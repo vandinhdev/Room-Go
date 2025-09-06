@@ -5,63 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chi tiết phòng trọ</title>
     <link rel="stylesheet" href="./access/css/styles.css">
+    <link rel="stylesheet" href="./access/css/footer.css">
+    <link rel="stylesheet" href="./access/css/user.css">
+    <link rel="stylesheet" href="./access/css/detail.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 </head>
 <body>
-    <!-- Header -->
-    <header class="header">
-        <div class="header-left">
-            <div class="logo"><a href="index.html">ROOM GO</a></div>
-        </div>
-        
-        
-        <div class="header-right">
-            <a href="chat.html" class="header-btn" style="color:#ff6b35;background:transparent;">💬 Chat</a>
-            <a href="#" class="header-btn" style="color:#ff6b35;background:transparent;">❤️ Yêu thích</a>
-            <a href="roomForm.html" class="header-btn post-btn">📝 Đăng tin</a>
-            <div id="authButtons">
-                <!-- Will be populated by JS -->
-            </div>
-            <div class="user-menu d-none">
-                <div class="user-menu-trigger">
-                    <div class="user-avatar"></div>
-                    <span class="user-name"></span>
-                    <span class="dropdown-arrow">▼</span>
-                </div>
-                <div class="dropdown-menu">
-                    <div class="dropdown-header">
-                        <div class="user-info">
-                            <div class="user-avatar-large"></div>
-                            <div class="user-details">
-                                <div class="user-name-large"></div>
-                                <div class="user-email"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="dropdown-divider"></div>
-                    <a href="#" class="dropdown-item">
-                        <span class="item-icon">👤</span>
-                        Thông tin cá nhân
-                    </a>
-                    <a href="#" class="dropdown-item">
-                        <span class="item-icon">🏠</span>
-                        Phòng của tôi
-                    </a>
-                    <a href="#" class="dropdown-item">
-                        <span class="item-icon">❤️</span>
-                        Phòng yêu thích
-                    </a>
-                    <div class="dropdown-divider"></div>
-                    <a href="#" class="dropdown-item text-danger" id="logoutBtn">
-                        <span class="item-icon">🚪</span>
-                        Đăng xuất
-                    </a>
-                </div>
-            </div>
-        </div>
-    </header>
+    
     <div class="main-container">
         <div id="roomDetail" style="max-width:800px;margin:32px auto;"></div>
     </div>
+    <script src="./js/header.js"></script>
+    <script src="./js/footer.js"></script>
     <script type="module" src="./js/detail.js"></script>
 </body>
 </html>

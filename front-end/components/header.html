@@ -1,0 +1,73 @@
+<!-- Header -->
+<header class="header">
+    <div class="header-left">
+        <div class="logo">ROOM GO</div>
+        <div class="location-selector">
+            <span class="location-icon"><i class="fa-solid fa-location-dot"></i></span>
+            <select id="provinceSelect" style="border:none;background:transparent;font-size:16px;color:#ff6b35;outline:none;">
+                <option value="">Đang tải tỉnh thành...</option>
+            </select>
+        </div>
+    </div>
+    
+    <div class="search-container">
+        <input type="text" class="search-box" placeholder="Tìm bất động sản...">
+    </div>
+    
+    <div class="header-right">
+        <a href="chat.html" class="header-btn" style="color:#ff6b35;background:transparent;"><i class="fa-regular fa-message"></i></a>
+        <a href="#" class="header-btn" style="color:#ff6b35;background:transparent;"><i class="fa-regular fa-heart"></i></a>
+        <a href="roomForm.html" class="header-btn post-btn">Đăng tin</a>
+        <div id="authButtons">
+            <!-- Will be populated by JS -->
+        </div>
+        <div class="user-menu d-none">
+            <div class="user-menu-trigger">
+                <div class="user-avatar"></div>
+                <span class="user-name"></span>
+                <span class="dropdown-arrow"><i class="fas fa-chevron-down"></i></span>
+            </div>
+            <div class="dropdown-menu">
+                <div class="dropdown-header">
+                    <div class="user-info">
+                        <div class="user-avatar-large"></div>
+                        <div class="user-details">
+                            <div class="user-name-large"></div>
+                            <div class="user-email"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="dropdown-body">
+                    <a href="#" class="menu-item">
+                        <i class="fas fa-user"></i> 
+                        <div class="menu-item-content">
+                            <span class="menu-item-title">Trang cá nhân</span>
+                            <span class="menu-item-desc">Xem và cập nhật thông tin</span>
+                        </div>
+                    </a>
+                    <a href="#" class="menu-item">
+                        <i class="fas fa-list"></i> 
+                        <div class="menu-item-content">
+                            <span class="menu-item-title">Quản lý tin đăng</span>
+                            <span class="menu-item-desc">Tin đăng của bạn</span>
+                        </div>
+                    </a>
+                    <a href="#" class="menu-item">
+                        <i class="fas fa-heart"></i> 
+                        <div class="menu-item-content">
+                            <span class="menu-item-title">Tin đã lưu</span>
+                            <span class="menu-item-desc">Phòng bạn quan tâm</span>
+                        </div>
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a href="#" class="menu-item" id="logoutButton">
+                        <i class="fas fa-sign-out-alt"></i> 
+                        <div class="menu-item-content">
+                            <span class="menu-item-title">Đăng xuất</span>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>

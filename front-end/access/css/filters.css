@@ -1,0 +1,101 @@
+/* Filter styles */
+.filters {
+    padding: 20px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    background: white;
+    border-bottom: 1px solid #eee;
+}
+
+.filter-btn {
+    padding: 8px 16px;
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #666;
+}
+
+.primary-filter {
+    background: #f8f9fa;
+    color: #333;
+    font-weight: 500;
+}
+
+.filter-btn:hover {
+    border-color: #ff6b35;
+    color: #ff6b35;
+    background: #fff7f3;
+}
+
+.filter-group {
+    position: relative;
+    min-width: 140px;
+}
+
+.filter-select {
+    width: 100%;
+    padding: 8px 16px;
+    padding-right: 32px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+    font-size: 14px;
+    color: #666;
+    appearance: none;
+    outline: none;
+    transition: all 0.2s;
+}
+
+.filter-select:hover {
+    border-color: #ff6b35;
+    color: #ff6b35;
+    background: #fff7f3;
+}
+
+.filter-select:focus {
+    border-color: #ff6b35;
+    box-shadow: 0 0 0 2px rgba(255,107,53,0.1);
+}
+
+.select-icon {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #999;
+    pointer-events: none;
+    font-size: 12px;
+}
+
+.filter-group:hover .select-icon {
+    color: #ff6b35;
+}
+
+.clear-filters {
+    padding: 8px 16px;
+    background: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    cursor: pointer;
+    color: #666;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.clear-filters:hover {
+    background: #ff6b35;
+    color: white;
+    border-color: #ff6b35;
+}
