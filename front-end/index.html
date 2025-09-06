@@ -5,70 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ROOM GO - Cho Thuê Phòng Trọ</title>
     <link rel="stylesheet" href="access/css/styles.css">
+    <link rel="stylesheet" href="access/css/filters.css">
+    <link rel="stylesheet" href="access/css/footer.css">
+    <link rel="stylesheet" href="access/css/user.css">
+    <link rel="stylesheet" href="access/css/pagination.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 </head>
 <body>
-    <!-- Header -->
-    <header class="header">
-        <div class="header-left">
-            <div class="logo">ROOM GO</div>
-            <div class="location-selector">
-                <span class="location-icon">📍</span>
-                <select id="provinceSelect" style="border:none;background:transparent;font-size:16px;color:#ff6b35;outline:none;">
-                    <option value="">Đang tải tỉnh thành...</option>
-                </select>
-                <span>▼</span>
-            </div>
-        </div>
-        
-        <div class="search-container">
-            <input type="text" class="search-box" placeholder="Tìm bất động sản...">
-        </div>
-        
-        <div class="header-right">
-            <a href="chat.html" class="header-btn" style="color:#ff6b35;background:transparent;">💬 Chat</a>
-            <a href="#" class="header-btn" style="color:#ff6b35;background:transparent;">❤️ Yêu thích</a>
-            <a href="roomForm.html" class="header-btn post-btn">📝 Đăng tin</a>
-            <div id="authButtons">
-                <!-- Will be populated by JS -->
-            </div>
-            <div class="user-menu d-none">
-                <div class="user-menu-trigger">
-                    <div class="user-avatar"></div>
-                    <span class="user-name"></span>
-                    <span class="dropdown-arrow">▼</span>
-                </div>
-                <div class="dropdown-menu">
-                    <div class="dropdown-header">
-                        <div class="user-info">
-                            <div class="user-avatar-large"></div>
-                            <div class="user-details">
-                                <div class="user-name-large"></div>
-                                <div class="user-email"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="dropdown-divider"></div>
-                    <a href="#" class="dropdown-item">
-                        <span class="item-icon">👤</span>
-                        Thông tin cá nhân
-                    </a>
-                    <a href="#" class="dropdown-item">
-                        <span class="item-icon">🏠</span>
-                        Phòng của tôi
-                    </a>
-                    <a href="#" class="dropdown-item">
-                        <span class="item-icon">❤️</span>
-                        Phòng yêu thích
-                    </a>
-                    <div class="dropdown-divider"></div>
-                    <a href="#" class="dropdown-item text-danger" id="logoutBtn">
-                        <span class="item-icon">🚪</span>
-                        Đăng xuất
-                    </a>
-                </div>
-            </div>
-        </div>
-    </header>
+   
 
     <!-- Main Container -->
     <div class="main-container">
@@ -76,28 +20,46 @@
 
         <!-- Filters -->
         <div class="filters">
-            <div class="filter-btn">🔍 Lọc</div>
-            <select id="priceFilter" class="filter-btn" style="min-width:120px;">
-                <option value="">Giá thuê</option>
-                <option value="1">Dưới 1 triệu</option>
-                <option value="2">1-2 triệu</option>
-                <option value="3">2-3 triệu</option>
-                <option value="4">Trên 3 triệu</option>
-            </select>
-            <select id="areaFilter" class="filter-btn" style="min-width:120px;">
-                <option value="">Diện tích</option>
-                <option value="1">Dưới 15m²</option>
-                <option value="2">15-25m²</option>
-                <option value="3">25-35m²</option>
-                <option value="4">Trên 35m²</option>
-            </select>
-            <select id="districtSelect" class="filter-btn" style="min-width:120px;">
-                <option value="">Quận/Huyện</option>
-            </select>
-            <select id="wardSelect" class="filter-btn" style="min-width:120px;">
-                <option value="">Phường/Xã</option>
-            </select>
-            <div class="clear-filters">Xoá lọc</div>
+            <div class="filter-btn primary-filter">
+                <i class="fa-solid fa-sliders"></i>
+                <span>Lọc</span>
+            </div>
+            <div class="filter-group">
+                <select id="priceFilter" class="filter-select">
+                    <option value="">Giá thuê</option>
+                    <option value="1">Dưới 1 triệu</option>
+                    <option value="2">1-2 triệu</option>
+                    <option value="3">2-3 triệu</option>
+                    <option value="4">Trên 3 triệu</option>
+                </select>
+                <i class="fa-solid fa-chevron-down select-icon"></i>
+            </div>
+            <div class="filter-group">
+                <select id="areaFilter" class="filter-select">
+                    <option value="">Diện tích</option>
+                    <option value="1">Dưới 15m²</option>
+                    <option value="2">15-25m²</option>
+                    <option value="3">25-35m²</option>
+                    <option value="4">Trên 35m²</option>
+                </select>
+                <i class="fa-solid fa-chevron-down select-icon"></i>
+            </div>
+            <div class="filter-group">
+                <select id="districtSelect" class="filter-select">
+                    <option value="">Quận/Huyện</option>
+                </select>
+                <i class="fa-solid fa-chevron-down select-icon"></i>
+            </div>
+            <div class="filter-group">
+                <select id="wardSelect" class="filter-select">
+                    <option value="">Phường/Xã</option>
+                </select>
+                <i class="fa-solid fa-chevron-down select-icon"></i>
+            </div>
+            <button class="clear-filters">
+                <i class="fa-solid fa-xmark"></i>
+                <span>Xoá lọc</span>
+            </button>
         </div>
 
         <!-- Category Tags -->
@@ -113,19 +75,17 @@
         <div class="sort-view-controls">
             <div class="sort-control">
                 <span>Tin mới nhất</span>
-                <span>⬇️</span>
             </div>
-            <div class="view-toggle">
-                <div class="view-btn">📋</div>
-                <div class="view-btn active">⚏</div>
-            </div>
-            <a href="roomForm.html" class="btn-add-room">+ Thêm phòng</a>
+            
         </div>
 
         <!-- Listings Grid -->
         <div class="listings-grid" id="listingsGrid">
             <!-- Cards sẽ được render bằng JS -->
         </div>
+
+        <!-- Pagination -->
+        <div id="paginationContainer" class="pagination-container"></div>
     </div>
 
     <script type="module" src="./js/main.js"></script>
@@ -136,7 +96,7 @@
             fetch('https://provinces.open-api.vn/api/p/')
                 .then(res => res.json())
                 .then(data => {
-                    provinceSelect.innerHTML = '<option value="">Tất cả tỉnh thành</option>' +
+                    provinceSelect.innerHTML = '<option value="">Chọn khu vực</option>' +
                         data.map(p => `<option value="${p.name}">${p.name}</option>`).join('');
                 })
                 .catch(() => {
@@ -191,6 +151,7 @@
             });
         });
     </script>
-
+    <script src="js/header.js"></script>
+    <script src="js/footer.js"></script>
 </body>
 </html>

@@ -40,6 +40,45 @@ function updateAuthUI() {
     }
 }
 
+// Kích hoạt hiển thị chi tiết phòng khi trang được load
+document.addEventListener('DOMContentLoaded', function() {
+    const roomId = getRoomIdFromUrl();
+    const room = rooms.find(r => r.id === roomId);
+    renderRoomDetail(room);
+    updateAuthUI();
+
+    // Xử lý sự kiện chuyển ảnh
+    document.getElementById('roomDetail').addEventListener('click', function(e) {
+        if (e.target.matches('.room-thumb') || e.target.matches('.img-dot')) {
+            const idx = parseInt(e.target.dataset.idx);
+            showImage(idx);
+        } else if (e.target.id === 'prevImg') {
+            changeImage(-1);
+        } else if (e.target.id === 'nextImg') {
+            changeImage(1);
+        }
+    });
+});
+
+function showImage(idx) {
+    document.querySelectorAll('.room-img').forEach((img, i) => {
+        img.style.display = i === idx ? 'block' : 'none';
+    });
+    document.querySelectorAll('.room-thumb').forEach((thumb, i) => {
+        thumb.style.border = `2px solid ${i === idx ? '#ff6b35' : '#eee'}`;
+    });
+    document.querySelectorAll('.img-dot').forEach((dot, i) => {
+        dot.style.background = i === idx ? '#ff6b35' : '#fff';
+    });
+}
+
+function changeImage(delta) {
+    const images = document.querySelectorAll('.room-img');
+    const currentIdx = Array.from(images).findIndex(img => img.style.display === 'block');
+    const newIdx = (currentIdx + delta + images.length) % images.length;
+    showImage(newIdx);
+}
+
 function renderRoomDetail(room) {
     const container = document.getElementById('roomDetail');
     if (!room) {
@@ -77,37 +116,77 @@ function renderRoomDetail(room) {
     });
     let thumbsHtml = images.map((img, idx) => `<img src="${img}" class="room-thumb" data-idx="${idx}" style="width:64px;height:48px;object-fit:cover;border-radius:6px;border:2px solid ${idx===0?'#ff6b35':'#eee'};margin-right:8px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.07);">`).join('');
     container.innerHTML = `
-        <div class="listing-card" style="max-width:900px;margin:32px auto;box-shadow:0 4px 24px rgba(0,0,0,0.10);background:#fff;">
-            <div style="width:100%;height:380px;overflow:hidden;border-top-left-radius:12px;border-top-right-radius:12px;position:relative;">
-                ${imagesHtml}
-                <button id="prevImg" style="position:absolute;top:50%;left:12px;transform:translateY(-50%);background:rgba(255,255,255,0.7);border:none;border-radius:50%;width:38px;height:38px;font-size:22px;cursor:pointer;z-index:3;">&#8592;</button>
-                <button id="nextImg" style="position:absolute;top:50%;right:12px;transform:translateY(-50%);background:rgba(255,255,255,0.7);border:none;border-radius:50%;width:38px;height:38px;font-size:22px;cursor:pointer;z-index:3;">&#8594;</button>
-                <div style="position:absolute;bottom:12px;left:50%;transform:translateX(-50%);z-index:3;display:flex;gap:8px;">
-                    ${images.map((_,i)=>`<span class="img-dot" data-idx="${i}" style="width:10px;height:10px;border-radius:50%;background:${i===0?'#ff6b35':'#fff'};border:1px solid #ff6b35;display:inline-block;cursor:pointer;"></span>`).join('')}
+        <div class="room-detail">
+            <div class="gallery-container">
+                <div class="gallery-main">
+                    ${imagesHtml}
+                </div>
+                <button id="prevImg" class="gallery-nav-btn">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <button id="nextImg" class="gallery-nav-btn">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+                <div class="gallery-dots">
+                    ${images.map((_,i)=>`<span class="gallery-dot ${i===0?'active':''}" data-idx="${i}"></span>`).join('')}
+                </div>
+                <div class="gallery-nav">
+                    ${thumbsHtml}
                 </div>
             </div>
-            <div style="width:100%;background:#f8f8fa;padding:12px 0 8px 0;display:flex;justify-content:center;align-items:center;gap:0;">
-                ${thumbsHtml}
-            </div>
-            <div class="listing-content" style="padding:40px 32px 32px 32px;">
-                <div class="listing-title" style="font-size:32px;font-weight:700;color:#222;margin-bottom:16px;">${room.title}</div>
-                <div class="listing-price" style="font-size:28px;color:#ff6b35;font-weight:bold;margin-bottom:12px;">${formatPrice(room.price)}</div>
-                <div class="listing-location" style="font-size:18px;color:#333;margin-bottom:18px;">
-                    <span>📍</span>
+            <div class="room-content">
+                <h1 class="room-title">${room.title}</h1>
+                <div class="room-price">${formatPrice(room.price)}</div>
+                <div class="room-location">
+                    <i class="fas fa-map-marker-alt"></i>
                     <span>${room.address || ''}</span>
                 </div>
-                <div style="display:flex;align-items:center;gap:24px;margin-bottom:24px;">
-                    <div class="user-avatar" style="width:56px;height:56px;font-size:22px;">${String(room.owner_id).slice(-1)}</div>
-                    <div>
-                        <div style="font-size:17px;font-weight:600;">Chủ phòng: #${room.owner_id}</div>
-                        <div style="font-size:15px;color:#888;">Liên hệ: 0123xxxxxx</div>
+                
+                <div class="room-info">
+                    <div class="info-item">
+                        <i class="fas fa-expand"></i>
+                        <div>
+                            <div class="info-label">Diện tích</div>
+                            <div class="info-value">${room.area} m²</div>
+                        </div>
                     </div>
-                    <button style="margin-left:auto;padding:12px 32px;background:#ff6b35;color:white;border:none;border-radius:8px;font-size:18px;cursor:pointer;transition:background 0.2s;box-shadow:0 2px 8px rgba(255,107,53,0.15);font-weight:600;">Liên hệ ngay</button>
-                        <button id="chatBtn" style="margin-left:16px;padding:12px 32px;background:#fff;color:#ff6b35;border:2px solid #ff6b35;border-radius:8px;font-size:18px;cursor:pointer;transition:background 0.2s;box-shadow:0 2px 8px rgba(255,107,53,0.10);font-weight:600;">💬 Chat với chủ phòng</button>
+                    <div class="info-item">
+                        <i class="fas fa-map"></i>
+                        <div>
+                            <div class="info-label">Khu vực</div>
+                            <div class="info-value">${room.district}</div>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-check-circle"></i>
+                        <div>
+                            <div class="info-label">Trạng thái</div>
+                            <div class="info-value">${room.status === 'available' ? 'Còn trống' : 'Đã thuê'}</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="listing-area" style="font-size:16px;color:#666;margin-bottom:8px;">Diện tích: <b>${room.area ? room.area + ' m²' : ''}</b></div>
+                <div class="user-section">
+                    <div class="user-avatar">${String(room.owner_id).slice(-1)}</div>
+                    <div class="user-info">
+                        <div class="user-name">Chủ nhà #${room.owner_id}</div>
+                        <div class="user-status">Đang hoạt động</div>
+                        <div class="user-stats">
+                            <div class="stat-item">
+                                <i class="fas fa-home"></i>
+                                <span>5 phòng cho thuê</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button  id="chatBtn" class="contact-button">
+                        <i class="fas fa-comment"></i>
+                        Nhắn tin
+                    </button>
+                    
+                    
+                </div>
+                
                 <div style="margin-bottom:16px;color:#666;">Ngày đăng: <b>${room.created_at ? new Date(room.created_at).toLocaleDateString('vi-VN') : ''}</b></div>
-                <div style="margin-bottom:16px;color:#666;">Trạng thái: <b style="color:${room.status==='available'?'#28a745':'#dc3545'}">${room.status === 'available' ? 'Còn phòng' : 'Đã thuê'}</b></div>
+                
                 <div class="listing-type" style="font-size:17px;color:#444;margin-bottom:24px;line-height:1.7;background:#f8f9fa;padding:16px;border-radius:8px;">${room.description || ''}</div>
                 <div style="font-size:14px;color:#aaa;">Mã phòng: ${room.id}</div>
                 ${mapSection}

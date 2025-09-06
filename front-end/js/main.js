@@ -2,6 +2,13 @@
 import { rooms } from './mockRooms.js';
 import { getCurrentUser, isAdmin } from './mockUsers.js';
 
+// Global state
+const state = {
+    currentPage: 1,
+    roomsPerPage: 9,
+    filteredRooms: [...rooms]
+};
+
 function formatPrice(price) {
     if (!price) return '';
     if (price >= 1000000) {
@@ -10,10 +17,70 @@ function formatPrice(price) {
     return price.toLocaleString('vi-VN') + ' đ/tháng';
 }
 
+function renderPagination(totalRooms) {
+    const totalPages = Math.ceil(totalRooms / state.roomsPerPage);
+    const container = document.getElementById('paginationContainer');
+    
+    let paginationHTML = `
+        <button class="pagination-button" onclick="window.app.changePage(${state.currentPage - 1})" ${state.currentPage === 1 ? 'disabled' : ''}>
+            <i class="fas fa-chevron-left"></i>
+        </button>
+    `;
+
+    // Hiển thị số trang
+    for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= state.currentPage - 1 && i <= state.currentPage + 1)) {
+            paginationHTML += `
+                <button class="pagination-button ${i === state.currentPage ? 'active' : ''}" 
+                        onclick="window.app.changePage(${i})">
+                    ${i}
+                </button>
+            `;
+        } else if (i === state.currentPage - 2 || i === state.currentPage + 2) {
+            paginationHTML += `<span class="pagination-info">...</span>`;
+        }
+    }
+
+    paginationHTML += `
+        <button class="pagination-button" onclick="window.app.changePage(${state.currentPage + 1})" ${state.currentPage === totalPages ? 'disabled' : ''}>
+            <i class="fas fa-chevron-right"></i>
+        </button>
+        
+    `;
+
+    container.innerHTML = paginationHTML;
+}
+
+// Namespace cho các hàm global
+window.app = {
+    changePage: function(page) {
+        const totalPages = Math.ceil(state.filteredRooms.length / state.roomsPerPage);
+        if (page < 1 || page > totalPages) return;
+        state.currentPage = page;
+        renderRooms(state.filteredRooms);
+    },
+    
+    // Thêm các hàm global khác ở đây nếu cần
+    updateFilteredRooms: function(newRooms) {
+        state.filteredRooms = newRooms;
+        state.currentPage = 1; // Reset về trang 1 khi filter thay đổi
+        renderRooms(state.filteredRooms);
+    }
+};
+
 function renderRooms(rooms) {
     const grid = document.getElementById('listingsGrid');
     grid.innerHTML = '';
-    rooms.forEach(room => {
+    
+    // Tính toán phân trang
+    const startIndex = (state.currentPage - 1) * state.roomsPerPage;
+    const paginatedRooms = rooms.slice(startIndex, startIndex + state.roomsPerPage);
+    
+    // Render phân trang
+    renderPagination(rooms.length);
+    
+    // Render danh sách phòng
+    paginatedRooms.forEach(room => {
         const card = document.createElement('div');
         card.className = 'listing-card';
         card.innerHTML = `
@@ -121,10 +188,12 @@ function updateAuthUI() {
         userMenu.querySelector('.user-email').textContent = user.email;
         
         // Hiển thị/ẩn nút thêm phòng dựa vào role
-        if (isAdmin()) {
-            addRoomBtn.style.display = 'block';
-        } else {
-            addRoomBtn.style.display = 'none';
+        if (addRoomBtn) {
+            if (isAdmin()) {
+                addRoomBtn.style.display = 'block';
+            } else {
+                addRoomBtn.style.display = 'none';
+            }
         }
     } else {
         authButtons.innerHTML = `
@@ -132,7 +201,9 @@ function updateAuthUI() {
             
         `;
         userMenu.classList.add('d-none');
-        addRoomBtn.style.display = 'none';
+        if (addRoomBtn) {
+            addRoomBtn.style.display = 'none';
+        }
     }
 }
 
