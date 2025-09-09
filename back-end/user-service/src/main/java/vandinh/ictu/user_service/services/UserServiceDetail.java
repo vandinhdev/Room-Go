@@ -6,8 +6,7 @@ import vandinh.ictu.user_service.repositories.UserRepository;
 
 @Service
 public record UserServiceDetail(UserRepository userRepository) {
-
     public UserDetailsService userDetailsService() {
-        return userRepository::findByUsername;
+        return userRepository::findByEmail;
     }
 }
