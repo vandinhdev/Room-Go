@@ -65,7 +65,7 @@ public class UserController {
     }
 
     @Operation(summary = "Update User", description = "API update user to database")
-    @PutMapping("/upd")
+    @PutMapping("/update")
   //  @PreAuthorize("hasAnyAuthority('admin', 'tenant')")
     public ApiResponse updateUser(@RequestBody @Valid UpdateUserRequest request) {
 

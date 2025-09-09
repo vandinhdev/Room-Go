@@ -38,7 +38,7 @@ public class UserEntity implements UserDetails, Serializable {
     @Column(name = "username", unique = true, nullable = false, length = 50)
     private String username;
 
-    @Column(name = "password")
+    @Column(name = "password_hash")
     private String password;
 
     @Column(name = "email", unique = true, length = 100)
@@ -59,38 +59,38 @@ public class UserEntity implements UserDetails, Serializable {
     @Column(nullable = false)
     private Role role;
 
-    @Column(name = "created_at", length = 255)
+    @Column(name = "created_at")
     @Temporal(TemporalType.TIMESTAMP)
     @CreationTimestamp
     private Date createdAt;
 
-    @Column(name = "updated_at", length = 255)
+    @Column(name = "updated_at")
     @Temporal(TemporalType.TIMESTAMP)
     @UpdateTimestamp
     private Date updatedAt;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of();
+        return List.of((GrantedAuthority) () -> "ROLE_" + role.name());
     }
 
     @Override
     public boolean isAccountNonExpired() {
-        return UserDetails.super.isAccountNonExpired();
+        return true;
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        return UserDetails.super.isAccountNonLocked();
+        return true;
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
-        return UserDetails.super.isCredentialsNonExpired();
+        return true;
     }
 
     @Override
     public boolean isEnabled() {
-        return UserDetails.super.isEnabled();
+        return true;
     }
 }
