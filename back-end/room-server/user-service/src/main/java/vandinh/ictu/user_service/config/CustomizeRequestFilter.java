@@ -40,8 +40,7 @@ public class CustomizeRequestFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String path = request.getServletPath();
 
-        // ✅ Bỏ qua toàn bộ endpoint công khai
-        if (path.startsWith("/auth/") ||
+        if (path.startsWith("/api/auth/") ||
                 path.startsWith("/swagger-ui") ||
                 path.startsWith("/v3/")) {
             filterChain.doFilter(request, response);
