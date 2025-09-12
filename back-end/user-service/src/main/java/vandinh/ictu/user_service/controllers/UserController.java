@@ -12,10 +12,11 @@ import org.springframework.web.bind.annotation.*;
 import vandinh.ictu.user_service.common.response.ApiResponse;
 import vandinh.ictu.user_service.dto.request.CreateUserRequest;
 import vandinh.ictu.user_service.dto.request.UpdateUserRequest;
+import vandinh.ictu.user_service.dto.request.UserPasswordRequest;
 import vandinh.ictu.user_service.services.UserService;
 
 @RestController
-@RequestMapping("/user")
+@RequestMapping("api/user")
 @Tag(name = "User Controller")
 @Slf4j(topic = "USER-CONTROLLER")
 @RequiredArgsConstructor
@@ -25,7 +26,7 @@ public class UserController {
 
     @Operation(summary = "Get user list", description = "API retrieve user from database")
     @GetMapping("/list")
-   //@PreAuthorize("hasAnyAuthority('admin', 'manager')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
     public ApiResponse getList(@RequestParam(required = false) String keyword,
                                @RequestParam(required = false) String sort,
                                @RequestParam(defaultValue = "0") int page,
@@ -40,8 +41,8 @@ public class UserController {
     }
 
     @Operation(summary = "Get user detail", description = "API retrieve user detail by ID from database")
-    @GetMapping("/{userId}")
-    //@PreAuthorize("hasAnyAuthority('admin', 'manager')")
+    @GetMapping("detail/{userId}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_STUDENT','ROLE_OWNER')")
     public ApiResponse getUserDetail(@PathVariable @Min(value = 1, message = "userId must be equals or greater than 1") Long userId) {
         log.info("Get user detail by ID: {}", userId);
 
@@ -55,7 +56,7 @@ public class UserController {
     @Operation(summary = "Create User", description = "API add new user to database")
     @PostMapping("/add")
     @ResponseStatus(HttpStatus.OK)
-   // @PreAuthorize("hasAuthority('admin')")
+   @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public ApiResponse createUser(@RequestBody @Valid CreateUserRequest request) {
         return ApiResponse.builder()
                 .status(HttpStatus.CREATED.value())
@@ -66,14 +67,39 @@ public class UserController {
 
     @Operation(summary = "Update User", description = "API update user to database")
     @PutMapping("/update")
-  //  @PreAuthorize("hasAnyAuthority('admin', 'tenant')")
     public ApiResponse updateUser(@RequestBody @Valid UpdateUserRequest request) {
-
         userService.updateUser(request);
 
         return ApiResponse.builder()
                 .status(HttpStatus.ACCEPTED.value())
                 .message("User updated successfully")
+                .data("")
+                .build();
+    }
+
+    @Operation(summary = "Delete User", description = "API delete user from database")
+    @DeleteMapping("/delete/{userId}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')" )
+    public ApiResponse deleteUser(@PathVariable @Min(value = 1, message = "userId must be equals or greater than 1") Long userId) {
+        userService.deleteUser(userId);
+        return ApiResponse.builder()
+                .status(HttpStatus.RESET_CONTENT.value())
+                .message("User deleted successfully")
+                .data("")
+                .build();
+    }
+
+    @Operation(summary = "Change Password", description = "API change password for user to database")
+    @PatchMapping("/change-pwd")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_STUDENT','ROLE_OWNER')")
+    public ApiResponse changePassword(@RequestBody @Valid UserPasswordRequest request) {
+        log.info("Changing password for user: {}", request);
+
+        userService.changePassword(request);
+
+        return ApiResponse.builder()
+                .status(HttpStatus.NO_CONTENT.value())
+                .message("Password updated successfully")
                 .data("")
                 .build();
     }

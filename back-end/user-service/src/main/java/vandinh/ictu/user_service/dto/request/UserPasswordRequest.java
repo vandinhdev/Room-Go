@@ -9,12 +9,7 @@ import java.io.Serializable;
 @Getter
 @Setter
 public class UserPasswordRequest implements Serializable {
-
     private Long id;
-
-
     private String password;
-
-
     private String confirmPassword;
 }

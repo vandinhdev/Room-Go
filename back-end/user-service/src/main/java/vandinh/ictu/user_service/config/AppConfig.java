@@ -28,10 +28,8 @@ import static org.springframework.security.config.http.SessionCreationPolicy.STA
 @RequiredArgsConstructor
 @EnableMethodSecurity(prePostEnabled = true)
 public class AppConfig {
-
     private final String[] whitelistedUrls = {"/auth/**"};
-
-
+    private final CustomizeRequestFilter requestFilter;
     private final UserServiceDetail userServiceDetail;
 
     @Bean
@@ -40,7 +38,7 @@ public class AppConfig {
                 .authorizeHttpRequests(request -> request.requestMatchers(whitelistedUrls).permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement(manager -> manager.sessionCreationPolicy(STATELESS))
-                .authenticationProvider(authenticationProvider());
+                .authenticationProvider(authenticationProvider()).addFilterBefore(requestFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 

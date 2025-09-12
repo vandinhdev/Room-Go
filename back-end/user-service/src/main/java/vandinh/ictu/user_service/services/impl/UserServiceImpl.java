@@ -116,11 +116,10 @@ public class UserServiceImpl implements UserService {
         userEntity.setFirstName(req.getFirstname());
         userEntity.setLastName(req.getLastname());
         userEntity.setUsername(req.getUsername());
-        userEntity.setPassword(req.getPassword());
+        userEntity.setPassword(passwordEncoder.encode(req.getPassword()));
         userEntity.setEmail(req.getEmail());
         userEntity.setPhone(req.getPhone());
         userEntity.setRole(Role.valueOf(req.getRole().toUpperCase()));
-
         UserEntity saveUser = userRepository.save(userEntity);
 
         return saveUser.getId();
@@ -136,7 +135,7 @@ public class UserServiceImpl implements UserService {
         userEntity.setGender(req.getGender());
         userEntity.setDateOfBirth(req.getDateOfBirth());
 
-        UserEntity saveUser = userRepository.save(userEntity);
+        userRepository.save(userEntity);
 
     }
 
@@ -146,7 +145,6 @@ public class UserServiceImpl implements UserService {
         if (req.getPassword().equals(req.getConfirmPassword())) {
             user.setPassword(passwordEncoder.encode(req.getPassword()));
         }
-
         userRepository.save(user);
     }
 
