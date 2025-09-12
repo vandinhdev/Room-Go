@@ -202,7 +202,7 @@ body {
 .primary-btn{
     width: 100%;
     padding: 0.875rem 1.5rem;
-    background:#000;
+    background:#ff6b35;
     color: white;
     border: none;
     border-radius: 0.5rem;
@@ -216,13 +216,13 @@ body {
 }
 
 .login:hover {
-    background: #007bff;
+    background: #ff6b35;
     transform: translateY(-1px);
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .register:hover {
-    background: #28a745;
+    background: #ff6b35;
     transform: translateY(-1px);
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }

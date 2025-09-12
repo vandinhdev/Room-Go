@@ -9,38 +9,42 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.authorization.AuthenticatedAuthorizationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import vandinh.ictu.user_service.common.response.TokenResponse;
-import vandinh.ictu.user_service.dto.request.SigInRequest;
+import vandinh.ictu.user_service.dto.request.SignInRequest;
+import vandinh.ictu.user_service.dto.request.SignUpRequest;
 import vandinh.ictu.user_service.exception.ForBiddenException;
 import vandinh.ictu.user_service.exception.InvalidDataException;
+import vandinh.ictu.user_service.models.Role;
 import vandinh.ictu.user_service.models.UserEntity;
 import vandinh.ictu.user_service.repositories.UserRepository;
-import vandinh.ictu.user_service.services.AuthServiec;
+import vandinh.ictu.user_service.services.AuthService;
 import vandinh.ictu.user_service.services.JwtService;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
+import java.util.UUID;
 
 import static vandinh.ictu.user_service.common.enums.TokenType.REFRESH_TOKEN;
 
 @Service
 @RequiredArgsConstructor
-public class AuthServiceImpl implements AuthServiec {
+public class AuthServiceImpl implements AuthService {
     private final JwtService jwtService;
     private final UserRepository userRepository;
     private final AuthenticationManager authenticationManager;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
-    public TokenResponse getAccessToken(SigInRequest request) {
+    public TokenResponse getAccessToken(SignInRequest request) {
         List<String> authorities = new ArrayList<>();
         try {
-            // Thực hiện xác thực với username và password
             Authentication authenticate = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
             authorities.add(authenticate.getAuthorities().toString());
 
-            // Nếu xác thực thành công, lưu thông tin vào SecurityContext
             SecurityContextHolder.getContext().setAuthentication(authenticate);
         } catch (BadCredentialsException | DisabledException e) {
             throw new AccessDeniedException(e.getMessage());
@@ -59,21 +63,49 @@ public class AuthServiceImpl implements AuthServiec {
         }
 
         try {
-            // Verify token
             String email = jwtService.extractEmail(refreshToken, REFRESH_TOKEN);
 
-            // check user is active or inactivated
             UserEntity user = userRepository.findByUsername(email);
 
             List<String> authorities = new ArrayList<>();
             user.getAuthorities().forEach(authority -> authorities.add(authority.getAuthority()));
 
-            // generate new access token
             String accessToken = jwtService.generateAccessToken(user.getUsername(), authorities);
 
             return TokenResponse.builder().accessToken(accessToken).refreshToken(refreshToken).build();
         } catch (Exception e) {
             throw new ForBiddenException(e.getMessage());
         }
+    }
+
+    @Override
+    public TokenResponse register(SignUpRequest request) {
+        if (userRepository.findByEmail(request.getEmail()) != null) {
+            throw new InvalidDataException("Email is already in use");
+        }
+
+        String base = request.getFirstName().toLowerCase().trim() + "_" + request.getLastName().toLowerCase().trim();
+        String generatedUsername = base + new Random().nextInt(1000);
+
+
+
+        UserEntity user = UserEntity.builder()
+                .username(generatedUsername)
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .role(Role.ADMIN)
+                .build();
+
+        userRepository.save(user);
+
+        List<String> authorities = new ArrayList<>();
+        user.getAuthorities().forEach(authority -> authorities.add(authority.getAuthority()));
+
+        String accessToken = jwtService.generateAccessToken(user.getEmail(), authorities);
+        String refreshToken = jwtService.generateRefreshToken(user.getEmail(), authorities);
+
+        return TokenResponse.builder().accessToken(accessToken).refreshToken(refreshToken).build();
     }
 }

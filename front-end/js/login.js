@@ -1,5 +1,11 @@
 let isLoginForm = true;
 
+document.getElementById("googleLoginBtn")
+    .addEventListener("click", loginWithGoogle);
+
+document.getElementById("facebookLoginBtn")
+    .addEventListener("click", loginWithFacebook);
+
 function toggleAuthForm() {
     const loginForm = document.getElementById('loginForm');
     const registerForm = document.getElementById('registerForm');
