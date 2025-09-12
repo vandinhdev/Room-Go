@@ -1,0 +1,46 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            # User Service
+            - id: user-service
+              uri: http://localhost:8081
+              predicates:
+                - Path=/user/**
+
+            - id: user-service
+              uri: http://localhost:8081
+              predicates:
+                - Path=/auth/**
+
+            # Room Service
+            - id: room-service
+              uri: http://localhost:8082
+              predicates:
+                - Path=/rooms/**
+
+            # Search Service
+            - id: search-service
+              uri: http://localhost:8083
+              predicates:
+                - Path=/search/**
+
+            # Chat Service
+            - id: chat-service
+              uri: http://localhost:8084
+              predicates:
+                - Path=/chat/**
+
+          # Tuỳ chọn filter chung (nếu muốn log, auth)
+          default-filters:
+            - name: RemoveRequestHeader
+              args:
+                name: Cookie
