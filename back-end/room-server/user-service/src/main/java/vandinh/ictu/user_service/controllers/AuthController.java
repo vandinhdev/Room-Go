@@ -16,7 +16,7 @@ import vandinh.ictu.user_service.dto.request.SignUpRequest;
 import vandinh.ictu.user_service.services.AuthService;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
 @Tag(name = "Authentication Controller")
 @Slf4j(topic = "AUTHENTICATION-CONTROLLER")
 @RequiredArgsConstructor

@@ -23,7 +23,12 @@ import java.util.List;
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "users")
+@Table(name = "users",
+        indexes = {
+                @Index(name = "idx_users_username", columnList = "username", unique = true),
+                @Index(name = "idx_users_email", columnList = "email", unique = true),
+                @Index(name = "idx_users_phone", columnList = "phone")
+        })
 @Slf4j(topic = "User Entity")
 public class UserEntity implements UserDetails, Serializable {
     @Id
