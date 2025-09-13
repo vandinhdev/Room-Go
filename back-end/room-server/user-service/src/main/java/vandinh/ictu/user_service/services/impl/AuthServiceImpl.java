@@ -65,12 +65,12 @@ public class AuthServiceImpl implements AuthService {
         try {
             String email = jwtService.extractEmail(refreshToken, REFRESH_TOKEN);
 
-            UserEntity user = userRepository.findByUsername(email);
+            UserEntity userEmail = userRepository.findByEmail(email);
 
             List<String> authorities = new ArrayList<>();
-            user.getAuthorities().forEach(authority -> authorities.add(authority.getAuthority()));
+            userEmail.getAuthorities().forEach(authority -> authorities.add(authority.getAuthority()));
 
-            String accessToken = jwtService.generateAccessToken(user.getUsername(), authorities);
+            String accessToken = jwtService.generateAccessToken(userEmail.getEmail(), authorities);
 
             return TokenResponse.builder().accessToken(accessToken).refreshToken(refreshToken).build();
         } catch (Exception e) {

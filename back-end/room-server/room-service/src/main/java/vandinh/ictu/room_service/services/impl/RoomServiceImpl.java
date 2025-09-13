@@ -82,8 +82,6 @@ public class RoomServiceImpl implements RoomService {
                 .build();
     }
 
-
-
     @Override
     public Long createRoom(CreateRoomRequest req, String email, String bearerToken) {
         Long ownerId = userClient.getUserIdByEmail(email, bearerToken);
