@@ -8,7 +8,7 @@ import vandinh.ictu.room_service.dto.response.RoomResponse;
 public interface RoomService {
     RoomPageResponse getAllRoom(String keyword, String sort, int page, int size);
     RoomResponse getRoomById(Long id);
-    Long createRoom(CreateRoomRequest req);
+    Long createRoom(CreateRoomRequest req, String email, String bearerToken);
     void updateRoom(UpdateRoomRequest req);
     void deleteRoom(Long id);
 }

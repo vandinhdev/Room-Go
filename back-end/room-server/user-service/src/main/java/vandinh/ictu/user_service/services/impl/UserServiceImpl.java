@@ -105,7 +105,18 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse getUserByEmail(String email) {
-        return null;
+        UserEntity userEntity = userRepository.findByEmail(email);
+        return UserResponse.builder()
+                .id(userEntity.getId())
+                .firstname(userEntity.getFirstName())
+                .lastname(userEntity.getLastName())
+                .gender(userEntity.getGender())
+                .dateOfBirth(userEntity.getDateOfBirth())
+                .username(userEntity.getUsername())
+                .phone(userEntity.getPhone())
+                .email(userEntity.getEmail())
+                .role(userEntity.getRole())
+                .build();
     }
 
     @Override

@@ -1,10 +1,14 @@
 package vandinh.ictu.room_service.models;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
 @Entity
+@Getter
+@Setter
 @Table(name = "room_images")
 public class RoomImage {
     @Id

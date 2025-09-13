@@ -1,17 +1,19 @@
 package vandinh.ictu.room_service.models;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import vandinh.ictu.room_service.common.RoomStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Entity
 @Getter
 @Setter
+@Builder
+@Entity
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "rooms",
         indexes = {
                 @Index(name = "idx_rooms_price", columnList = "price"),

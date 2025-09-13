@@ -25,7 +25,12 @@ spring:
             - id: room-service
               uri: http://localhost:8082
               predicates:
-                - Path=/api/rooms/**
+                - Path=/api/room/**
+
+            - id: room-service
+              uri: http://localhost:8082
+              predicates:
+                - Path=/api/room-images/**
 
             # Search Service
             - id: search-service
@@ -44,3 +49,7 @@ spring:
             - name: RemoveRequestHeader
               args:
                 name: Cookie
+
+
+jwt:
+  accessKey: IIwLeRIVsznVTPFEYmA6HiVVBrlKkKqC36OpWzqw8mk=
