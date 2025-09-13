@@ -28,19 +28,22 @@ import static org.springframework.security.config.http.SessionCreationPolicy.STA
 @RequiredArgsConstructor
 @EnableMethodSecurity(prePostEnabled = true)
 public class AppConfig {
-    private final String[] whitelistedUrls = {"/auth/**"};
+    private final String[] whitelistedUrls = {"/auth/**", "/api/auth/**"};
     private final CustomizeRequestFilter requestFilter;
     private final UserServiceDetail userServiceDetail;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(request -> request.requestMatchers(whitelistedUrls).permitAll()
+                .authorizeHttpRequests(request -> request
+                        .requestMatchers(whitelistedUrls).permitAll()
                         .anyRequest().authenticated())
                 .sessionManagement(manager -> manager.sessionCreationPolicy(STATELESS))
-                .authenticationProvider(authenticationProvider()).addFilterBefore(requestFilter, UsernamePasswordAuthenticationFilter.class);
+                .authenticationProvider(authenticationProvider())
+                .addFilterBefore(requestFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
+
 
     @Bean
     public WebSecurityCustomizer ignoreResources() {
@@ -67,8 +70,8 @@ public class AppConfig {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(@NonNull CorsRegistry registry) {
-                registry.addMapping("**")
-                        .allowedOrigins("http://localhost:8500")
+                registry.addMapping("/**")
+                        .allowedOrigins("http://localhost:5500")
                         .allowedMethods("GET", "POST", "PUT", "DELETE") // Allowed HTTP methods
                         .allowedHeaders("*") // Allowed request headers
                         .allowCredentials(false)

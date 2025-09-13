@@ -43,7 +43,7 @@ public class AuthServiceImpl implements AuthService {
         List<String> authorities = new ArrayList<>();
         try {
             Authentication authenticate = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
-            authorities.add(authenticate.getAuthorities().toString());
+            authenticate.getAuthorities().forEach(a -> authorities.add(a.getAuthority()));
 
             SecurityContextHolder.getContext().setAuthentication(authenticate);
         } catch (BadCredentialsException | DisabledException e) {

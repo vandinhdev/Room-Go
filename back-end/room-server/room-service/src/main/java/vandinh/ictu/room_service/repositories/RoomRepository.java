@@ -1,5 +1,7 @@
 package vandinh.ictu.room_service.repositories;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,7 +14,7 @@ public interface RoomRepository extends JpaRepository<RoomEntity, Long> {
     @Query("SELECT r FROM RoomEntity r " +
             "WHERE lower(r.title) LIKE lower(concat('%', :keyword, '%')) " +
             "OR lower(r.address) LIKE lower(concat('%', :keyword, '%'))")
-    List<RoomEntity> searchByKeyword(@Param("keyword") String keyword);
+    Page<RoomEntity> searchByKeyword(String keyword, Pageable pageable);
     RoomEntity findByOwnerId(Long ownerId);
 }
 

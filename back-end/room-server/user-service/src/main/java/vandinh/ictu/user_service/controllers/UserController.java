@@ -52,6 +52,16 @@ public class UserController {
                 .data(userService.getUserById(userId))
                 .build();
     }
+    @Operation(summary = "Get user detail", description = "API retrieve user detail by ID from database")
+    @GetMapping("by-email")
+    public ApiResponse getUserDetailByEmail(@RequestParam String email) {
+        log.info("Get user detail by email: {}", email);
+        return ApiResponse.builder()
+                .status(HttpStatus.OK.value())
+                .message("user")
+                .data(userService.getUserByEmail(email))
+                .build();
+    }
 
     @Operation(summary = "Create User", description = "API add new user to database")
     @PostMapping("/add")
