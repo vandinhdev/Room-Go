@@ -19,7 +19,6 @@ import vandinh.ictu.room_service.dto.response.UserRespone;
 @RequiredArgsConstructor
 @Slf4j(topic = "USER-CLIENT")   // ✅ thêm log
 public class UserClient {
-
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
 

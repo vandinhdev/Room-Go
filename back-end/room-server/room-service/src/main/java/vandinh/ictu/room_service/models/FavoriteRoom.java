@@ -1,4 +1,4 @@
-package vandinh.ictu.user_service.models;
+package vandinh.ictu.room_service.models;
 
 import jakarta.persistence.*;
 import lombok.Data;

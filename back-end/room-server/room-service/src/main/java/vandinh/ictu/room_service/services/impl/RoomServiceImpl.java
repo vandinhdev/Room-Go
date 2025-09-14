@@ -10,11 +10,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import vandinh.ictu.room_service.dto.request.CreateRoomRequest;
 import vandinh.ictu.room_service.dto.request.UpdateRoomRequest;
+import vandinh.ictu.room_service.dto.response.GeoLocation;
 import vandinh.ictu.room_service.dto.response.RoomPageResponse;
 import vandinh.ictu.room_service.dto.response.RoomResponse;
 import vandinh.ictu.room_service.exception.ResourceNotFoundException;
 import vandinh.ictu.room_service.models.RoomEntity;
 import vandinh.ictu.room_service.repositories.RoomRepository;
+import vandinh.ictu.room_service.services.GeocodingClient;
 import vandinh.ictu.room_service.services.RoomService;
 import vandinh.ictu.room_service.services.UserClient;
 
@@ -28,6 +30,7 @@ import java.util.regex.Pattern;
 public class RoomServiceImpl implements RoomService {
     private final RoomRepository roomRepository;
     private final UserClient userClient;
+    private final GeocodingClient geocodingClient;
 
     @Override
     public RoomPageResponse getAllRoom(String keyword, String sort, int page, int size) {
@@ -91,10 +94,16 @@ public class RoomServiceImpl implements RoomService {
         room.setPrice(req.getPrice());
         room.setArea(req.getArea());
         room.setAddress(req.getAddress());
-        room.setLatitude(req.getLatitude());
-        room.setLongitude(req.getLongitude());
         room.setOwnerId(ownerId);
-        log.info("ownerId = {}", ownerId);
+
+        if (req.getLatitude() == null || req.getLongitude() == null) {
+            GeoLocation location = geocodingClient.getLocation(req.getAddress());
+            room.setLatitude(location.getLat());
+            room.setLongitude(location.getLon());
+        } else {
+            room.setLatitude(req.getLatitude());
+            room.setLongitude(req.getLongitude());
+        }
         roomRepository.save(room);
         return room.getId();
     }
