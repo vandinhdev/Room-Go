@@ -1,4 +1,4 @@
-package vandinh.ictu.user_service.models;
+package vandinh.ictu.search_service.models;
 
 import jakarta.persistence.*;
 

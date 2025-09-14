@@ -10,6 +10,7 @@ import java.io.Serializable;
 @Setter
 public class UserPasswordRequest implements Serializable {
     private Long id;
-    private String password;
+    private String oldPassword;
+    private String newPassword;
     private String confirmPassword;
 }

@@ -37,3 +37,6 @@ jwt:
   expiryDay: ${JWT_EXPIRY_DAY:14}
   accessKey: ${JWT_ACCESS_KEY:IIwLeRIVsznVTPFEYmA6HiVVBrlKkKqC36OpWzqw8mk=}
   refreshKey: ${JWT_REFRESH_KEY:tvszknimPZQEdy3c9TCERBLAkOyoCc2ZvOmGcHsRJgg=}
+
+serpapi:
+  key: ${SERPAPI_KEY:acdda4c258f533346bf0651e79076443eec0fe6595a7f71dd65b117da9ee69dd}

@@ -27,10 +27,16 @@ spring:
               predicates:
                 - Path=/api/room/**
 
+
             - id: room-service
               uri: http://localhost:8082
               predicates:
                 - Path=/api/room-images/**
+
+            - id: room-service
+              uri: http://localhost:8082
+              predicates:
+                - Path=/api/favorite-rooms/**
 
             # Search Service
             - id: search-service
