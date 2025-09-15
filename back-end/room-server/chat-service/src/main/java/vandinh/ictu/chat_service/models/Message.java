@@ -1,6 +1,9 @@
 package vandinh.ictu.chat_service.models;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+import vandinh.ictu.chat_service.common.enums.MessageType;
 
 import java.time.LocalDateTime;
 
@@ -10,13 +13,12 @@ import java.time.LocalDateTime;
                 @Index(name = "idx_messages_conversation_id", columnList = "conversation_id"),
                 @Index(name = "idx_messages_conversation_created_at", columnList = "conversation_id, created_at DESC")
         })
+@Getter
+@Setter
 public class Message {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(name = "conversation_id", nullable = false)
-    private Long conversationId;
 
     @Column(name = "sender_id", nullable = false)
     private Long senderId;
@@ -34,5 +36,8 @@ public class Message {
     @Column(name = "is_read")
     private Boolean isRead = false;
 
-    public enum MessageType {TEXT, IMAGE, SYSTEM}
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "conversation_id", nullable = false)
+    private Conversation conversation;
+
 }

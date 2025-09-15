@@ -40,7 +40,7 @@ public class JwtAuthenticationFilter implements GlobalFilter {
             return exchange.getResponse().setComplete();
         }
 
-        token = token.substring(7); // bỏ 'Bearer '
+        token = token.substring(7);
 
         try {
             // ✅ Giải mã JWT và lấy thông tin email + roles
@@ -53,7 +53,6 @@ public class JwtAuthenticationFilter implements GlobalFilter {
             String email = claims.getSubject();
             List<String> roles = claims.get("role", List.class);
 
-            // ✅ Gắn thêm header mới để chuyển xuống room_service
             ServerHttpRequest mutated = exchange.getRequest().mutate()
                     .header("X-User-Email", email)
                     .header("X-User-Roles", String.join(",", roles))
@@ -61,7 +60,6 @@ public class JwtAuthenticationFilter implements GlobalFilter {
             log.info("Roles to forward: {}", roles);
             log.info("Email to forward: {}", email);
 
-            // ✅ Tiếp tục filter chain với request mới đã gắn header
             return chain.filter(exchange.mutate().request(mutated).build());
 
         } catch (JwtException e) {
