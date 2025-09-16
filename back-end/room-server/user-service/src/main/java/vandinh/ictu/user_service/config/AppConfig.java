@@ -55,7 +55,7 @@ public class AppConfig {
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-        provider.setUserDetailsService(userServiceDetail.userDetailsService());
+        provider.setUserDetailsService(userServiceDetail);
         provider.setPasswordEncoder(passwordEncoder());
         return provider;
     }
@@ -63,21 +63,6 @@ public class AppConfig {
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
-    }
-
-    @Bean
-    public WebMvcConfigurer corsConfigurer() {
-        return new WebMvcConfigurer() {
-            @Override
-            public void addCorsMappings(@NonNull CorsRegistry registry) {
-                registry.addMapping("/**")
-                        .allowedOrigins("http://localhost:5500")
-                        .allowedMethods("GET", "POST", "PUT", "DELETE") // Allowed HTTP methods
-                        .allowedHeaders("*") // Allowed request headers
-                        .allowCredentials(false)
-                        .maxAge(3600);
-            }
-        };
     }
 
     @Bean

@@ -1,6 +1,7 @@
 package vandinh.ictu.user_service.services.impl;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -32,6 +33,7 @@ import static vandinh.ictu.user_service.common.enums.TokenType.REFRESH_TOKEN;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j(topic = "AUTH-SERVICE")
 public class AuthServiceImpl implements AuthService {
     private final JwtService jwtService;
     private final UserRepository userRepository;
@@ -40,21 +42,37 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public TokenResponse getAccessToken(SignInRequest request) {
-        List<String> authorities = new ArrayList<>();
         try {
-            Authentication authenticate = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
-            authenticate.getAuthorities().forEach(a -> authorities.add(a.getAuthority()));
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+            );
 
-            SecurityContextHolder.getContext().setAuthentication(authenticate);
-        } catch (BadCredentialsException | DisabledException e) {
-            throw new AccessDeniedException(e.getMessage());
+            log.info("✅ Login success for email={}", request.getEmail());
+
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            List<String> authorities = authentication.getAuthorities()
+                    .stream()
+                    .map(a -> a.getAuthority())
+                    .toList();
+
+            String accessToken = jwtService.generateAccessToken(authentication.getName(), authorities);
+            String refreshToken = jwtService.generateRefreshToken(authentication.getName(), authorities);
+
+            return TokenResponse.builder()
+                    .accessToken(accessToken)
+                    .refreshToken(refreshToken)
+                    .build();
+
+        } catch (BadCredentialsException e) {
+            log.warn("❌ Login failed for email={} reason=Bad credentials", request.getEmail());
+            throw new BadCredentialsException("Sai email hoặc mật khẩu");
+        } catch (DisabledException e) {
+            log.warn("❌ Login failed for email={} reason=Account disabled", request.getEmail());
+            throw new DisabledException("Tài khoản bị vô hiệu hóa");
         }
-
-        String accessToken = jwtService.generateAccessToken(request.getEmail(), authorities);
-        String refreshToken = jwtService.generateRefreshToken(request.getEmail(), authorities);
-
-        return TokenResponse.builder().accessToken(accessToken).refreshToken(refreshToken).build();
     }
+
 
     @Override
     public TokenResponse getRefreshToken(String refreshToken) {

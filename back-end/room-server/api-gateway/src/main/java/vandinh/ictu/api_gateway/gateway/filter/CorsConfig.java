@@ -13,7 +13,12 @@ public class CorsConfig {
     public CorsWebFilter corsWebFilter() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.addAllowedOrigin("http://127.0.0.1:5500"); // hoặc "*"
+
+        // ✅ Cho phép FE chạy ở cả localhost và 127.0.0.1
+        config.addAllowedOrigin("http://127.0.0.1:5500");
+        config.addAllowedOrigin("http://localhost:5500");
+
+        // ✅ Mở toàn bộ header & method
         config.addAllowedHeader("*");
         config.addAllowedMethod("*");
 
@@ -23,3 +28,4 @@ public class CorsConfig {
         return new CorsWebFilter(source);
     }
 }
+

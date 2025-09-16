@@ -76,14 +76,19 @@ public class UserEntity implements UserDetails, Serializable {
     @UpdateTimestamp
     private Date updatedAt;
 
-    @Transient
-    public String getFullName() {
-        return (firstName + " " + lastName).trim();
-    }
-
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of((GrantedAuthority) () -> "ROLE_" + role.name());
+    }
+
+    @Override
+    public String getUsername() {
+        return email; // login bằng email
+    }
+
+    @Override
+    public String getPassword() {
+        return password; // để rõ ràng (Spring Security dùng trường này để so khớp)
     }
 
     @Override
@@ -105,4 +110,5 @@ public class UserEntity implements UserDetails, Serializable {
     public boolean isEnabled() {
         return true;
     }
+
 }

@@ -39,13 +39,20 @@ public class CustomizeRequestFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String path = request.getServletPath();
+        String method = request.getMethod();
+
+        log.info("[USER-SERVICE] Incoming request: {} {}", method, path);
 
         if (path.startsWith("/api/auth/") ||
+                path.startsWith("/auth/") ||
                 path.startsWith("/swagger-ui") ||
-                path.startsWith("/v3/")) {
+                path.startsWith("/v3/") ||
+                "OPTIONS".equalsIgnoreCase(method)) {
+            log.info("[USER-SERVICE] Bypassing JWT filter for path: {}", path);
             filterChain.doFilter(request, response);
             return;
         }
+
 
         log.info("{} {}", request.getMethod(), request.getRequestURI());
 
@@ -66,7 +73,7 @@ public class CustomizeRequestFilter extends OncePerRequestFilter {
                 return;
             }
 
-            UserDetails user = serviceDetail.userDetailsService().loadUserByUsername(email);
+            UserDetails user = serviceDetail.loadUserByUsername(email);
 
             SecurityContext context = SecurityContextHolder.createEmptyContext();
             UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
