@@ -12,4 +12,9 @@ public class UserRespone {
     private String email;
     private String firstName;
     private String lastName;
+
+    public String getFullName() {
+        return (firstName != null ? firstName : "") + " " +
+                (lastName != null ? lastName : "");
+    }
 }

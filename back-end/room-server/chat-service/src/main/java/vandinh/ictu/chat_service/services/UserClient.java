@@ -1,5 +1,6 @@
 package vandinh.ictu.chat_service.services;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,8 +10,12 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriUtils;
 import vandinh.ictu.chat_service.common.response.ApiResponse;
 import vandinh.ictu.chat_service.dto.response.UserRespone;
+
+import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -42,7 +47,33 @@ public class UserClient {
         }
 
         Long id = user.getId();
-        log.info("User id resolved for email {}: {}", email, id);           // log id nhận được
+        log.info("User id resolved for email {}: {}", email, id);
         return id;
+    }
+
+    public String getFullNameByUserId(Long userId, String bearerToken) {
+        if (userId == null) {
+            throw new IllegalArgumentException("UserId must not be null");
+        }
+        String url = "http://localhost:8080/api/user/detail/" + userId;
+        log.info("Requesting user details from URL: {}", url);
+        log.info("Using bearer token: {}", bearerToken);
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", bearerToken);
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+        ResponseEntity<ApiResponse> response =
+                restTemplate.exchange(url, HttpMethod.GET, entity, ApiResponse.class);
+
+        if (response.getBody() == null || response.getBody().getData() == null) {
+            throw new IllegalArgumentException("User not found with id: " + userId);
+        }
+
+        ApiResponse apiResponse = response.getBody();
+        log.info("Raw JSON from user-service: {}", apiResponse);
+        UserRespone userResponse = objectMapper.convertValue(apiResponse.getData(), UserRespone.class);
+
+        log.info("Full name for user {} is {}", userId, userResponse.getFullName());
+        return userResponse.getFullName();
     }
 }

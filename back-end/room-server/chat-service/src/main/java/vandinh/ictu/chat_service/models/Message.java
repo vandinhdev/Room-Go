@@ -3,6 +3,7 @@ package vandinh.ictu.chat_service.models;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
 import vandinh.ictu.chat_service.common.enums.MessageType;
 
 import java.time.LocalDateTime;
@@ -23,6 +24,9 @@ public class Message {
     @Column(name = "sender_id", nullable = false)
     private Long senderId;
 
+    @Column(name = "sender_name")
+    private String senderName;
+
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
@@ -31,6 +35,7 @@ public class Message {
     private MessageType messageType = MessageType.TEXT;
 
     @Column(name = "created_at")
+    @CreationTimestamp
     private LocalDateTime createdAt;
 
     @Column(name = "is_read")

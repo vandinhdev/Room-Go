@@ -7,6 +7,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import vandinh.ictu.user_service.models.UserEntity;
 
+import java.util.List;
+import java.util.Optional;
 
 
 public interface UserRepository extends JpaRepository<UserEntity, Long> {
@@ -20,5 +22,7 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
     Page<UserEntity> searchByKeyword(String keyword, Pageable pageable);
     UserEntity findByUsername(String username);
     UserEntity findByEmail(String email);
+    @Query("SELECT u FROM UserEntity u WHERE CONCAT(u.firstName, ' ', u.lastName) LIKE %:fullName%")
+    List<UserEntity> findByFullName(@Param("fullName") String fullName);
 
 }

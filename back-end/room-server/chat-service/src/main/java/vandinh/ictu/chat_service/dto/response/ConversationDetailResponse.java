@@ -1,18 +1,20 @@
 package vandinh.ictu.chat_service.dto.response;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
 @AllArgsConstructor
-public class ConversationResponse {
-    private Long id;
-    private String conversationName;
-    private Long roomId;
+@NoArgsConstructor
+@Builder
+public class ConversationDetailResponse {
+    private Long conversationId;
     private Long currentUserId;
     private Long ownerId;
+
+    private List<MessageResponse> messages;
 }

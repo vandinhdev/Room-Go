@@ -4,15 +4,20 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import vandinh.ictu.chat_service.dto.request.CreateConversationRequest;
+import vandinh.ictu.chat_service.dto.request.SendMessageRequest;
+import vandinh.ictu.chat_service.dto.response.ConversationDetailResponse;
 import vandinh.ictu.chat_service.dto.response.ConversationResponse;
 import vandinh.ictu.chat_service.dto.response.MessageResponse;
+import vandinh.ictu.chat_service.dto.response.UserRespone;
 import vandinh.ictu.chat_service.models.Conversation;
+import vandinh.ictu.chat_service.models.Message;
 import vandinh.ictu.chat_service.repositories.ConversationRepository;
 import vandinh.ictu.chat_service.repositories.MessageRepository;
 import vandinh.ictu.chat_service.services.ChatService;
 import vandinh.ictu.chat_service.services.RoomClient;
 import vandinh.ictu.chat_service.services.UserClient;
 
+import java.util.List;
 import java.util.Optional;
 
 
@@ -26,21 +31,28 @@ public class ChatServiceImpl implements ChatService {
     private final RoomClient roomClient;
 
     @Override
-    public ConversationResponse GetConversation(Long userId, Long roomId) {
-        return null;
+    public List<Conversation> getUserConversations(Long userId) {
+        return conversationRepository.findByCurrentUserIdOrOwnerId(userId, userId);
     }
 
     @Override
+    public Conversation findConversationByName(String conversationName, String email, String bearerToken) {
+        Long currentUserId = userClient.getUserIdByEmail(email, bearerToken);
+        log.info("Resolved current user id: {} for email: {}", currentUserId, email);
+        return conversationRepository.findByConversationNameAndCurrentUserId(
+                conversationName, currentUserId).orElseThrow(() -> new IllegalArgumentException(
+                "No conversation found with name: " + conversationName));
+    }
+
+
+    @Override
     public Long CreateConversation(CreateConversationRequest  request, String email,String bearerToken) {
-        // 1. Lấy currentUserId từ email
         Long currentUserId = userClient.getUserIdByEmail(email, bearerToken);
         log.info("Resolved current user id: {} for email: {}", currentUserId, email);
 
-        // 2. Lấy ownerId từ room-service
         Long ownerId = roomClient.getOwnerIdByRoomId(request.getRoomId(), bearerToken);
         log.info("Resolved owner id: {} for room id: {}", ownerId, request.getRoomId());
 
-        // 3. Kiểm tra conversation đã tồn tại chưa
         Optional<Conversation> existing = conversationRepository
                 .findByRoomIdAndCurrentUserIdAndOwnerId(
                         request.getRoomId(),
@@ -53,8 +65,10 @@ public class ChatServiceImpl implements ChatService {
             return existing.get().getId();
         }
 
-        // 4. Tạo mới nếu chưa có
+        String conversationName = userClient.getFullNameByUserId(ownerId, bearerToken);
+
         Conversation conversation = new Conversation();
+        conversation.setConversationName(conversationName);
         conversation.setRoomId(request.getRoomId());
         conversation.setCurrentUserId(currentUserId);
         conversation.setOwnerId(ownerId);
@@ -66,74 +80,72 @@ public class ChatServiceImpl implements ChatService {
     }
 
     @Override
-    public ConversationResponse findConversationBetweenUsers(Long userId1, Long userId2) {
-        return null;
+    public Long SendMessage(SendMessageRequest request, String emall, String bearerToken) {
+        Long senderId = userClient.getUserIdByEmail(emall, bearerToken);
+        log.info("Resolved sender id: {} for email: {}", senderId, emall);
+
+        Conversation conversation = conversationRepository.findById(request.getConversationId())
+                .orElseThrow(() -> new IllegalArgumentException("Conversation not found"));
+        if (!conversation.getCurrentUserId().equals(senderId) && !conversation.getOwnerId().equals(senderId)) {
+            throw new IllegalArgumentException("User is not a participant in the conversation");
+        }
+
+        String senderName = userClient.getFullNameByUserId(senderId, bearerToken);
+        log.info("Resolved sender name: {} for sender id: {}", senderName, senderId);
+
+        Message  message = new Message();
+        message.setConversation(conversation);
+        message.setSenderId(senderId);
+        message.setSenderName(senderName);
+        message.setContent(request.getContent());
+        message.setMessageType(request.getMessageType());
+
+        return messageRepository.save(message).getId();
     }
 
     @Override
-    public MessageResponse SendMessage(Long userId, Long roomId, String content, String messageType) {
-        return null;
+    public ConversationDetailResponse getConversationDetail(Long conversationId, String email, String bearerToken) {
+        Conversation conversation = conversationRepository.findById(conversationId)
+                .orElseThrow(() -> new IllegalArgumentException("Conversation not found"));
+        Long currentUserId = userClient.getUserIdByEmail(email, bearerToken);
+        if (!conversation.getCurrentUserId().equals(currentUserId)
+                && !conversation.getOwnerId().equals(currentUserId)) {
+            throw new IllegalArgumentException("User is not a participant in the conversation");
+        }
+        List<Message> messages = messageRepository.findByConversationIdOrderByCreatedAtAsc(conversationId);
+        List<MessageResponse> messageResponses = messages.stream().map(msg -> {
+            String senderName = userClient.getFullNameByUserId(msg.getSenderId(), bearerToken);
+            return MessageResponse.builder()
+                    .id(msg.getId())
+                    .senderId(msg.getSenderId())
+                    .senderName(senderName)
+                    .content(msg.getContent())
+                    .messageType(msg.getMessageType())
+                    .createdAt(msg.getCreatedAt())
+                    .build();
+        }).toList();
+
+        return ConversationDetailResponse.builder()
+                .conversationId(conversationId)
+                .currentUserId(currentUserId)
+                .ownerId(conversation.getOwnerId())
+                .messages(messageResponses)
+                .build();
     }
+
+
 
     @Override
-    public MessageResponse MarkMessageAsRead(Long userId, Long messageId) {
-        return null;
+    public void DeleteConversation(Long id) {
+        Conversation conversation = getConversationId(id);
+        if (conversation != null) {
+            conversationRepository.delete(conversation);
+            log.info("Deleted conversation with id: {}", id);
+        }
     }
 
-    @Override
-    public Long CountUnreadMessages(Long userId, Long roomId) {
-        return 0L;
+    private Conversation getConversationId(Long id) {
+        return conversationRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Conversation not found"));
     }
 
-    @Override
-    public Page<MessageResponse> GetMessages(Long userId, Long roomId, int page, int size) {
-        return null;
-    }
-
-    @Override
-    public Page<ConversationResponse> GetConversations(Long userId, int page, int size) {
-        return null;
-    }
-
-    private ConversationResponse mapToConversationResponse(Conversation conversation) {
-        return new ConversationResponse(
-                conversation.getId(),
-                conversation.getRoomId(),
-                conversation.getCurrentUserId(),
-                conversation.getOwnerId()
-        );
-    }
-
-//    // Helper methods
-//    private ConversationResponse mapToConversationResponse(Conversation conversation) {
-//        ConversationResponse response = new ConversationResponse();
-//        response.setId(conversation.getId());
-//        response.setRoomId(conversation.getRoomId());
-//
-//        if (conversation.getParticipants() != null) {
-//            List<Long> participantIds = conversation.getParticipants().stream()
-//                    .map(ConversationParticipant::getUserId)
-//                    .collect(Collectors.toList());
-//            response.setParticipantIds(participantIds);
-//        }
-//
-//        // Lấy tin nhắn mới nhất
-//        Message latestMessage = messageRepository.findFirstByConversationIdOrderByCreatedAtDesc(conversation.getId());
-//        if (latestMessage != null) {
-//            response.setLatestMessage(mapToMessageResponse(latestMessage));
-//        }
-//
-//        return response;
-//    }
-//
-//    private MessageResponse mapToMessageResponse(Message message) {
-//        MessageResponse response = new MessageResponse();
-//        response.setId(message.getId());
-//        response.setConversationId(message.getConversation().getId());
-//        response.setSenderId(message.getSenderId());
-//        response.setContent(message.getContent());
-//        response.setMessageType(message.getMessageType());
-//        response.setIsRead(message.getIsRead());
-//        return response;
-//    }
 }

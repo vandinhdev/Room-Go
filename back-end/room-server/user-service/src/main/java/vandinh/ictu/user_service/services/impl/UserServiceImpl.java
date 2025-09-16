@@ -76,11 +76,11 @@ public class UserServiceImpl implements UserService {
 
         return UserResponse.builder()
                 .id(id)
-                .firstname(userEntity.getFirstName())
-                .lastname(userEntity.getLastName())
+                .firstName(userEntity.getFirstName())
+                .lastName(userEntity.getLastName())
                 .gender(userEntity.getGender())
                 .dateOfBirth(userEntity.getDateOfBirth())
-                .username(userEntity.getUsername())
+                .userName(userEntity.getUsername())
                 .phone(userEntity.getPhone())
                 .email(userEntity.getEmail())
                 .role(userEntity.getRole())
@@ -92,11 +92,11 @@ public class UserServiceImpl implements UserService {
         UserEntity userEntity = userRepository.findByUsername(username);
         return UserResponse.builder()
                 .id(userEntity.getId())
-                .firstname(userEntity.getFirstName())
-                .lastname(userEntity.getLastName())
+                .firstName(userEntity.getFirstName())
+                .lastName(userEntity.getLastName())
                 .gender(userEntity.getGender())
                 .dateOfBirth(userEntity.getDateOfBirth())
-                .username(userEntity.getUsername())
+                .userName(userEntity.getUsername())
                 .phone(userEntity.getPhone())
                 .email(userEntity.getEmail())
                 .role(userEntity.getRole())
@@ -108,16 +108,17 @@ public class UserServiceImpl implements UserService {
         UserEntity userEntity = userRepository.findByEmail(email);
         return UserResponse.builder()
                 .id(userEntity.getId())
-                .firstname(userEntity.getFirstName())
-                .lastname(userEntity.getLastName())
+                .firstName(userEntity.getFirstName())
+                .lastName(userEntity.getLastName())
                 .gender(userEntity.getGender())
                 .dateOfBirth(userEntity.getDateOfBirth())
-                .username(userEntity.getUsername())
+                .userName(userEntity.getUsername())
                 .phone(userEntity.getPhone())
                 .email(userEntity.getEmail())
                 .role(userEntity.getRole())
                 .build();
     }
+
 
     @Override
     public long addUser(CreateUserRequest req) {
@@ -179,11 +180,11 @@ public class UserServiceImpl implements UserService {
 
         List<UserResponse> userList = userEntities.stream().map(entity -> UserResponse.builder()
                 .id(entity.getId())
-                .firstname(entity.getFirstName())
-                .lastname(entity.getLastName())
+                .firstName(entity.getFirstName())
+                .lastName(entity.getLastName())
                 .gender(entity.getGender())
                 .dateOfBirth(entity.getDateOfBirth())
-                .username(entity.getUsername())
+                .userName(entity.getUsername())
                 .phone(entity.getPhone())
                 .email(entity.getEmail())
                 .build()
