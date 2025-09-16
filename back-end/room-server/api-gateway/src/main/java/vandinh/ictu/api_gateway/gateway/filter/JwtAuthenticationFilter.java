@@ -29,10 +29,19 @@ public class JwtAuthenticationFilter implements GlobalFilter {
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
 
         String path = exchange.getRequest().getPath().toString();
-        // ✅ Bỏ qua xác thực cho các endpoint public
-        if (path.startsWith("/api/auth/") || path.startsWith("/swagger-ui") || path.startsWith("/v3/")) {
+        String method = exchange.getRequest().getMethod().toString();
+
+        log.info("[GATEWAY] Incoming request: {} {}", method, path);
+
+        if (path.startsWith("/api/auth/") ||
+                path.startsWith("/auth/") ||
+                path.startsWith("/swagger-ui") ||
+                path.startsWith("/v3/") ||
+                "OPTIONS".equalsIgnoreCase(method)) {
+            log.info("[GATEWAY] Bypassing JWT filter for path: {}", path);
             return chain.filter(exchange);
         }
+
         String token = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
         log.info("Authorization header: {}", token);
         if (token == null || !token.startsWith("Bearer ")) {

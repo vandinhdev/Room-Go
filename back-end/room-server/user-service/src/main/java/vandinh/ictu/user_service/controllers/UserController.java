@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import vandinh.ictu.user_service.common.response.ApiResponse;
 import vandinh.ictu.user_service.dto.request.CreateUserRequest;
@@ -66,6 +67,18 @@ public class UserController {
                 .build();
     }
 
+    @Operation(summary = "Get profile", description = "API retrieve profile of user")
+    @GetMapping("/me")
+    //@PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_STUDENT','ROLE_OWNER')")
+    public ApiResponse getProfile(Authentication authentication) {
+        String email = authentication.getName();
+        log.info("Get profile of user: {}", email);
+        return ApiResponse.builder()
+                .status(HttpStatus.OK.value())
+                .message("user")
+                .data(userService.getUserByEmail(email))
+                .build();
+    }
 
     @Operation(summary = "Create User", description = "API add new user to database")
     @PostMapping("/add")
