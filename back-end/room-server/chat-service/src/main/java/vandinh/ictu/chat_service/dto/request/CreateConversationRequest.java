@@ -9,10 +9,10 @@ import java.util.List;
 
 @Data
 public class CreateConversationRequest {
+    private String conversationName;
     @NotNull(message = "roomId must not be null")
     @JsonProperty("roomId")
     private Long roomId;
-
     private Long currentUserId;
     private Long ownerId;
 

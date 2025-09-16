@@ -76,6 +76,11 @@ public class UserEntity implements UserDetails, Serializable {
     @UpdateTimestamp
     private Date updatedAt;
 
+    @Transient
+    public String getFullName() {
+        return (firstName + " " + lastName).trim();
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of((GrantedAuthority) () -> "ROLE_" + role.name());

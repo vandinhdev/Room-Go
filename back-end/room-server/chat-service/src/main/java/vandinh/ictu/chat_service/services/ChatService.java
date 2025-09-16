@@ -2,17 +2,19 @@ package vandinh.ictu.chat_service.services;
 
 import org.springframework.data.domain.Page;
 import vandinh.ictu.chat_service.dto.request.CreateConversationRequest;
+import vandinh.ictu.chat_service.dto.request.SendMessageRequest;
+import vandinh.ictu.chat_service.dto.response.ConversationDetailResponse;
 import vandinh.ictu.chat_service.dto.response.ConversationResponse;
 import vandinh.ictu.chat_service.dto.response.MessageResponse;
+import vandinh.ictu.chat_service.models.Conversation;
+
+import java.util.List;
 
 public interface ChatService {
-    ConversationResponse GetConversation(Long userId, Long roomId);
+    List<Conversation> getUserConversations(Long userId);
+    Conversation findConversationByName(String conversationName, String email, String bearerToken);
     Long CreateConversation(CreateConversationRequest request, String email, String bearerToken);
-    ConversationResponse findConversationBetweenUsers(Long userId1, Long userId2);
-    MessageResponse SendMessage(Long userId, Long roomId, String content, String messageType);
-    MessageResponse MarkMessageAsRead(Long userId, Long messageId);
-    Long CountUnreadMessages(Long userId, Long roomId);
-    Page<MessageResponse> GetMessages(Long userId, Long roomId, int page, int size);
-    Page<ConversationResponse> GetConversations(Long userId, int page, int size);
-
+    Long SendMessage(SendMessageRequest request, String emall, String bearerToken);
+    ConversationDetailResponse getConversationDetail(Long conversationId, String email, String bearerToken);
+    void DeleteConversation(Long id);
 }

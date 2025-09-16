@@ -120,8 +120,15 @@ public class RoomServiceImpl implements RoomService {
         room.setPrice(req.getPrice());
         room.setArea(req.getArea());
         room.setAddress(req.getAddress());
-        room.setLatitude(req.getLatitude());
-        room.setLongitude(req.getLongitude());
+
+        if (req.getLatitude() == null || req.getLongitude() == null) {
+            GeoLocation location = geocodingClient.getLocation(req.getAddress());
+            room.setLatitude(location.getLat());
+            room.setLongitude(location.getLon());
+        } else {
+            room.setLatitude(req.getLatitude());
+            room.setLongitude(req.getLongitude());
+        }
         roomRepository.save(room);
     }
 

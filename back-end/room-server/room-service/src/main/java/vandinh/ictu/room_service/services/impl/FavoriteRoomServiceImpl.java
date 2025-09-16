@@ -60,10 +60,6 @@ public class FavoriteRoomServiceImpl implements FavoriteRoomService {
         favoriteRooomRepository.deleteByUserIdAndRoomId(userId, roomId);
     }
 
-    @Override
-    public boolean isFavoriteRoom(Long userId, Long roomId) {
-        return false;
-    }
 
     @Override
     public List<Long> getFavoriteRoomsByUserId(Long userId) {

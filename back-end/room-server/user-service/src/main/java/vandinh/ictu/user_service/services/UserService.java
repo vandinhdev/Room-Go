@@ -5,6 +5,9 @@ import vandinh.ictu.user_service.dto.request.UpdateUserRequest;
 import vandinh.ictu.user_service.dto.request.UserPasswordRequest;
 import vandinh.ictu.user_service.dto.response.UserPageResponse;
 import vandinh.ictu.user_service.dto.response.UserResponse;
+import vandinh.ictu.user_service.models.UserEntity;
+
+import java.util.List;
 
 public interface UserService {
     UserPageResponse getAllUser(String keyword, String sort, int page, int size);
@@ -15,5 +18,4 @@ public interface UserService {
     void updateUser(UpdateUserRequest req);
     void changePassword(UserPasswordRequest req);
     void deleteUser(long id);
-
 }

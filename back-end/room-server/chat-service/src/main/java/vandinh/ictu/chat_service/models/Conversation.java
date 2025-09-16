@@ -20,6 +20,9 @@ public class Conversation {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "conversation_name")
+    private String conversationName;
+
     @Column(name = "room_id", nullable = false)
     private Long roomId;
 

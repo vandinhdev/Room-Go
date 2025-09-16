@@ -13,7 +13,10 @@ import vandinh.ictu.user_service.common.response.ApiResponse;
 import vandinh.ictu.user_service.dto.request.CreateUserRequest;
 import vandinh.ictu.user_service.dto.request.UpdateUserRequest;
 import vandinh.ictu.user_service.dto.request.UserPasswordRequest;
+import vandinh.ictu.user_service.models.UserEntity;
 import vandinh.ictu.user_service.services.UserService;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("api/user")
@@ -62,6 +65,7 @@ public class UserController {
                 .data(userService.getUserByEmail(email))
                 .build();
     }
+
 
     @Operation(summary = "Create User", description = "API add new user to database")
     @PostMapping("/add")
