@@ -8,5 +8,6 @@ public interface AuthService {
     TokenResponse getAccessToken(SignInRequest request);
     TokenResponse getRefreshToken(String request);
     TokenResponse register(SignUpRequest request);
+    //void logout(String email);
 }
 

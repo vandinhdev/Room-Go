@@ -7,7 +7,7 @@ import vandinh.ictu.room_service.models.FavoriteRoom;
 
 import java.util.List;
 
-public interface FavoriteRooomRepository extends JpaRepository<FavoriteRoom, Long> {
+public interface FavoriteRoomRepository extends JpaRepository<FavoriteRoom, Long> {
     List<FavoriteRoom> findByUserId(Long userId);
     boolean existsByUserIdAndRoomId(Long userId, Long roomId);
     void deleteByUserIdAndRoomId(Long userId, Long roomId);
