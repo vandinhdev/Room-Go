@@ -1,19 +1,12 @@
-package vandinh.ictu.room_service.dto.response;
+package vandinh.ictu.search_service.dto.response;
 
-import lombok.*;
-import vandinh.ictu.room_service.common.RoomStatus;
+import lombok.Data;
 
-import java.io.Serializable;
 import java.math.BigDecimal;
 
-@Getter
-@Setter
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-public class RoomResponse implements Serializable {
+@Data
+public class RoomResponse {
     private Long id;
-    private Long ownerId;
     private String title;
     private String description;
     private BigDecimal price;
@@ -22,7 +15,7 @@ public class RoomResponse implements Serializable {
     private String district;
     private String ward;
     private String address;
-    private RoomStatus status;
     private Double latitude;
     private Double longitude;
+
 }

@@ -30,6 +30,19 @@ public class FavoriteRoomController {
                 .build();
     }
 
+    @Operation(summary = "Get Favorite Rooms by User Email", description = "API retrieve favorite rooms by user email")
+    @PreAuthorize("hasAnyAuthority('ROLE_OWNER','ROLE_STUDENT','ROLE_ADMIN')")
+    @GetMapping("/me")
+    @ResponseStatus(HttpStatus.OK)
+    public ApiResponse getFavoriteRoomsByUserEmail(@RequestHeader("X-User-Email") String email,
+                                                   @RequestHeader("Authorization") String authorizationHeader) {
+        return ApiResponse.builder()
+                .status(200)
+                .message("Favorite rooms retrieved successfully")
+                .data(favoriteRoomService.getFavoriteRoomsByUserEmail(email, authorizationHeader))
+                .build();
+    }
+
     @Operation(summary = "Add Favorite Room", description = "API add a room to user's favorite list")
     @PostMapping("/{roomId}")
     @PreAuthorize("hasAnyAuthority('ROLE_OWNER','ROLE_STUDENT','ROLE_ADMIN')")

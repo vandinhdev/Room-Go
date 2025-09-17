@@ -8,5 +8,5 @@ public interface JwtService {
     String generateAccessToken(String email, List<String> authorities);
     String generateRefreshToken(String email, List<String> authorities);
     String extractEmail(String token, TokenType type);
-    boolean isTokenValid(String token);
+
 }

@@ -14,6 +14,8 @@ import vandinh.ictu.room_service.dto.response.RoomPageResponse;
 import vandinh.ictu.room_service.dto.response.RoomResponse;
 import vandinh.ictu.room_service.services.RoomService;
 
+import java.math.BigDecimal;
+
 @RestController
 @RequestMapping("/api/room")
 @Slf4j(topic = "ROOM-CONTROLLER")
@@ -25,14 +27,38 @@ public class RoomController {
     @GetMapping("/list")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_OWNER','ROLE_STUDENT')")
     public ApiResponse getAllRoom(@RequestParam(required = false) String keyword,
-                                        @RequestParam(required = false) String sort,
-                                        @RequestParam(defaultValue = "0") int page,
-                                        @RequestParam(defaultValue = "20") int size) {
+                                  @RequestParam(required = false) String province,
+                                  @RequestParam(required = false) String district,
+                                  @RequestParam(required = false) String ward,
+                                  @RequestParam(required = false) BigDecimal minPrice,
+                                  @RequestParam(required = false) BigDecimal maxPrice,
+                                  @RequestParam(required = false) BigDecimal minArea,
+                                  @RequestParam(required = false) BigDecimal maxArea,
+                                  @RequestParam(defaultValue = "0") int page,
+                                  @RequestParam(defaultValue = "20") int size,
+                                  @RequestParam(required = false) String sort) {
         log.info("Get room list");
         return ApiResponse.builder()
                 .status(HttpStatus.OK.value())
                 .message("rooms")
-                .data(roomService.getAllRoom(keyword, sort, page, size))
+                .data(roomService.getAllRoom(keyword, province, district, ward, minPrice, maxPrice, minArea, maxArea, sort, page, size))
+                .build();
+    }
+
+    @Operation(summary = "Get Room list of user", description = "API retrieve room list of user from database")
+    @GetMapping("/me")
+    public ApiResponse getRoomMe(@RequestParam(required = false) String keyword,
+                                 @RequestParam(required = false) String sort,
+                                 @RequestParam(defaultValue = "0") int page,
+                                 @RequestParam(defaultValue = "20") int size,
+                                 @RequestHeader("X-User-Email") String email,
+                                 @RequestHeader("Authorization") String authorizationHeader) {
+        log.info("Get room list of user: {}", email);
+        RoomPageResponse room = roomService.getRoomByUserEmail(keyword, sort, page, size,email, authorizationHeader);
+        return ApiResponse.builder()
+                .status(HttpStatus.OK.value())
+                .message("room")
+                .data(room)
                 .build();
     }
 

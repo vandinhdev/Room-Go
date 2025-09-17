@@ -40,6 +40,15 @@ public class RoomEntity {
     @Column(precision = 6, scale = 2)
     private BigDecimal area;
 
+    @Column(name = "province", length = 100)
+    private String province;
+
+    @Column(name = "district", length = 100)
+    private String district;
+
+    @Column(name = "ward", length = 100)
+    private String ward;
+
     @Column(columnDefinition = "TEXT")
     private String address;
 
