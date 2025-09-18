@@ -23,6 +23,7 @@ import vandinh.ictu.user_service.models.UserEntity;
 import vandinh.ictu.user_service.repositories.UserRepository;
 import vandinh.ictu.user_service.services.AuthService;
 import vandinh.ictu.user_service.services.JwtService;
+import vandinh.ictu.user_service.utils.NameUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -65,10 +66,8 @@ public class AuthServiceImpl implements AuthService {
                     .build();
 
         } catch (BadCredentialsException e) {
-            log.warn("❌ Login failed for email={} reason=Bad credentials", request.getEmail());
             throw new BadCredentialsException("Sai email hoặc mật khẩu");
         } catch (DisabledException e) {
-            log.warn("❌ Login failed for email={} reason=Account disabled", request.getEmail());
             throw new DisabledException("Tài khoản bị vô hiệu hóa");
         }
     }
@@ -102,18 +101,25 @@ public class AuthServiceImpl implements AuthService {
             throw new InvalidDataException("Email is already in use");
         }
 
-        String base = request.getFirstName().toLowerCase().trim() + "_" + request.getLastName().toLowerCase().trim();
-        String generatedUsername = base + new Random().nextInt(1000);
+        String[] names = NameUtils.splitFullName(request.getFullName());
+        String lastName = names[0];
+        String firstName = names[1];
 
 
+
+        Role role = Role.USER; // hoặc request.getRole()
+
+        String generatedUsername = role.name().toLowerCase()
+                + "_"
+                + UUID.randomUUID().toString().substring(0, 8);
 
         UserEntity user = UserEntity.builder()
                 .username(generatedUsername)
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .firstName(request.getFirstName())
-                .lastName(request.getLastName())
-                .role(Role.ADMIN)
+                .firstName(firstName)
+                .lastName(lastName)
+                .role(role)
                 .build();
 
         userRepository.save(user);

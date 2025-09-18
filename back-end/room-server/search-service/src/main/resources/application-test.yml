@@ -1,0 +1,39 @@
+spring:
+  config:
+    activate:
+      on-profile: test
+  devtools:
+    restart:
+      enabled: false
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: none
+      cache:
+        use_second_level_cache: true
+        region.factory_class: org.hibernate.cache.jcache.JCacheRegionFactory
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+  datasource:
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 30
+      idle-timeout: 30000
+      max-lifetime: 1800000
+  main:
+    banner-mode: off
+
+# application-test.yml
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+openapi:
+  service:
+    api-docs: backend-service
+    server: ${BACKEND_SERVICE:http://localhost:${server.port}}
+    title: Backend service
+    version: 1.0.0

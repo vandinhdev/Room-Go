@@ -5,7 +5,7 @@ spring:
   devtools:
     add-properties: true
   datasource:
-    url: jdbc:postgresql://${DATABASE_HOST:localhost}:${DATABASE_PORT:5432}/room_db
+    url: jdbc:postgresql://${DATABASE_HOST:localhost}:${DATABASE_PORT:5432}/roomgo_db
     username: ${DATABASE_USERNAME:postgres}
     password: ${DATABASE_PASSWORD:password}
   jpa:
