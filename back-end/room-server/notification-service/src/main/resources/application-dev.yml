@@ -18,6 +18,11 @@ spring:
     show-sql: false
     hibernate:
       ddl-auto: update
+#  sendGrid:
+#    apiKey: ${SENDGRID_API_KEY:DUMMY-SENDGRID-API-KEY}
+#    fromEmail: ${SENDGRID_FROM_EMAIL:quoctay87@gmail.com}
+#    templateId: ${SENDGRID_TEMPLATE_ID:d-2116466afd0a438b90615184dd569e42}
+#    verificationLink: ${SENDGRID_VERIFICATION_LINK:http://localhost:8080/user/confirm-email}
 
 # application-dev.yml
 springdoc:
@@ -37,6 +42,3 @@ jwt:
   expiryDay: ${JWT_EXPIRY_DAY:14}
   accessKey: ${JWT_ACCESS_KEY:IIwLeRIVsznVTPFEYmA6HiVVBrlKkKqC36OpWzqw8mk=}
   refreshKey: ${JWT_REFRESH_KEY:tvszknimPZQEdy3c9TCERBLAkOyoCc2ZvOmGcHsRJgg=}
-
-serpapi:
-  key: ${SERPAPI_KEY:acdda4c258f533346bf0651e79076443eec0fe6595a7f71dd65b117da9ee69dd}
