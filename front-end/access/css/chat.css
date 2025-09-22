@@ -1,8 +1,20 @@
 /* chat.css */
+<<<<<<< HEAD
 .chat-container {
     display: flex;
     height: calc(100vh - 70px);
     margin-top: 70px;
+=======
+*{
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+}
+.chat-container {
+    display: flex;
+    height: calc(100vh - 70px);
+    /* margin-top: 70px; */
+>>>>>>> origin/main
     background: #fff;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
@@ -14,6 +26,58 @@
     flex-direction: column;
 }
 
+<<<<<<< HEAD
+=======
+.chat-title-header {
+    border-bottom: 1px solid #ccc;
+}
+
+.chat-title {
+    font-size: 20px;
+    font-weight: 500;
+    padding: 16px;
+}
+
+.chat-search {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 0 16px 0 16px;
+    margin-bottom: 16px;
+}
+
+.chat-search-input {
+    flex: 1;
+    position: relative;
+}
+
+.chat-search-input input {
+    width: 100%;
+    padding: 12px 12px 12px 32px;
+    border-radius: 10px;
+    outline: none;
+}
+
+.chat-search-icon {
+    position: absolute;
+    top: 14px;
+    left: 8px;
+}
+
+.chat-search-menu {
+    margin-left: 12px;
+}
+
+.chat-message-status {
+    display: flex;
+    margin-top: 12px;
+    padding: 0 18px;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 500;
+}
+
+>>>>>>> origin/main
 .chat-list {
     flex: 1;
     overflow-y: auto;
