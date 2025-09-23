@@ -294,3 +294,61 @@ document.addEventListener('DOMContentLoaded', () => {
     const room = rooms.find(r => r.id === roomId);
     renderRoomDetail(room);
 });
+
+function renderSimilarRoom(rooms) {
+    const container = document.getElementById('similarRoom');
+    container.innerHTML = '';
+
+    rooms.forEach(room => {
+            const card = document.createElement('div');
+            card.className = 'similar-card';
+            card.innerHTML = `
+                <div class="similar-image">
+                    <div style="background: linear-gradient(135deg, #8B4513, #D2B48C); width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px;">${room.title}</div>
+                    <div class="image-overlay">${room.status === 'available' ? 'Có phòng' : 'Đã thuê'}</div>
+                    <div class="heart-icon">🤍</div>
+                </div>
+                <div class="similar-content">
+                    <div class="similar-title">${room.title}</div>
+                    <div class="similar-type">${room.description || ''}</div>
+                    <div class="similar-price">${formatPrice(room.price)}</div>
+                    <div class="similar-area">${room.area ? room.area + ' m²' : ''}</div>
+                    <div class="similar-location">
+                        <span>📍</span>
+                        <span>${room.address || ''}</span>
+                    </div>
+                    <div class="similar-footer">
+                        <div class="user-info">
+                            <div class="user-avatar">${String(room.owner_id).slice(-1)}</div>
+                            <span>Chủ phòng #${room.owner_id}</span>
+                            <span>${room.status === 'available' ? 'Còn phòng' : 'Đã thuê'}</span>
+                        </div>
+                        ${isAdmin() ? `
+                        <div class="similar-actions">
+                            <a href="roomForm.html?id=${room.id}" class="btn-edit" onclick="event.stopPropagation()">
+                                <span>✏️</span> Sửa
+                            </a>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+            card.addEventListener('click', function() {
+                window.location.href = `./detail.html?id=${room.id}`;
+            });
+            card.querySelector('.heart-icon').addEventListener('click', function(e) {
+                e.stopPropagation();
+                this.innerHTML = this.innerHTML === '🤍' ? '❤️' : '🤍';
+            });
+            container.appendChild(card);
+        });
+}
+document.addEventListener('DOMContentLoaded', () => {
+    const currentId = getRoomIdFromUrl();
+    const currentRoom = rooms.find(r => r.id === currentId);
+
+    // Lọc ra danh sách phòng cùng khu vực nhưng khác id
+    const similar = rooms.filter(r => r.district === currentRoom.district && r.id !== currentId);
+
+    renderSimilarRoom(rooms);
+});

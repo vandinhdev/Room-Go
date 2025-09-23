@@ -14,6 +14,135 @@
     overflow: hidden;
 }
 
+.similar-form {
+    max-width: 800px;
+    margin: 32px auto;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 18px;
+}
+
+.similar-form__title {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+/* #similarRoom {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    padding: 10px 0;
+} */
+.grid-similarRoom {
+    /* display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 20px;
+    margin-bottom: 40px; */
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    padding: 10px 0;
+    /* overflow: hidden; */
+}
+
+.similar-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 240px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.similar-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+
+.similar-image {
+    position: relative;
+    height: 140px;
+    border-radius: 8px 8px 0 0;
+    overflow: hidden;
+}
+
+.similar-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.similar-content {
+    padding: 10px;
+}
+
+.similar-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    line-height: 1.3;
+}
+
+.similar-type {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+.similar-price {
+    color: #ff6b35;
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+.similar-area {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+.similar-location {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.similar-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.similar-footer .user-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #666;
+}
+
+.user-info .user-avatar {
+    width: 24px;
+    height: 24px;
+    background: #ff6b35;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 12px;
+}
+
 /* Image Gallery */
 .gallery-container {
     width: 100%;
