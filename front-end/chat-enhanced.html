@@ -5,58 +5,72 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tin nhắn - Room Rental</title>
     <link rel="stylesheet" href="./access/css/styles.css">
-    <link rel="stylesheet" href="access/css/chat.css">
+    <link rel="stylesheet" href="./access/css/chat-enhanced.css">
     <link rel="stylesheet" href="./components/header.html">
     <link rel="stylesheet" href="./access/css/user.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 </head>
 <body>
     <!-- Chat Container -->
-    <div class="chat-container">
+    <div class="chat-container" id="chat-container">
         <div class="chat-sidebar">
             <div class="chat-title-header">
                 <div class="chat-title">
-                Chat
+                    <i class="fas fa-comments"></i> Tin nhắn
+                </div>
             </div>
             <div class="chat-search">
                 <div class="chat-search-input">
-                    <input type="text" placeholder="Nhập ký tự để bắt đầu tìm "></input>
+                    <input type="text" placeholder="Tìm kiếm cuộc trò chuyện...">
                     <i class="fa-solid fa-magnifying-glass chat-search-icon"></i>
                 </div>
                 <div class="chat-search-menu">
                     <i class="fa-solid fa-ellipsis-vertical"></i>
                 </div>
             </div>
-        </div>
-        <div class="chat-message-status">
-            <div class="chat-all-message">
-                Tất cả tin nhắn
+            <div class="chat-message-status">
+                <div class="chat-all-message active">
+                    Tất cả tin nhắn
+                </div>
+                <div class="chat-unread-message">
+                    Tin chưa đọc
+                </div>
             </div>
-            <div class="chat-unread-message">
-                Tin chưa đọc
-            </div>
-        </div>
             <div class="chat-list" id="chat-list">
                 <!-- Chat list items will be added here -->
             </div>
         </div>
         <div class="chat-main">
-            <div class="chat-header" id="chat-header">
-                <!-- Active chat header will be shown here -->
+            <div class="chat-header">
+                <div class="chat-header-title" id="chat-header">
+                    <!-- Active chat header will be shown here -->
+                </div>
+                <div class="chat-header-actions">
+                    <button class="chat-header-action-btn">
+                        <i class="fas fa-phone"></i>
+                    </button>
+                    <button class="chat-header-action-btn">
+                        <i class="fas fa-video"></i>
+                    </button>
+                    <button class="chat-header-action-btn">
+                        <i class="fas fa-info-circle"></i>
+                    </button>
+                </div>
             </div>
             <div class="chat-messages" id="chat-messages">
                 <!-- Messages will be added here -->
             </div>
             <div class="chat-input">
                 <input type="text" id="message-input" placeholder="Nhập tin nhắn...">
-                <button id="send-button">Gửi</button>
+                <button id="send-button">
+                    <i class="fas fa-paper-plane"></i> Gửi
+                </button>
             </div>
         </div>
     </div>
 
-
     <script type="module" src="js/header.js"></script>
     <script type="module" src="js/auth.js"></script>
-    <script type="module" src="js/chat.js"></script>
+    <script type="module" src="js/chat-enhanced.js"></script>
 </body>
 </html>

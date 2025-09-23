@@ -1,22 +1,38 @@
-/* chat.css */
-<<<<<<< HEAD
-.chat-container {
-    display: flex;
-    height: calc(100vh - 70px);
-    margin-top: 70px;
-=======
-*{
+/* chat.css - Enhanced Version */
+* {
     padding: 0;
     margin: 0;
     box-sizing: border-box;
 }
+
+:root {
+    --primary-color: #ff6b35;
+    --primary-hover: #e55a2b;
+    --secondary-color: #007bff;
+    --secondary-hover: #0056b3;
+    --text-dark: #333333;
+    --text-medium: #666666;
+    --text-light: #999999;
+    --bg-light: #f8f9fa;
+    --bg-white: #ffffff;
+    --border-color: #e0e0e0;
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.15);
+    --radius-sm: 8px;
+    --radius-md: 15px;
+    --radius-lg: 20px;
+    --transition-fast: 0.2s;
+    --transition-normal: 0.3s;
+}
+
 .chat-container {
     display: flex;
     height: calc(100vh - 70px);
-    /* margin-top: 70px; */
->>>>>>> origin/main
-    background: #fff;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    background: var(--bg-white);
+    box-shadow: var(--shadow-md);
+    position: relative;
+    overflow: hidden;
 }
 
 .chat-sidebar {
@@ -26,8 +42,7 @@
     flex-direction: column;
 }
 
-<<<<<<< HEAD
-=======
+
 .chat-title-header {
     border-bottom: 1px solid #ccc;
 }
@@ -77,7 +92,6 @@
     font-weight: 500;
 }
 
->>>>>>> origin/main
 .chat-list {
     flex: 1;
     overflow-y: auto;
