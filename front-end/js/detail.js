@@ -295,6 +295,9 @@ document.addEventListener('DOMContentLoaded', () => {
     renderRoomDetail(room);
 });
 
+let currentPage = 0;
+const visible = 3; 
+
 function renderSimilarRoom(rooms) {
     const container = document.getElementById('similarRoom');
     container.innerHTML = '';
@@ -342,13 +345,44 @@ function renderSimilarRoom(rooms) {
             });
             container.appendChild(card);
         });
+    updateSlider(rooms.length);
 }
+// document.addEventListener('DOMContentLoaded', () => {
+//     renderSimilarRoom(rooms);
+// });
+
+function updateSlider(total) {
+  const track = document.getElementById('similarRoom');
+  const translate = currentPage * 100; 
+  track.style.transform = `translateX(-${translate}%)`;
+
+  // ẩn/hiện nút
+  document.querySelector('.prev').style.display = currentPage === 0 ? 'none' : 'inline-block';
+  document.querySelector('.next').style.display = 'inline-block';
+}
+
+// Gắn event
 document.addEventListener('DOMContentLoaded', () => {
-    const currentId = getRoomIdFromUrl();
-    const currentRoom = rooms.find(r => r.id === currentId);
+  renderSimilarRoom(rooms);
 
-    // Lọc ra danh sách phòng cùng khu vực nhưng khác id
-    const similar = rooms.filter(r => r.district === currentRoom.district && r.id !== currentId);
+  document.querySelector('.prev').addEventListener('click', () => {
+    if (currentPage > 0) {
+      currentPage--;
+      updateSlider(document.querySelectorAll('.similar-card').length);
+    }
+  });
 
-    renderSimilarRoom(rooms);
+  document.querySelector('.next').addEventListener('click', () => {
+    const total = document.querySelectorAll('.similar-card').length;
+    const totalPages = Math.ceil(total / visible);
+
+    if (currentPage < totalPages - 1) {
+      currentPage++;
+    } else {
+      currentPage = 0; // quay lại đầu khi bấm Next ở cuối
+    }
+    updateSlider(total);
+  });
 });
+
+
