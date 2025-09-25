@@ -296,7 +296,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 let currentPage = 0;
-const visible = 3; 
+const visible = 4; 
 
 function renderSimilarRoom(rooms) {
     const container = document.getElementById('similarRoom');
