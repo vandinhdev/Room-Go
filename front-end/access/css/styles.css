@@ -198,11 +198,19 @@ select#provinceSelect {
 .user-avatar-large {
     width: 48px;
     height: 48px;
+    background: #ff6b35;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-size: 20px;
+    font-weight: bold;
 }
 
 .user-name {
-    font-weight: 500;
+    font-size: 18px;
+    font-weight: 600;
     color: #333;
 }
 
@@ -235,10 +243,36 @@ select#provinceSelect {
     padding: 16px;
 }
 
-.user-info {
+.user-section {
     display: flex;
-    gap: 12px;
     align-items: center;
+    justify-content: center;
+    gap: 24px;
+    margin-bottom: 24px;
+    padding: 20px;
+    background: #f8f8fa;
+    border-radius: 12px;
+}
+
+.user-status {
+    font-size: 14px;
+    color: #666;
+}
+
+.user-stats {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    color: #666;
+    font-size: 14px;
+    /* height: 100%; */
 }
 
 .user-details {
@@ -254,6 +288,31 @@ select#provinceSelect {
 .user-email {
     font-size: 14px;
     color: #666;
+}
+
+.contact-button {
+    background: #ff6b35;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.3s ease;
+}
+
+.contact-button:hover {
+    background: #e55a2b;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 107, 53, 0.2);
+}
+
+.contact-button i {
+    font-size: 18px;
 }
 
 .dropdown-item {
@@ -527,22 +586,25 @@ select#provinceSelect {
     border-top: 1px solid #f0f0f0;
 }
 .user-info {
+    flex: 1;
     display: flex;
     align-items: center;
-    gap: 8px;
+    justify-content: left;
+    gap: 20px;
     font-size: 14px;
     color: #666;
 }
 .user-avatar {
-    width: 24px;
-    height: 24px;
+    width: 56px;
+    height: 56px;
     background: #ff6b35;
+    color: white;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
-    font-size: 12px;
+    font-size: 22px;
+    font-weight: bold;
 }
 .sidebar {
     position: fixed;
