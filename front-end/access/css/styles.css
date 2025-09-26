@@ -243,6 +243,8 @@ select#provinceSelect {
     padding: 16px;
 }
 
+/* User */
+
 .user-section {
     display: flex;
     align-items: center;
@@ -272,7 +274,6 @@ select#provinceSelect {
     gap: 6px;
     color: #666;
     font-size: 14px;
-    /* height: 100%; */
 }
 
 .user-details {
@@ -288,6 +289,29 @@ select#provinceSelect {
 .user-email {
     font-size: 14px;
     color: #666;
+}
+
+.user-info {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: left;
+    gap: 20px;
+    font-size: 14px;
+    color: #666;
+}
+
+.user-avatar {
+    width: 56px;
+    height: 56px;
+    background: #ff6b35;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    font-weight: bold;
 }
 
 .contact-button {
@@ -585,27 +609,7 @@ select#provinceSelect {
     padding-top: 12px;
     border-top: 1px solid #f0f0f0;
 }
-.user-info {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: left;
-    gap: 20px;
-    font-size: 14px;
-    color: #666;
-}
-.user-avatar {
-    width: 56px;
-    height: 56px;
-    background: #ff6b35;
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 22px;
-    font-weight: bold;
-}
+
 .sidebar {
     position: fixed;
     right: 20px;
