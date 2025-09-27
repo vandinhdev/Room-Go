@@ -1,0 +1,88 @@
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: room_soa_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - soa-net
+    restart: always
+
+  user-management-service:
+    build:
+      context: ./user-management-service
+      dockerfile: Dockerfile
+    container_name: user-management-service
+    depends_on:
+      - postgres
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/room_soa_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: password
+    ports:
+      - "8081:8080"
+    networks:
+      - soa-net
+    restart: always
+
+  room-management-service:
+    build:
+      context: ./room-management-service
+      dockerfile: Dockerfile
+    container_name: room-management-service
+    depends_on:
+      - postgres
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/room_soa_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: password
+    ports:
+      - "8082:8080"
+    networks:
+      - soa-net
+    restart: always
+
+  communication-service:
+    build:
+      context: ./communication-service
+      dockerfile: Dockerfile
+    container_name: communication-service
+    depends_on:
+      - postgres
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/room_soa_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: password
+    ports:
+      - "8083:8080"
+    networks:
+      - soa-net
+    restart: always
+
+  esb-camel:
+    build:
+      context: ./esb-camel
+      dockerfile: Dockerfile
+    container_name: esb-camel
+    ports:
+      - "8080:8080"
+    depends_on:
+      - communication-service
+      - user-management-service
+      - room-management-service
+    networks:
+      - soa-net
+    restart: always
+
+networks:
+  soa-net:
+    driver: bridge
+
+volumes:
+  postgres-data:

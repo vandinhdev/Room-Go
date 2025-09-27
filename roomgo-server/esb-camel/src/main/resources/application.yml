@@ -4,3 +4,9 @@ server:
 spring:
   application:
     name: esb-camel
+  cloud:
+    kubernetes:
+      config:
+        enabled: true
+        sources:
+          - name: esb-service-mapping

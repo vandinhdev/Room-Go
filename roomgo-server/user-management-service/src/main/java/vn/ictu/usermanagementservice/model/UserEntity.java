@@ -24,7 +24,7 @@ import java.util.List;
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "users", schema = "soa_app",
+@Table(name = "users",
         indexes = {
                 @Index(name = "idx_users_username", columnList = "username", unique = true),
                 @Index(name = "idx_users_email", columnList = "email", unique = true),

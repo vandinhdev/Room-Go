@@ -1,0 +1,4 @@
+routes:
+  user: user-management-service
+  room: room-management-service
+  communication: communication-service

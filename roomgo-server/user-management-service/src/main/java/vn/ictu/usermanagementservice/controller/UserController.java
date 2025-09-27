@@ -12,8 +12,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import vn.ictu.usermanagementservice.common.response.ApiResponse;
-import vn.ictu.usermanagementservice.dto.request.CreateUserRequest;
-import vn.ictu.usermanagementservice.dto.request.UpdateUserRequest;
+import vn.ictu.usermanagementservice.dto.request.UpdateProfileRequest;
+import vn.ictu.usermanagementservice.dto.request.UpdateStatusUser;
 import vn.ictu.usermanagementservice.dto.request.UserPasswordRequest;
 import vn.ictu.usermanagementservice.service.UserService;
 
@@ -55,6 +55,7 @@ public class UserController {
                 .data(userService.getUserById(userId))
                 .build();
     }
+
     @Operation(summary = "Get user detail", description = "API retrieve user detail by ID from database")
     @GetMapping("by-email")
     public ApiResponse getUserDetailByEmail(@RequestParam String email) {
@@ -67,8 +68,8 @@ public class UserController {
     }
 
     @Operation(summary = "Get profile", description = "API retrieve profile of user")
-    @GetMapping("/me")
-    //@PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_STUDENT','ROLE_OWNER')")
+    @GetMapping("/profile")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
     public ApiResponse getProfile(Authentication authentication) {
         String email = authentication.getName();
         log.info("Get profile of user: {}", email);
@@ -79,21 +80,10 @@ public class UserController {
                 .build();
     }
 
-    @Operation(summary = "Create User", description = "API add new user to database")
-    @PostMapping("/add")
-    @ResponseStatus(HttpStatus.OK)
-   @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public ApiResponse createUser(@RequestBody @Valid CreateUserRequest request) {
-        return ApiResponse.builder()
-                .status(HttpStatus.CREATED.value())
-                .message("User created successfully")
-                .data(userService.addUser(request))
-                .build();
-    }
 
-    @Operation(summary = "Update User", description = "API update user to database")
+    @Operation(summary = "Update Profile", description = "API update user to database")
     @PutMapping("/update-profile")
-    public ApiResponse updateProfile(@RequestBody @Valid UpdateUserRequest request, Authentication authentication) {
+    public ApiResponse updateProfile(@RequestBody @Valid UpdateProfileRequest request, Authentication authentication) {
         String email = authentication.getName();
         log.info("Update user profile: {}", email);
         userService.updateProfile(request, email);
@@ -101,6 +91,19 @@ public class UserController {
         return ApiResponse.builder()
                 .status(HttpStatus.ACCEPTED.value())
                 .message("User updated successfully")
+                .data("")
+                .build();
+    }
+
+    @Operation(summary = "Update Status User", description = "API update status user to database")
+    @PatchMapping("/update-status/{userId}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')" )
+    public ApiResponse updateStatus(@RequestBody @Valid UpdateStatusUser request,
+                                    @PathVariable @Min(value = 1, message = "userId must be equals or greater than 1") Long userId) {
+        userService.updateStatus(userId, request.getStatus());
+        return ApiResponse.builder()
+                .status(HttpStatus.ACCEPTED.value())
+                .message("User status updated successfully")
                 .data("")
                 .build();
     }
@@ -119,7 +122,7 @@ public class UserController {
 
     @Operation(summary = "Change Password", description = "API change password for user to database")
     @PatchMapping("/change-pwd")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_STUDENT','ROLE_OWNER')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
     public ApiResponse changePassword(@RequestBody @Valid UserPasswordRequest request, Authentication authentication) {
         String email = authentication.getName();
         log.info("Changing password for user: {}", request);
@@ -144,6 +147,7 @@ public class UserController {
     }
 
     @PostMapping("/reset-password")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
     public ApiResponse resetPassword(@RequestParam String email,
                                                 @RequestParam String otp,
                                                 @RequestParam String newPassword) {
