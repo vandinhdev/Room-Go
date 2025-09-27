@@ -26,7 +26,16 @@ import static org.springframework.security.config.http.SessionCreationPolicy.STA
 @RequiredArgsConstructor
 @EnableMethodSecurity(prePostEnabled = true)
 public class AppConfig {
-    private final String[] whitelistedUrls = {"/auth/**", "/api/auth/**"};
+    private final String[] whitelistedUrls = {
+            "/api/user/auth/**",
+            "/api/auth/**",
+            "/auth/**",
+            "/actuator/**",
+            "/v3/**",
+            "/swagger-ui*/**",
+            "/webjars/**",
+            "/favicon.ico"
+    };
     private final CustomizeRequestFilter requestFilter;
     private final UserServiceDetail userServiceDetail;
 

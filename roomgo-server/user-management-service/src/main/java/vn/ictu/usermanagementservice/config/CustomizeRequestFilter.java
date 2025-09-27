@@ -43,8 +43,8 @@ public class CustomizeRequestFilter extends OncePerRequestFilter {
 
         log.info("[USER-SERVICE] Incoming request: {} {}", method, path);
 
-        if (path.startsWith("/api/auth/") ||
-                path.startsWith("/auth/") ||
+        if (path.startsWith("/api/user/auth/") ||
+                path.startsWith("/user/auth/") ||
                 path.startsWith("/swagger-ui") ||
                 path.startsWith("/v3/") ||
                 "OPTIONS".equalsIgnoreCase(method)) {

@@ -4,9 +4,33 @@ server:
 spring:
   application:
     name: esb-camel
-  cloud:
-    kubernetes:
-      config:
-        enabled: true
-        sources:
-          - name: esb-service-mapping
+
+# ánh xạ service trong docker-compose
+routes:
+  user: http://user-management-service:8080
+  room: http://room-management-service:8080
+  communication: http://communication-service:8080
+
+camel:
+  servlet:
+    mapping:
+      context-path: /api/*   # tất cả request /api/* sẽ đi vào Camel
+    servlet-name: CamelServlet
+
+    rest:
+      component: servlet
+      context-path: /api
+      api-docs: /api-docs
+      api-docs-title: ESB Camel API
+      api-docs-version: 1.0.0
+      api-docs-path: /api-docs
+      cors: true
+      binding-mode: json
+      data-format-property:
+        pretty-print: true
+
+logging:
+  level:
+    root: INFO
+    org.apache.camel: DEBUG
+    org.springframework.web: DEBUG

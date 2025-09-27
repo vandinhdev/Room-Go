@@ -1,4 +1,10 @@
 routes:
-  user: user-management-service
-  room: room-management-service
-  communication: communication-service
+  user:
+    path: /api/user/**
+    url: http://user-management-service:8081/api/user
+  room:
+    path: /api/room/**
+    url: http://room-management-service:8082/api/room
+  communication:
+    path: /api/communication/**
+    url: http://communication-service:8083/api/communication

@@ -44,14 +44,27 @@
             <version>3.20.2</version>
         </dependency>
 
-        <!-- Jetty HTTP endpoint -->
+
+        <!-- Servlet HTTP endpoint -->
         <dependency>
             <groupId>org.apache.camel.springboot</groupId>
-            <artifactId>camel-jetty-starter</artifactId>
+            <artifactId>camel-servlet-starter</artifactId>
+            <version>3.22.0</version>
+        </dependency>
+
+        <!-- REST DSL support -->
+        <dependency>
+            <groupId>org.apache.camel.springboot</groupId>
+            <artifactId>camel-rest-starter</artifactId>
             <version>3.20.2</version>
         </dependency>
 
-
+        <!-- HTTP client support -->
+        <dependency>
+            <groupId>org.apache.camel.springboot</groupId>
+            <artifactId>camel-http-starter</artifactId>
+            <version>3.20.2</version>
+        </dependency>
 
         <!-- JSON / XML -->
         <dependency>
