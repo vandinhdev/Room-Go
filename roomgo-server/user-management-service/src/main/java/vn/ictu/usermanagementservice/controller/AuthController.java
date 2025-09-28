@@ -15,7 +15,7 @@ import vn.ictu.usermanagementservice.service.AuthService;
 
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/api/user/auth")
 @Tag(name = "Authentication Controller")
 @Slf4j(topic = "AUTHENTICATION-CONTROLLER")
 @RequiredArgsConstructor

@@ -9,6 +9,7 @@ import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import vn.ictu.usermanagementservice.common.enums.TokenType;
 import vn.ictu.usermanagementservice.exception.InvalidDataException;
@@ -59,6 +60,25 @@ public class JwtServiceImpl implements JwtService {
     public String extractEmail(String token, TokenType type) {
         return extractClaim(token, type, Claims::getSubject);
     }
+
+    @Override
+    public boolean isTokenValid(String token, UserDetails userDetails) {
+        try {
+            final String email = extractEmail(token, ACCESS_TOKEN);
+            return (email.equals(userDetails.getUsername())) && !isTokenExpired(token, ACCESS_TOKEN);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public boolean isTokenExpired(String token, TokenType type) {
+        return extractExpiration(token, type).before(new Date());
+    }
+
+    public Date extractExpiration(String token, TokenType type) {
+        return extractClaim(token, type, Claims::getExpiration);
+    }
+
 
     private String createAccessToken(Map<String, Object> claims, String email) {
         return Jwts.builder()

@@ -12,8 +12,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import vn.ictu.usermanagementservice.common.response.ApiResponse;
-import vn.ictu.usermanagementservice.dto.request.CreateUserRequest;
-import vn.ictu.usermanagementservice.dto.request.UpdateUserRequest;
+import vn.ictu.usermanagementservice.dto.request.UpdateProfileRequest;
 import vn.ictu.usermanagementservice.dto.request.UserPasswordRequest;
 import vn.ictu.usermanagementservice.service.UserService;
 
@@ -45,7 +44,7 @@ public class UserController {
 
     @Operation(summary = "Get user detail", description = "API retrieve user detail by ID from database")
     @GetMapping("detail/{userId}")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_STUDENT','ROLE_OWNER')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
     public ApiResponse getUserDetail(@PathVariable @Min(value = 1, message = "userId must be equals or greater than 1") Long userId) {
         log.info("Get user detail by ID: {}", userId);
 
@@ -57,6 +56,7 @@ public class UserController {
     }
     @Operation(summary = "Get user detail", description = "API retrieve user detail by ID from database")
     @GetMapping("by-email")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
     public ApiResponse getUserDetailByEmail(@RequestParam String email) {
         log.info("Get user detail by email: {}", email);
         return ApiResponse.builder()
@@ -67,8 +67,8 @@ public class UserController {
     }
 
     @Operation(summary = "Get profile", description = "API retrieve profile of user")
-    @GetMapping("/me")
-    //@PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_STUDENT','ROLE_OWNER')")
+    @GetMapping("/profile")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
     public ApiResponse getProfile(Authentication authentication) {
         String email = authentication.getName();
         log.info("Get profile of user: {}", email);
@@ -79,21 +79,24 @@ public class UserController {
                 .build();
     }
 
-    @Operation(summary = "Create User", description = "API add new user to database")
-    @PostMapping("/add")
-    @ResponseStatus(HttpStatus.OK)
-   @PreAuthorize("hasAuthority('ROLE_ADMIN')")
-    public ApiResponse createUser(@RequestBody @Valid CreateUserRequest request) {
+    @Operation(summary = "Update User Status", description = "API update user status to database")
+    @PatchMapping("/update-status/{userId}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')" )
+    public ApiResponse updateStatus(@PathVariable @Min(value = 1, message = "userId must be equals or greater than 1") Long userId,
+                                    @RequestParam String status) {
+        log.info("Update user status by ID: {}", userId);
+        userService.updateStatus(userId, status);
         return ApiResponse.builder()
-                .status(HttpStatus.CREATED.value())
-                .message("User created successfully")
-                .data(userService.addUser(request))
+                .status(HttpStatus.ACCEPTED.value())
+                .message("User status updated successfully")
+                .data("")
                 .build();
     }
 
+
     @Operation(summary = "Update User", description = "API update user to database")
     @PutMapping("/update-profile")
-    public ApiResponse updateProfile(@RequestBody @Valid UpdateUserRequest request, Authentication authentication) {
+    public ApiResponse updateProfile(@RequestBody @Valid UpdateProfileRequest request, Authentication authentication) {
         String email = authentication.getName();
         log.info("Update user profile: {}", email);
         userService.updateProfile(request, email);
