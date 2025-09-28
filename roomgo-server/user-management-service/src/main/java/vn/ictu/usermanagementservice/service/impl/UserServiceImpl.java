@@ -11,8 +11,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import vn.ictu.usermanagementservice.common.enums.UserStatus;
-import vn.ictu.usermanagementservice.dto.request.CreateUserRequest;
-import vn.ictu.usermanagementservice.dto.request.UpdateUserRequest;
+import vn.ictu.usermanagementservice.dto.request.UpdateProfileRequest;
 import vn.ictu.usermanagementservice.dto.request.UserPasswordRequest;
 import vn.ictu.usermanagementservice.dto.response.UserPageResponse;
 import vn.ictu.usermanagementservice.dto.response.UserResponse;
@@ -128,26 +127,21 @@ public class UserServiceImpl implements UserService {
                 .build();
     }
 
-
-
     @Override
-    public long addUser(CreateUserRequest req) {
-        UserEntity userEntity = new UserEntity();
-        userEntity.setFirstName(req.getFirstname());
-        userEntity.setLastName(req.getLastname());
-        userEntity.setUsername(req.getUsername());
-        userEntity.setPassword(passwordEncoder.encode(req.getPassword()));
-        userEntity.setEmail(req.getEmail());
-        userEntity.setPhone(req.getPhone());
-        userEntity.setRole(req.getRole());
-        userEntity.setStatus(UserStatus.PENDING);
-        UserEntity saveUser = userRepository.save(userEntity);
-
-        return saveUser.getId();
+    public void updateStatus(long id, String status) {
+        UserEntity userEntity = getUserEntity(id);
+        userEntity.setStatus(UserStatus.valueOf(status));
+        userRepository.save(userEntity);
     }
 
     @Override
-    public void updateProfile(UpdateUserRequest req, String email) {
+    public UserResponse getProfile(String email) {
+        return getUserByEmail(email);
+    }
+
+
+    @Override
+    public void updateProfile(UpdateProfileRequest req, String email) {
         Long id = getUserByEmail(email).getId();
         UserEntity userEntity = getUserEntity(id);
         userEntity.setFirstName(req.getFirstname());
