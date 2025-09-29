@@ -90,19 +90,6 @@
 
     <script type="module" src="./js/main.js"></script>
     <script>
-        // Lấy danh sách tỉnh thành từ API và render vào dropdown
-        document.addEventListener('DOMContentLoaded', function() {
-            const provinceSelect = document.getElementById('provinceSelect');
-            fetch('https://provinces.open-api.vn/api/p/')
-                .then(res => res.json())
-                .then(data => {
-                    provinceSelect.innerHTML = '<option value="">Chọn khu vực</option>' +
-                        data.map(p => `<option value="${p.name}">${p.name}</option>`).join('');
-                })
-                .catch(() => {
-                    provinceSelect.innerHTML = '<option value="">Không tải được dữ liệu</option>';
-                });
-        });
         // Xử lý lọc tỉnh thành, giá, diện tích
         document.addEventListener('DOMContentLoaded', function() {
             const provinceSelect = document.getElementById('provinceSelect');

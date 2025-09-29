@@ -23,137 +23,137 @@ CREATE TYPE email_status AS ENUM ('PENDING', 'SENT', 'FAILED');
 -- ========================
 
 CREATE TABLE roles (
-                       id BIGSERIAL PRIMARY KEY,
-                       role_name VARCHAR(20) UNIQUE NOT NULL
+       id BIGSERIAL PRIMARY KEY,
+       role_name VARCHAR(20) UNIQUE NOT NULL
 );
 
 CREATE TABLE users (
-                       id BIGSERIAL PRIMARY KEY,
-                       first_name VARCHAR(50) NOT NULL,
-                       last_name VARCHAR(50) NOT NULL,
-                       gender gender,
-                       username VARCHAR(50) UNIQUE NOT NULL,
-                       password_hash TEXT NOT NULL,
-                       email VARCHAR(100) UNIQUE NOT NULL,
-                       phone VARCHAR(20),
-                       role_id BIGINT NOT NULL REFERENCES roles(id),
-                       user_status user_status DEFAULT 'PENDING',
-                       date_of_birth DATE, -- thêm cho khớp với Hibernate entity
-                       created_at TIMESTAMP DEFAULT NOW(),
-                       updated_at TIMESTAMP DEFAULT NOW()
+       id BIGSERIAL PRIMARY KEY,
+       first_name VARCHAR(50) NOT NULL,
+       last_name VARCHAR(50) NOT NULL,
+       gender gender,
+       username VARCHAR(50) UNIQUE NOT NULL,
+       password_hash TEXT NOT NULL,
+       email VARCHAR(100) UNIQUE NOT NULL,
+       phone VARCHAR(20),
+       role_id BIGINT NOT NULL REFERENCES roles(id),
+       user_status user_status DEFAULT 'PENDING',
+       date_of_birth DATE, -- thêm cho khớp với Hibernate entity
+       created_at TIMESTAMP DEFAULT NOW(),
+       updated_at TIMESTAMP DEFAULT NOW()
 );
 
 CREATE TABLE rooms (
-                       id BIGSERIAL PRIMARY KEY,
-                       owner_id BIGINT NOT NULL REFERENCES users(id),
-                       title VARCHAR(255) NOT NULL,
-                       description TEXT,
-                       price NUMERIC(12,2) NOT NULL,
-                       area NUMERIC(6,2),
-                       province VARCHAR(100),
-                       district VARCHAR(100),
-                       ward VARCHAR(100),
-                       address TEXT,
-                       latitude DOUBLE PRECISION,
-                       longitude DOUBLE PRECISION,
-                       status room_status DEFAULT 'AVAILABLE',
-                       created_at TIMESTAMP DEFAULT NOW(),
-                       updated_at TIMESTAMP DEFAULT NOW()
+       id BIGSERIAL PRIMARY KEY,
+       owner_id BIGINT NOT NULL REFERENCES users(id),
+       title VARCHAR(255) NOT NULL,
+       description TEXT,
+       price NUMERIC(12,2) NOT NULL,
+       area NUMERIC(6,2),
+       province VARCHAR(100),
+       district VARCHAR(100),
+       ward VARCHAR(100),
+       address TEXT,
+       latitude DOUBLE PRECISION,
+       longitude DOUBLE PRECISION,
+       status room_status DEFAULT 'AVAILABLE',
+       created_at TIMESTAMP DEFAULT NOW(),
+       updated_at TIMESTAMP DEFAULT NOW()
 );
 
 CREATE TABLE room_images (
-                             id BIGSERIAL PRIMARY KEY,
-                             room_id BIGINT NOT NULL REFERENCES rooms(id) ON DELETE CASCADE,
-                             image_url TEXT NOT NULL,
-                             uploaded_at TIMESTAMP DEFAULT NOW()
+             id BIGSERIAL PRIMARY KEY,
+             room_id BIGINT NOT NULL REFERENCES rooms(id) ON DELETE CASCADE,
+             image_url TEXT NOT NULL,
+             uploaded_at TIMESTAMP DEFAULT NOW()
 );
 
 CREATE TABLE favorite_rooms (
-                                id BIGSERIAL PRIMARY KEY,
-                                user_id BIGINT NOT NULL REFERENCES users(id),
-                                room_id BIGINT NOT NULL REFERENCES rooms(id) ON DELETE CASCADE,
-                                created_at TIMESTAMP DEFAULT NOW(),
-                                UNIQUE(user_id, room_id)
+                id BIGSERIAL PRIMARY KEY,
+                user_id BIGINT NOT NULL REFERENCES users(id),
+                room_id BIGINT NOT NULL REFERENCES rooms(id) ON DELETE CASCADE,
+                created_at TIMESTAMP DEFAULT NOW(),
+                UNIQUE(user_id, room_id)
 );
 
 CREATE TABLE conversations (
-                               id BIGSERIAL PRIMARY KEY,
-                               conversation_name VARCHAR(100),
-                               room_id BIGINT REFERENCES rooms(id),
-                               current_user_id BIGINT NOT NULL REFERENCES users(id),
-                               owner_id BIGINT NOT NULL REFERENCES users(id),
-                               created_at TIMESTAMP DEFAULT NOW()
+               id BIGSERIAL PRIMARY KEY,
+               conversation_name VARCHAR(100),
+               room_id BIGINT REFERENCES rooms(id),
+               current_user_id BIGINT NOT NULL REFERENCES users(id),
+               owner_id BIGINT NOT NULL REFERENCES users(id),
+               created_at TIMESTAMP DEFAULT NOW()
 );
 
 CREATE TABLE messages (
-                          id BIGSERIAL PRIMARY KEY,
-                          conversation_id BIGINT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
-                          sender_id BIGINT NOT NULL REFERENCES users(id),
-                          sender_name VARCHAR(100) NOT NULL,
-                          content TEXT NOT NULL,
-                          message_type message_type DEFAULT 'TEXT',
-                          is_read BOOLEAN DEFAULT FALSE,
-                          created_at TIMESTAMP DEFAULT NOW()
+    id BIGSERIAL PRIMARY KEY,
+    conversation_id BIGINT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+    sender_id BIGINT NOT NULL REFERENCES users(id),
+    sender_name VARCHAR(100) NOT NULL,
+    content TEXT NOT NULL,
+    message_type message_type DEFAULT 'TEXT',
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT NOW()
 );
 
 CREATE TABLE notifications (
-                               id BIGSERIAL PRIMARY KEY,
-                               user_id BIGINT NOT NULL REFERENCES users(id),
-                               title VARCHAR(255) NOT NULL,
-                               message TEXT NOT NULL,
-                               type notification_type NOT NULL,
-                               related_id BIGINT,
-                               related_type VARCHAR(50),
-                               is_read BOOLEAN DEFAULT FALSE,
-                               is_deleted BOOLEAN DEFAULT FALSE,
-                               data JSONB,
-                               created_at TIMESTAMP DEFAULT NOW(),
-                               read_at TIMESTAMP,
-                               expires_at TIMESTAMP
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES users(id),
+    title VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    type notification_type NOT NULL,
+    related_id BIGINT,
+    related_type VARCHAR(50),
+    is_read BOOLEAN DEFAULT FALSE,
+    is_deleted BOOLEAN DEFAULT FALSE,
+    data JSONB,
+    created_at TIMESTAMP DEFAULT NOW(),
+    read_at TIMESTAMP,
+    expires_at TIMESTAMP
 );
 
 CREATE TABLE notification_settings (
-                                       id BIGSERIAL PRIMARY KEY,
-                                       user_id BIGINT NOT NULL REFERENCES users(id),
-                                       notification_type notification_type NOT NULL,
-                                       is_enabled BOOLEAN DEFAULT TRUE,
-                                       delivery_method delivery_method DEFAULT 'IN_APP',
-                                       created_at TIMESTAMP DEFAULT NOW(),
-                                       updated_at TIMESTAMP DEFAULT NOW(),
-                                       UNIQUE(user_id, notification_type, delivery_method)
+                       id BIGSERIAL PRIMARY KEY,
+                       user_id BIGINT NOT NULL REFERENCES users(id),
+                       notification_type notification_type NOT NULL,
+                       is_enabled BOOLEAN DEFAULT TRUE,
+                       delivery_method delivery_method DEFAULT 'IN_APP',
+                       created_at TIMESTAMP DEFAULT NOW(),
+                       updated_at TIMESTAMP DEFAULT NOW(),
+                       UNIQUE(user_id, notification_type, delivery_method)
 );
 
 CREATE TABLE email_logs (
-                            id BIGSERIAL PRIMARY KEY,
-                            recipient VARCHAR(255) NOT NULL,
-                            body TEXT NOT NULL,
-                            status email_status DEFAULT 'PENDING',
-                            error_message TEXT,
-                            created_at TIMESTAMP DEFAULT NOW(),
-                            sent_at TIMESTAMP
+            id BIGSERIAL PRIMARY KEY,
+            recipient VARCHAR(255) NOT NULL,
+            body TEXT NOT NULL,
+            status email_status DEFAULT 'PENDING',
+            error_message TEXT,
+            created_at TIMESTAMP DEFAULT NOW(),
+            sent_at TIMESTAMP
 );
 
 CREATE TABLE search_history (
-                                id BIGSERIAL PRIMARY KEY,
-                                user_id BIGINT NOT NULL REFERENCES users(id),
-                                search_query TEXT NOT NULL,
-                                keywords TEXT[],
-                                province VARCHAR(100),
-                                district VARCHAR(100),
-                                ward VARCHAR(100),
-                                min_price NUMERIC(12,2),
-                                max_price NUMERIC(12,2),
-                                min_area NUMERIC(6,2),
-                                max_area NUMERIC(6,2),
-                                search_at TIMESTAMP DEFAULT NOW()
+                id BIGSERIAL PRIMARY KEY,
+                user_id BIGINT NOT NULL REFERENCES users(id),
+                search_query TEXT NOT NULL,
+                keywords TEXT[],
+                province VARCHAR(100),
+                district VARCHAR(100),
+                ward VARCHAR(100),
+                min_price NUMERIC(12,2),
+                max_price NUMERIC(12,2),
+                min_area NUMERIC(6,2),
+                max_area NUMERIC(6,2),
+                search_at TIMESTAMP DEFAULT NOW()
 );
 
 CREATE TABLE password_reset_tokens (
-                                       id BIGSERIAL PRIMARY KEY,
-                                       email VARCHAR(255) NOT NULL,
-                                       otp_code VARCHAR(10) NOT NULL,
-                                       expires_at TIMESTAMP NOT NULL,
-                                       created_at TIMESTAMP DEFAULT NOW()
+                       id BIGSERIAL PRIMARY KEY,
+                       email VARCHAR(255) NOT NULL,
+                       otp_code VARCHAR(10) NOT NULL,
+                       expires_at TIMESTAMP NOT NULL,
+                       created_at TIMESTAMP DEFAULT NOW()
 );
 
 -- ========================
@@ -221,6 +221,6 @@ CREATE INDEX idx_password_reset_email ON password_reset_tokens(email);
 -- DEFAULT DATA
 -- ========================
 INSERT INTO roles (role_name) VALUES
-                                  ('ADMIN'),
-                                  ('USER'),
-                                  ('GUEST');
+                  ('ADMIN'),
+                  ('USER'),
+                  ('GUEST');

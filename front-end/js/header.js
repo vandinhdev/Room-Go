@@ -13,6 +13,13 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function initializeHeader() {
+    const logo = document.querySelector('.logo');
+    if (logo) {
+        logo.addEventListener('click', function() {
+            window.location.href = 'index.html';
+            setTimeout(() => { window.location.reload(); }, 100);
+        });
+    }
     // Lấy thông tin user từ localStorage
     const userInfo = JSON.parse(localStorage.getItem('userInfo'));
     const authButtons = document.getElementById('authButtons');
@@ -72,7 +79,7 @@ function initializeHeader() {
         .then(response => response.json())
         .then(data => {
             const provinceSelect = document.getElementById('provinceSelect');
-            provinceSelect.innerHTML = '<option value="">Chọn tỉnh thành</option>';
+            provinceSelect.innerHTML = '<option value="">Chọn khu vực</option>';
             data.forEach(province => {
                 const option = document.createElement('option');
                 option.value = province.code;
@@ -81,4 +88,24 @@ function initializeHeader() {
             });
         })
         .catch(error => console.error('Error loading provinces:', error));
+    
+    const favoriteBtn = document.getElementById("favourite-btn");
+    const savedPopup = document.querySelector(".favourite-room");
+
+    if (favoriteBtn && savedPopup) {
+        favoriteBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            savedPopup.style.display =
+                savedPopup.style.display === "block" ? "none" : "block";
+        });
+
+        document.addEventListener("click", (e) => {
+            if (!favoriteBtn.contains(e.target) && !savedPopup.contains(e.target)) {
+                savedPopup.style.display = "none";
+            }
+        });
+    }
 }
+
+

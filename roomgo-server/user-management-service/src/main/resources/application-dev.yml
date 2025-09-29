@@ -24,7 +24,7 @@ spring:
 
 services:
   email:
-    base-url: http://localhost:8083
+    base-url: http:/esb-camel:8080/api/esb/comm
 
 # application-dev.yml
 springdoc:

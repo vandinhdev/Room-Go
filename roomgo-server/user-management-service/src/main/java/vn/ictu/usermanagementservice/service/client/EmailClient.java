@@ -21,7 +21,7 @@ public class EmailClient {
                 "name", name,
                 "verifyLink", verifyLink
         );
-        restTemplate.postForEntity(emailServiceUrl + "/api/email/send-verification", body, String.class);
+        restTemplate.postForEntity(emailServiceUrl + "/send-verification", body, String.class);
     }
 
     public void sendResetPasswordEmail(String to, String name, String otpCode) {
@@ -30,7 +30,7 @@ public class EmailClient {
                 "name", name,
                 "otpCode", otpCode
         );
-        restTemplate.postForEntity(emailServiceUrl + "/api/email/send-reset", body, String.class);
+        restTemplate.postForEntity(emailServiceUrl + "/send-reset-password", body, String.class);
     }
 }
 

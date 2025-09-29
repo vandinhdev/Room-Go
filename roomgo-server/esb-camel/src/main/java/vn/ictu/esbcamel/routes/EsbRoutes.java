@@ -43,9 +43,6 @@ public class EsbRoutes extends RouteBuilder {
                 .post("/forgot-password").to("direct:user-forgot-pwd")
                 .post("/reset-password").to("direct:user-reset-pwd");
 
-
-        // ================== ROUTES ==================
-
         // ---------- AUTH ----------
         from("direct:login")
                 .routeId("login-route")
@@ -236,6 +233,96 @@ public class EsbRoutes extends RouteBuilder {
                 .setHeader(Exchange.HTTP_METHOD, constant("GET"))
                 .to("http://room-management-service:8080/api/favorite-rooms/me?bridgeEndpoint=true")
                 .unmarshal().json(JsonLibrary.Jackson);
+
+
+        // ================== COMMUNICATION SERVICE ==================
+        rest("/comm")
+                .get("/get-user-conversations").to("direct:get-user-conversations")
+                .get("/search-by-conversation-name").to("direct:search-by-conversation-name")
+                .get("/conversations/{conversationId}").to("direct:get-conversation-by-id")
+                .post("/add-conversations").to("direct:add-conversations")
+                .post("/send-message").to("direct:send-message")
+                .delete("/delete-conversation/{conversationId}").to("direct:delete-conversation")
+                .post("/send-verification").to("direct:send-verification")
+                .post("/send-reset-password").to("direct:send-reset-password");
+
+
+        from("direct:get-user-conversations")
+                .routeId("get-user-conversations-route")
+                .log("Processing JWT for get-user-conversations")
+                .process(jwtProcessor) // Xác thực JWT trước khi gọi dịch vụ phòng
+                .setHeader("Authorization", header("Authorization"))
+                .log("👉 [ESB] Forwarding get user conversations")
+                .setHeader(Exchange.HTTP_METHOD, constant("GET"))
+                .to("http://communication-service:8080/api/chats/get-user-conversations?bridgeEndpoint=true")
+                .unmarshal().json(JsonLibrary.Jackson);
+
+        from("direct:search-by-conversation-name")
+                .routeId("search-by-conversation-name-route")
+                .log("Processing JWT for search-by-conversation-name")
+                .process(jwtProcessor) // Xác thực JWT trước khi gọi dịch vụ phòng
+                .log("👉 [ESB] Forwarding search by conversation name: ${header.name}")
+                .setHeader(Exchange.HTTP_METHOD, constant("GET"))
+                .toD("http://communication-service:8080/api/chats/search-by-conversation-name?name=${header.name}&bridgeEndpoint=true")
+                .unmarshal().json(JsonLibrary.Jackson);
+
+        from("direct:get-conversation-by-id")
+                .routeId("get-conversation-by-id-route")
+                .log("Processing JWT for get-conversation-by-id")
+                .process(jwtProcessor) // Xác thực JWT trước khi gọi dịch vụ phòng
+                .log("👉 [ESB] Forwarding get conversation by id: ${header.con   versationId}")
+                .setHeader(Exchange.HTTP_METHOD, constant("GET"))
+                .toD("http://communication-service:8080/api/chats/conversations/${header.conversationId}?bridgeEndpoint=true")
+                .unmarshal().json(JsonLibrary.Jackson);
+
+        from("direct:add-conversations")
+                .routeId("add-conversations-route")
+                .log("Processing JWT for add-conversations")
+                .process(jwtProcessor)// Xác thực JWT trước khi gọi dịch vụ phòng
+                .setHeader("Authorization", header("Authorization"))
+                .log("👉 [ESB] Forwarding add conversation: ${body}")
+                .setHeader(Exchange.CONTENT_TYPE, constant("application/json"))
+                .marshal().json(JsonLibrary.Jackson)
+                .to("http://communication-service:8080/api/chats/add-conversations?httpMethod=POST&bridgeEndpoint=true")
+                .unmarshal().json(JsonLibrary.Jackson);
+
+        from("direct:send-message")
+                .routeId("send-message-route")
+                .log("Processing JWT for send-message")
+                .process(jwtProcessor) // Xác thực JWT trước khi gọi dịch vụ phòng
+                .setHeader("Authorization", header("Authorization"))
+                .log("👉 [ESB] Forwarding send message: ${body}")
+                .setHeader(Exchange.CONTENT_TYPE, constant("application/json"))
+                .marshal().json(JsonLibrary.Jackson)
+                .to("http://communication-service:8080/api/chats/send-message?httpMethod=POST&bridgeEndpoint=true")
+                .unmarshal().json(JsonLibrary.Jackson);
+
+        from("direct:delete-conversation")
+                .routeId("delete-conversation-route")
+                .log("Processing JWT for delete-conversation")
+                .process(jwtProcessor) // Xác thực JWT trước khi gọi dịch vụ phòng
+                .log("👉 [ESB] Forwarding delete conversation id=${header.conversationId}")
+                .setHeader(Exchange.HTTP_METHOD, constant("DELETE"))
+                .toD("http://communication-service:8080/api/chats/delete-conversation/${header.conversationId}?bridgeEndpoint=true")
+                .unmarshal().json(JsonLibrary.Jackson);
+
+        // ---------- Gửi email ----------
+        from("direct:send-verification")
+                .routeId("send-verification-route")
+                .log("👉 [ESB] Forwarding send verification email: ${body}")
+                .setHeader(Exchange.CONTENT_TYPE, constant("application/json"))
+                .marshal().json(JsonLibrary.Jackson)
+                .to("http://communication-service:8080/api/email/send-verification?httpMethod=POST&bridgeEndpoint=true")
+                .unmarshal().json(JsonLibrary.Jackson);
+
+        from("direct:send-reset-password")
+                .routeId("send-reset-password-route")
+                .log("👉 [ESB] Forwarding send reset password email: ${body}")
+                .setHeader(Exchange.CONTENT_TYPE, constant("application/json"))
+                .marshal().json(JsonLibrary.Jackson)
+                .to("http://communication-service:8080/api/email/send-reset-password?httpMethod=POST&bridgeEndpoint=true")
+                .unmarshal().json(JsonLibrary.Jackson);
+
     }
 
 }
