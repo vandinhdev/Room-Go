@@ -44,23 +44,21 @@ services:
       - soa-net
     restart: always
 
-#  communication-service:
-#    build:
-#      context: ./communication-service
-#      dockerfile: Dockerfile
-#    container_name: communication-service
-#    depends_on:
-#      - postgres
-#    environment:
-#      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/room_soa_db
-#      SPRING_DATASOURCE_USERNAME: postgres
-#      SPRING_DATASOURCE_PASSWORD: password
-#    ports:
-#      - "8083:8080"
-#    networks:
-#      - soa-net
-#    restart: always
-#
+  communication-service:
+    build:
+      context: ./communication-service
+      dockerfile: Dockerfile
+    container_name: communication-service
+    depends_on:
+      - postgres
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/room_go_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: password
+    networks:
+      - soa-net
+    restart: always
+
   esb-camel:
     build:
       context: ./esb-camel
@@ -69,7 +67,7 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      #- communication-service
+      - communication-service
       - user-management-service
       - room-management-service
     networks:
