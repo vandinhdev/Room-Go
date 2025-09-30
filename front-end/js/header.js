@@ -109,16 +109,16 @@ function initializeHeader() {
     //     });
     // }
 
-    const favoriteBtn = document.getElementById("favourite-btn");
+    const favouriteBtn = document.getElementById("favourite-btn");
     const savedPopup = document.querySelector(".favourite-room");
 
-    if (favoriteBtn) {
-        favoriteBtn.addEventListener("click", (e) => {
+    if (favouriteBtn) {
+        favouriteBtn.addEventListener("click", (e) => {
             e.preventDefault();
             e.stopPropagation();
             
-            const savedPosts = JSON.parse(localStorage.getItem("savedPosts")) || [];
-            if (savedPosts.length === 0) {
+            const favouriteRooms = JSON.parse(localStorage.getItem("favouriteRooms")) || [];
+            if (favouriteRooms.length === 0) {
                 // Chưa có tin -> show popup
                 if (savedPopup) {
                     savedPopup.style.display =
