@@ -17,7 +17,7 @@ function saveRoom(room) {
 }
 
 function removeRoom(id) {
-  let favourite = getFavouriterooms().filter(p => p.id !== id);
+  let favourite = getFavouriteRooms().filter(p => p.id !== id);
   localStorage.setItem("favouriteRooms", JSON.stringify(favourite));
 }
 
