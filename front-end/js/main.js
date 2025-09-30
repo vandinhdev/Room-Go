@@ -134,15 +134,15 @@ function renderRooms(rooms) {
             window.location.href = `./detail.html?id=${room.id}`;
         });
         card.querySelector('.heart-icon').addEventListener('click', function (e) {
-      e.stopPropagation();
-      if (this.innerHTML === '🤍') {
-        this.innerHTML = '❤️';
-        saveRoom(room);
-      } else {
-        this.innerHTML = '🤍';
-        removeRoom(room.id);
-      }
-    });
+            e.stopPropagation();
+            if (this.innerHTML === '🤍') {
+                this.innerHTML = '❤️';
+                saveRoom(room);
+            } else {
+                this.innerHTML = '🤍';
+                removeRoom(room.id);
+            }
+        });
         grid.appendChild(card);
     });
 }
