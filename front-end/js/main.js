@@ -2,6 +2,25 @@
 import { rooms } from './mockRooms.js';
 import { getCurrentUser, isAdmin } from './mockUsers.js';
 
+
+// Quản lý tin đã lưu
+function getFavouriteRooms() {
+  return JSON.parse(localStorage.getItem("favouriteRooms")) || [];
+}
+
+function saveRoom(room) {
+  let favourite = getFavouriteRooms();
+  if (!favourite.find(p => p.id === room.id)) {
+    favourite.push(room);
+    localStorage.setItem("favouriteRooms", JSON.stringify(favourite));
+  }
+}
+
+function removeRoom(id) {
+  let favourite = getFavouriterooms().filter(p => p.id !== id);
+  localStorage.setItem("favouriteRooms", JSON.stringify(favourite));
+}
+
 // Global state
 const state = {
     currentPage: 1,
@@ -70,19 +89,21 @@ function renderRooms(rooms) {
     if (!grid) return;
     grid.innerHTML = '';
 
+    const saved = getFavouriteRooms();
     const startIndex = (state.currentPage - 1) * state.roomsPerPage;
     const paginatedRooms = rooms.slice(startIndex, startIndex + state.roomsPerPage);
 
     renderPagination(rooms.length);
 
     paginatedRooms.forEach(room => {
+        const isSaved = saved.find(p => p.id === room.id);
         const card = document.createElement('div');
         card.className = 'listing-card';
         card.innerHTML = `
             <div class="listing-image">
                 <div style="background: linear-gradient(135deg, #8B4513, #D2B48C); width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px;">${room.title}</div>
                 <div class="image-overlay">${room.status === 'available' ? 'Có phòng' : 'Đã thuê'}</div>
-                <div class="heart-icon">🤍</div>
+                <div class="heart-icon">${isSaved ? '❤️' : '🤍'}</div>
             </div>
             <div class="listing-content">
                 <div class="listing-title">${room.title}</div>
@@ -113,9 +134,15 @@ function renderRooms(rooms) {
             window.location.href = `./detail.html?id=${room.id}`;
         });
         card.querySelector('.heart-icon').addEventListener('click', function (e) {
-            e.stopPropagation();
-            this.innerHTML = this.innerHTML === '🤍' ? '❤️' : '🤍';
-        });
+      e.stopPropagation();
+      if (this.innerHTML === '🤍') {
+        this.innerHTML = '❤️';
+        saveRoom(room);
+      } else {
+        this.innerHTML = '🤍';
+        removeRoom(room.id);
+      }
+    });
         grid.appendChild(card);
     });
 }
@@ -376,3 +403,4 @@ document.addEventListener('DOMContentLoaded', function() {
         updateRooms();
     });
 });
+

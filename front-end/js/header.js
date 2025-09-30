@@ -1,3 +1,5 @@
+import { rooms } from "./mockRooms.js";
+
 document.addEventListener('DOMContentLoaded', function() {
     // Load the header
     fetch('components/header.html')
@@ -89,20 +91,42 @@ function initializeHeader() {
         })
         .catch(error => console.error('Error loading provinces:', error));
     
+    // const favoriteBtn = document.getElementById("favourite-btn");
+    // const savedPopup = document.querySelector(".favourite-room");
+
+    // if (favoriteBtn && savedPopup) {
+    //     favoriteBtn.addEventListener("click", (e) => {
+    //         e.preventDefault();
+    //         e.stopPropagation();
+    //         savedPopup.style.display =
+    //             savedPopup.style.display === "block" ? "none" : "block";
+    //     });
+
+    //     document.addEventListener("click", (e) => {
+    //         if (!favoriteBtn.contains(e.target) && !savedPopup.contains(e.target)) {
+    //             savedPopup.style.display = "none";
+    //         }
+    //     });
+    // }
+
     const favoriteBtn = document.getElementById("favourite-btn");
     const savedPopup = document.querySelector(".favourite-room");
 
-    if (favoriteBtn && savedPopup) {
+    if (favoriteBtn) {
         favoriteBtn.addEventListener("click", (e) => {
             e.preventDefault();
             e.stopPropagation();
-            savedPopup.style.display =
-                savedPopup.style.display === "block" ? "none" : "block";
-        });
-
-        document.addEventListener("click", (e) => {
-            if (!favoriteBtn.contains(e.target) && !savedPopup.contains(e.target)) {
-                savedPopup.style.display = "none";
+            
+            const savedPosts = JSON.parse(localStorage.getItem("savedPosts")) || [];
+            if (savedPosts.length === 0) {
+                // Chưa có tin -> show popup
+                if (savedPopup) {
+                    savedPopup.style.display =
+                        savedPopup.style.display === "block" ? "none" : "block";
+                }
+            } else {
+                // Có tin -> chuyển sang danh sách
+                window.location.href = "favourite.html";
             }
         });
     }

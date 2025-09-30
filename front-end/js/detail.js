@@ -296,7 +296,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 let currentPage = 0;
-const visible = 3; // số card hiển thị cùng lúc 
+const visible = 4; // số card hiển thị cùng lúc 
 
 function renderSimilarRoom(rooms) {
     const container = document.getElementById('similarRoom');
