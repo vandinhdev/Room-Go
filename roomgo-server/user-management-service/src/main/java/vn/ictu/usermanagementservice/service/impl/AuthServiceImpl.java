@@ -1,0 +1,153 @@
+package vn.ictu.usermanagementservice.service.impl;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+import vn.ictu.usermanagementservice.common.enums.UserStatus;
+import vn.ictu.usermanagementservice.common.response.TokenResponse;
+import vn.ictu.usermanagementservice.dto.request.SignInRequest;
+import vn.ictu.usermanagementservice.dto.request.SignUpRequest;
+import vn.ictu.usermanagementservice.exception.ForBiddenException;
+import vn.ictu.usermanagementservice.exception.InvalidDataException;
+import vn.ictu.usermanagementservice.model.Role;
+import vn.ictu.usermanagementservice.model.UserEntity;
+import vn.ictu.usermanagementservice.repository.RoleRepository;
+import vn.ictu.usermanagementservice.repository.UserRepository;
+import vn.ictu.usermanagementservice.service.AuthService;
+import vn.ictu.usermanagementservice.service.JwtService;
+import vn.ictu.usermanagementservice.utils.NameUtils;
+
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+import static vn.ictu.usermanagementservice.common.enums.TokenType.REFRESH_TOKEN;
+
+
+@Service
+@RequiredArgsConstructor
+@Slf4j(topic = "AUTH-SERVICE")
+public class AuthServiceImpl implements AuthService {
+    private final JwtService jwtService;
+    private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
+    private final AuthenticationManager authenticationManager;
+    private final PasswordEncoder passwordEncoder;
+    //private final EmailClient emailClient;
+
+
+    @Override
+    public TokenResponse login(SignInRequest request) {
+        try {
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+            );
+
+            log.info("✅ Login success for email={}", request.getEmail());
+            log.info(request.getPassword());
+
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            List<String> authorities = authentication.getAuthorities()
+                    .stream()
+                    .map(a -> a.getAuthority())
+                    .toList();
+
+            String accessToken = jwtService.generateAccessToken(authentication.getName(), authorities);
+            String refreshToken = jwtService.generateRefreshToken(authentication.getName(), authorities);
+
+            return TokenResponse.builder()
+                    .accessToken(accessToken)
+                    .refreshToken(refreshToken)
+                    .build();
+
+        } catch (BadCredentialsException e) {
+            throw new BadCredentialsException("Sai email hoặc mật khẩu");
+        } catch (DisabledException e) {
+            throw new DisabledException("Tài khoản bị vô hiệu hóa");
+        }
+    }
+
+
+    @Override
+    public TokenResponse getRefreshToken(String refreshToken) {
+        if (!StringUtils.hasLength(refreshToken)) {
+            throw new InvalidDataException("Token must be not blank");
+        }
+
+        try {
+            String email = jwtService.extractEmail(refreshToken, REFRESH_TOKEN);
+
+            UserEntity userEmail = userRepository.findByEmail(email);
+
+            List<String> authorities = new ArrayList<>();
+            userEmail.getAuthorities().forEach(authority -> authorities.add(authority.getAuthority()));
+
+            String accessToken = jwtService.generateAccessToken(userEmail.getEmail(), authorities);
+
+            return TokenResponse.builder().accessToken(accessToken).refreshToken(refreshToken).build();
+        } catch (Exception e) {
+            throw new ForBiddenException(e.getMessage());
+        }
+    }
+
+    @Override
+    public void register(SignUpRequest request) {
+        if (userRepository.findByEmail(request.getEmail()) != null) {
+            throw new InvalidDataException("Email is already in use");
+        }
+        String[] names = NameUtils.splitFullName(request.getFullName());
+        String lastName = names[0];
+        String firstName = names[1];
+
+        Role role = roleRepository.findByRoleName("USER")
+                .orElseThrow(() -> new RuntimeException("Default role USER not found"));
+
+        String generatedUsername = role.getRoleName().toLowerCase()
+                + "_" + UUID.randomUUID().toString().substring(0, 8);
+
+        UserEntity user = UserEntity.builder()
+                .username(generatedUsername)
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .firstName(firstName)
+                .lastName(lastName)
+                .role(role)
+                .status(UserStatus.PENDING)
+                .build();
+
+        userRepository.save(user);
+
+        // Gửi email xác thực
+//        String verifyLink = "https://roomgo.com/verify?email=" + user.getEmail();
+//        emailClient.sendVerificationEmail(
+//                user.getEmail(),
+//                user.getFirstName() + " " + user.getLastName(),
+//                verifyLink
+//        );
+    }
+
+    @Override
+    public void verifyEmail(String email) {
+        UserEntity user = userRepository.findByEmail(email);
+        if (user == null) {
+            throw new InvalidDataException("Email not found");
+        }
+        if (user.getStatus() == UserStatus.ACTIVE) {
+            throw new InvalidDataException("Account already verified");
+        }
+        user.setStatus(UserStatus.ACTIVE);
+        userRepository.save(user);
+    }
+
+
+}

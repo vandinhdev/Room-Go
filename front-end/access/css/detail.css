@@ -16,7 +16,6 @@
 
 .similar-form {
     position: relative;
-    max-width: 1200px;
     margin: 32px auto;
     background-color: #fff;
     padding: 20px;
@@ -46,6 +45,7 @@
     flex-direction: column;
     justify-content: space-between;
     width: 240px;
+    padding-bottom: 12px;
     background: #fff;
     border-radius: 8px;
     box-shadow: 0 2px 6px rgba(0,0,0,0.1);
