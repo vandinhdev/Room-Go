@@ -191,50 +191,61 @@ body {
 .favourite-container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 32px 20px;
+    padding: 24px 0;
     background: #fff;
 }
 
-.saved-card {
+.favourite-title {
+    font-size: 20px;
+    color: #000;
+    font-weight: 600;
+    padding-left: 12px;
+    margin-bottom: 12px;
+}
+
+.favourite-card {
   display: flex;
   align-items: flex-start;
   background: #fff;
-  border-radius: 6px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  margin-bottom: 15px;
-  padding: 10px;
+  padding: 12px;
+  border-top: 1px solid #ccc;
+  cursor: pointer;
+  position: relative;
 }
 
-.saved-card img {
+.favourite-card:hover {
+    box-shadow: 0 1px 8px 0 rgba(0, 0, 0, .3);
+    z-index: 1;
+}
+
+.favourite-card img {
   width: 120px;
   height: 90px;
   object-fit: cover;
-  border-radius: 4px;
   margin-right: 12px;
+  border: 1px solid red;
 }
 
-.saved-info {
+.favourite-info {
   flex: 1;
 }
 
-.saved-info h4 {
+.favourite-info h4 {
   font-size: 16px;
-  margin: 0;
   font-weight: 600;
 }
 
-.saved-info .price {
-  color: red;
+.favourite-price {
+  color: #ff6b35;
   font-weight: bold;
   margin: 4px 0;
 }
 
-.saved-info .meta {
-  color: #777;
-  font-size: 13px;
+.favourite-description {
+    color: #444;
 }
 
-.saved-actions {
+.favourite-actions {
   display: flex;
   flex-direction: column;
   align-items: center;

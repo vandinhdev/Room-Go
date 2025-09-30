@@ -16,13 +16,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (favouriteRooms.length !== 0) {
     container.innerHTML = `
-        <h2>Tin đăng đã lưu (${favouriteRooms.length} / 100)</h2>
+        <div class="favourite-title">Tin đăng đã lưu (${favouriteRooms.length} / 100)</div>
         ${favouriteRooms.map(room => `
             <div class="favourite-card" onclick="viewDetail(${room.id})">
             <img src="${room.image || 'https://via.placeholder.com/120x90'}" alt="${room.title}">
             <div class="favourite-info">
                 <h4>${room.title}</h4>
                 <p class="favourite-price">${room.price ? room.price.toLocaleString() : ''} /tháng</p>
+                <p class="favourite-description">${room.description}</p>
             </div>
             
             </div>
