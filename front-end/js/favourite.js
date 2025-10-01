@@ -14,8 +14,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const container = document.querySelector(".favourite-container");
     const favouriteRooms = getFavouriteRooms();
 
-    if (favouriteRooms.length !== 0) {
-    container.innerHTML = `
+    if (favouriteRooms.length === 0) {
+        container.innerHTML = `
+            <div class="favourite-title">Tin đăng đã lưu (${favouriteRooms.length} / 100)</div>
+            <div class="favourite-notifycation">Bạn chưa lưu tin đăng nào!</div>
+        `
+    } else {
+        container.innerHTML = `
         <div class="favourite-title">Tin đăng đã lưu (${favouriteRooms.length} / 100)</div>
         ${favouriteRooms.map(room => `
             <div class="favourite-card" onclick="viewDetail(${room.id})">
@@ -25,7 +30,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 <p class="favourite-price">${room.price ? room.price.toLocaleString() : ''} /tháng</p>
                 <p class="favourite-description">${room.description}</p>
             </div>
-            
+            <div class="favourite-remove" onclick="event.stopPropagation(); removeRoom(${room.id}); location.reload();">
+              ❤️
+            </div>
             </div>
         `).join("")}
         `;

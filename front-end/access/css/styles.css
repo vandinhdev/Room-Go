@@ -203,6 +203,12 @@ body {
     margin-bottom: 12px;
 }
 
+.favourite-notifycation {
+    font-size: 18px;
+    text-align: center;
+    color: #000;
+}
+
 .favourite-card {
   display: flex;
   align-items: flex-start;
@@ -245,11 +251,12 @@ body {
     color: #444;
 }
 
-.favourite-actions {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+.favourite-remove {
+    position: absolute;
+    right: 18px;
+    top: 48px;
+    font-size: 24px;
+    cursor: pointer;
 }
 
 
