@@ -705,6 +705,11 @@ body {
     cursor: pointer;
     transition: background 0.2s;
 }
+
+.heart-filled {
+  color: red;
+}
+
 .heart-icon:hover {
     background: white;
 }

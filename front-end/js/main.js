@@ -103,7 +103,9 @@ function renderRooms(rooms) {
             <div class="listing-image">
                 <div style="background: linear-gradient(135deg, #8B4513, #D2B48C); width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px;">${room.title}</div>
                 <div class="image-overlay">${room.status === 'available' ? 'Có phòng' : 'Đã thuê'}</div>
-                <div class="heart-icon">${isSaved ? '❤️' : '🤍'}</div>
+                <div class="heart-icon">
+                    <i class="${isSaved ? 'fa-solid heart-filled' : 'fa-regular heart-empty'} fa-heart"></i>
+                </div>
             </div>
             <div class="listing-content">
                 <div class="listing-title">${room.title}</div>
@@ -135,12 +137,15 @@ function renderRooms(rooms) {
         });
         card.querySelector('.heart-icon').addEventListener('click', function (e) {
             e.stopPropagation();
-            if (this.innerHTML === '🤍') {
-                this.innerHTML = '❤️';
-                saveRoom(room);
-            } else {
-                this.innerHTML = '🤍';
+            const icon = this.querySelector('i');
+            if (icon.classList.contains('heart-filled')) {
+                icon.classList.remove('fa-solid', 'heart-filled');
+                icon.classList.add('fa-regular', 'heart-empty');
                 removeRoom(room.id);
+            } else {
+                icon.classList.remove('fa-regular', 'heart-empty');
+                icon.classList.add('fa-solid', 'heart-filled');
+                saveRoom(room);
             }
         });
         grid.appendChild(card);
