@@ -90,25 +90,8 @@ function initializeHeader() {
             });
         })
         .catch(error => console.error('Error loading provinces:', error));
-    
-    // const favoriteBtn = document.getElementById("favourite-btn");
-    // const savedPopup = document.querySelector(".favourite-room");
 
-    // if (favoriteBtn && savedPopup) {
-    //     favoriteBtn.addEventListener("click", (e) => {
-    //         e.preventDefault();
-    //         e.stopPropagation();
-    //         savedPopup.style.display =
-    //             savedPopup.style.display === "block" ? "none" : "block";
-    //     });
-
-    //     document.addEventListener("click", (e) => {
-    //         if (!favoriteBtn.contains(e.target) && !savedPopup.contains(e.target)) {
-    //             savedPopup.style.display = "none";
-    //         }
-    //     });
-    // }
-
+        
     const favouriteBtn = document.getElementById("favourite-btn");
     const savedPopup = document.querySelector(".favourite-room");
 
