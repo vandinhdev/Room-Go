@@ -31,7 +31,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <p class="favourite-description">${room.description}</p>
             </div>
             <div class="favourite-remove" onclick="event.stopPropagation(); removeRoom(${room.id}); location.reload();">
-              ❤️
+              <i class="fa-solid fa-heart heart-filled"></i>
             </div>
             </div>
         `).join("")}
