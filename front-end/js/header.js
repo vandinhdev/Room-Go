@@ -111,6 +111,34 @@ function initializeHeader() {
     if (userMenuTrigger) {
         userMenuTrigger.addEventListener('click', function() {
             dropdownMenu.classList.toggle('show');
+            //nếu là admin thì hiện menu quản lý
+            const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+            if (userInfo && userInfo.role === 'admin') {
+                const adminMenuItem = document.createElement('a');
+                adminMenuItem.href = '#';
+                adminMenuItem.classList.add('menu-item');
+                adminMenuItem.innerHTML = `
+                    <i class="fas fa-cog"></i>
+                    <div class="menu-item-content">
+                        <span class="menu-item-title">Quản lý</span>
+                    </div>
+                `;
+                dropdownMenu.querySelector('.dropdown-body').appendChild(adminMenuItem);
+            } else {
+                const existingAdminItem = dropdownMenu.querySelector('.menu-item i.fas.fa-cog');
+                if (!existingAdminItem) {
+                    const adminMenuItem = document.createElement('a');
+                    adminMenuItem.href = '#';
+                    adminMenuItem.classList.add('menu-item');
+                    adminMenuItem.innerHTML = `
+                        <i class="fas fa-cog"></i>
+                        <div class="menu-item-content">
+                            <span class="menu-item-title">Quản lý</span>
+                        </div>
+                    `;
+                    dropdownMenu.querySelector('.dropdown-body').appendChild(adminMenuItem);
+                }
+            }
         });
 
         // Đóng dropdown khi click bên ngoài

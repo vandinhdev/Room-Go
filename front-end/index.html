@@ -91,6 +91,55 @@
     </div>
 
     <script type="module" src="./js/main.js" defer></script>
+    <script>
+        // Xử lý lọc tỉnh thành, giá, diện tích
+        document.addEventListener('DOMContentLoaded', function() {
+            const provinceSelect = document.getElementById('provinceSelect');
+            const priceFilter = document.getElementById('priceFilter');
+            const areaFilter = document.getElementById('areaFilter');
+            const clearBtn = document.querySelector('.clear-filters');
+            // Lưu lại hàm renderRooms từ main.js
+            let roomsData = window.roomsData || [];
+            if (!roomsData.length && window.rooms) roomsData = window.rooms;
+            function getFilteredRooms() {
+                let filtered = roomsData;
+                // Lọc tỉnh thành
+                const province = provinceSelect.value;
+                if (province) {
+                    filtered = filtered.filter(r => r.address && r.address.includes(province));
+                }
+                // Lọc giá
+                switch (priceFilter.value) {
+                    case '1': filtered = filtered.filter(r => r.price < 1000000); break;
+                    case '2': filtered = filtered.filter(r => r.price >= 1000000 && r.price <= 2000000); break;
+                    case '3': filtered = filtered.filter(r => r.price > 2000000 && r.price <= 3000000); break;
+                    case '4': filtered = filtered.filter(r => r.price > 3000000); break;
+                }
+                // Lọc diện tích
+                switch (areaFilter.value) {
+                    case '1': filtered = filtered.filter(r => r.area < 15); break;
+                    case '2': filtered = filtered.filter(r => r.area >= 15 && r.area <= 25); break;
+                    case '3': filtered = filtered.filter(r => r.area > 25 && r.area <= 35); break;
+                    case '4': filtered = filtered.filter(r => r.area > 35); break;
+                }
+                return filtered;
+            }
+            function updateRooms() {
+                if (window.renderRooms) {
+                    window.renderRooms(getFilteredRooms());
+                }
+            }
+            provinceSelect.addEventListener('change', updateRooms);
+            priceFilter.addEventListener('change', updateRooms);
+            areaFilter.addEventListener('change', updateRooms);
+            clearBtn.addEventListener('click', function() {
+                provinceSelect.value = '';
+                priceFilter.value = '';
+                areaFilter.value = '';
+                updateRooms();
+            });
+        });
+    </script>
     <script type="module" src="js/header.js"></script>
     <script src="js/footer.js"></script>
 </body>

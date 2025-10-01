@@ -111,22 +111,14 @@ function renderRooms(rooms) {
                 <div class="listing-price">${formatPrice(room.price)}</div>
                 <div class="listing-area">${room.area ? room.area + ' m²' : ''}</div>
                 <div class="listing-location">
-                    <span>📍</span>
+                    <span class="location-icon"><i class="fa-solid fa-location-dot"></i></span>
                     <span>${room.address || ''}</span>
                 </div>
                 <div class="listing-footer">
                     <div class="user-info">
                         <div class="user-avatar">${String(room.owner_id).slice(-1)}</div>
                         <span>Chủ phòng #${room.owner_id}</span>
-                        <span>${room.status === 'available' ? 'Còn phòng' : 'Đã thuê'}</span>
                     </div>
-                    ${isAdmin() ? `
-                    <div class="listing-actions">
-                        <a href="roomForm.html?id=${room.id}" class="btn-edit" onclick="event.stopPropagation()">
-                            <span>✏️</span> Sửa
-                        </a>
-                    </div>
-                    ` : ''}
                 </div>
             </div>
         `;
