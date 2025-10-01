@@ -1,5 +1,9 @@
 <!-- Header -->
 <header class="header">
+    <div class="mobile-menu-toggle">
+        <i class="fa-solid fa-bars"></i>
+    </div>
+    
     <div class="header-left">
         <div class="logo">ROOM GO</div>
         <div class="location-selector">
@@ -11,13 +15,12 @@
     </div>
     
     <div class="search-container">
-        
         <input type="text" class="search-box" placeholder="Tìm phòng trọ...">
-</div>
+    </div>
     
     <div class="header-right">
-        <a href="chat.html" class="header-btn"><i class="fa-regular fa-message"></i></a>
-        <div class="header-btn" id="favourite-btn" ><i class="fa-regular fa-heart"></i></div>
+        <a href="chat.html" class="header-btn mobile-hide"><i class="fa-regular fa-message"></i></a>
+        <div class="header-btn mobile-hide" id="favourite-btn"><i class="fa-regular fa-heart"></i></div>
         <div class="favourite-room">
             <div class="favourite-header">
                 Tin đăng đã lưu
@@ -28,7 +31,9 @@
             </div>
         </div>
         <a href="roomForm.html" class="header-btn post-btn">Đăng tin</a>
-        <div id="authButtons">
+        <!-- Test buttons for development -->
+        
+        <div id="authButtons" class="auth-buttons">
             <!-- Will be populated by JS -->
         </div>
         <div class="user-menu d-none">

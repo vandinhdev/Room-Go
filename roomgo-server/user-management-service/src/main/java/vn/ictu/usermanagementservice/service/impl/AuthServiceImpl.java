@@ -122,7 +122,7 @@ public class AuthServiceImpl implements AuthService {
                 .firstName(firstName)
                 .lastName(lastName)
                 .role(role)
-                .status(UserStatus.PENDING)
+                .status(UserStatus.ACTIVE)
                 .build();
 
         userRepository.save(user);

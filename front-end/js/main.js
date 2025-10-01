@@ -185,6 +185,37 @@ function updateRooms() {
 
 renderRooms(rooms);
 
+// Test function for quick login (for development/testing)
+window.testLogin = async function(email = 'admin@gmail.com', password = 'password') {
+    const { users, login } = await import('./mockUsers.js');
+    const user = users.find(u => u.email === email);
+    if (user && user.password === password) {
+        login(user.username, user.password);
+        console.log('Test login successful:', user);
+        updateAuthUI();
+        return user;
+    } else {
+        console.log('Test login failed');
+        return null;
+    }
+};
+
+// Test function for quick logout
+window.testLogout = async function() {
+    const { logout } = await import('./mockUsers.js');
+    logout();
+    console.log('Test logout successful');
+    updateAuthUI();
+};
+
+// Function to wait for header elements to be loaded
+function waitForHeaderAndUpdateAuth() {
+    // Listen for the custom headerLoaded event
+    document.addEventListener('headerLoaded', function() {
+        updateAuthUI();
+    });
+}
+
 function updateAuthUI() {
     const user = getCurrentUser();
     const authButtons = document.getElementById('authButtons');
@@ -197,8 +228,11 @@ function updateAuthUI() {
     }
 
     if (user) {
+        // User đã đăng nhập - Ẩn nút đăng nhập và hiển thị user menu
         authButtons.innerHTML = '';
+        authButtons.style.display = 'none';
         userMenu.classList.remove('d-none');
+        userMenu.style.display = 'block';
 
         const avatar = userMenu.querySelector('.user-avatar');
         const name = userMenu.querySelector('.user-name');
@@ -206,30 +240,111 @@ function updateAuthUI() {
         const nameLarge = userMenu.querySelector('.user-name-large');
         const email = userMenu.querySelector('.user-email');
 
-        if (avatar) avatar.textContent = user.fullName[0];
+        if (avatar) {
+            avatar.textContent = user.fullName[0].toUpperCase();
+            // Thêm style cho avatar
+            avatar.style.backgroundColor = '#ff6b35';
+            avatar.style.color = 'white';
+            avatar.style.fontWeight = 'bold';
+            avatar.style.display = 'flex';
+            avatar.style.alignItems = 'center';
+            avatar.style.justifyContent = 'center';
+            avatar.style.width = '32px';
+            avatar.style.height = '32px';
+            avatar.style.borderRadius = '50%';
+        }
         if (name) name.textContent = user.fullName;
-        if (avatarLarge) avatarLarge.textContent = user.fullName[0];
+        if (avatarLarge) {
+            avatarLarge.textContent = user.fullName[0].toUpperCase();
+            // Thêm style cho avatar lớn
+            avatarLarge.style.backgroundColor = '#ff6b35';
+            avatarLarge.style.color = 'white';
+            avatarLarge.style.fontWeight = 'bold';
+            avatarLarge.style.display = 'flex';
+            avatarLarge.style.alignItems = 'center';
+            avatarLarge.style.justifyContent = 'center';
+            avatarLarge.style.width = '48px';
+            avatarLarge.style.height = '48px';
+            avatarLarge.style.borderRadius = '50%';
+        }
         if (nameLarge) nameLarge.textContent = user.fullName;
         if (email) email.textContent = user.email;
 
         if (addRoomBtn) addRoomBtn.style.display = isAdmin() ? 'block' : 'none';
+        
+        console.log('User đã đăng nhập:', user.fullName);
     } else {
+        // User chưa đăng nhập - Hiển thị nút đăng nhập và ẩn user menu
         authButtons.innerHTML = `
             <a href="auth.html" class="header-btn login-btn">Đăng nhập</a>
         `;
+        authButtons.style.display = 'block';
         userMenu.classList.add('d-none');
+        userMenu.style.display = 'none';
         if (addRoomBtn) addRoomBtn.style.display = 'none';
+        
+        console.log('User chưa đăng nhập');
     }
 }
 
 document.addEventListener('DOMContentLoaded', function () {
+    // Wait for header to be loaded before updating auth UI
+    waitForHeaderAndUpdateAuth();
+
+    // Initialize non-header elements and functionality that doesn't depend on header
+    initializeFiltersAndTabs();
+
+    // Wait for header to be loaded before setting up header-dependent functionality
+    document.addEventListener('headerLoaded', function() {
+        initializeHeaderDependentElements();
+    });
+});
+
+function initializeFiltersAndTabs() {
+    // Initialize elements that don't depend on header
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+    document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', function () {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+    
+    document.querySelectorAll('.view-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+        });
+    });
+    document.querySelectorAll('.price-option').forEach(option => {
+        option.addEventListener('click', function () {
+            document.querySelectorAll('.price-option').forEach(o => o.style.background = '');
+            this.style.background = '#fff3f0';
+            this.style.borderColor = '#ff6b35';
+        });
+    });
+
+    const sortControl = document.querySelector('.sort-control');
+    if (sortControl) {
+        sortControl.addEventListener('click', function () {
+            const sorted = [...getFilteredRooms()].sort((a, b) => b.price - a.price);
+            renderRooms(sorted);
+        });
+    }
+}
+
+function initializeHeaderDependentElements() {
     const provinceSelect = document.getElementById('provinceSelect');
     const districtSelect = document.getElementById('districtSelect');
     const wardSelect = document.getElementById('wardSelect');
-
-    updateAuthUI();
-
     const logoutBtn = document.getElementById('logoutButton'); // ✅ fix ID cho đúng với header.html
+
+    // Setup logout button
     if (logoutBtn) {
         logoutBtn.addEventListener('click', async (e) => {
             e.preventDefault();
@@ -241,9 +356,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    const priceFilter = document.getElementById('priceFilter');
-    const areaFilter = document.getElementById('areaFilter');
-    const clearBtn = document.querySelector('.clear-filters');
+    // Setup location selectors
 
     let provinceList = [];
     let districtMap = {};
@@ -298,6 +411,12 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     if (wardSelect) wardSelect.addEventListener('change', updateRooms);
+
+    // Setup price and area filters
+    const priceFilter = document.getElementById('priceFilter');
+    const areaFilter = document.getElementById('areaFilter');
+    const clearBtn = document.querySelector('.clear-filters');
+
     if (priceFilter) priceFilter.addEventListener('change', updateRooms);
     if (areaFilter) areaFilter.addEventListener('change', updateRooms);
     if (clearBtn) clearBtn.addEventListener('click', function () {
@@ -307,32 +426,6 @@ document.addEventListener('DOMContentLoaded', function () {
         if (priceFilter) priceFilter.value = '';
         if (areaFilter) areaFilter.value = '';
         updateRooms();
-    });
-
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.addEventListener('click', function () {
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-        });
-    });
-    document.querySelectorAll('.tab').forEach(tab => {
-        tab.addEventListener('click', function () {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            this.classList.add('active');
-        });
-    });
-    document.querySelectorAll('.view-btn').forEach(btn => {
-        btn.addEventListener('click', function () {
-            document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-        });
-    });
-    document.querySelectorAll('.price-option').forEach(option => {
-        option.addEventListener('click', function () {
-            document.querySelectorAll('.price-option').forEach(o => o.style.background = '');
-            this.style.background = '#fff3f0';
-            this.style.borderColor = '#ff6b35';
-        });
     });
 
     const searchBox = document.querySelector('.search-box');
@@ -346,61 +439,5 @@ document.addEventListener('DOMContentLoaded', function () {
             renderRooms(filtered);
         });
     }
-
-    const sortControl = document.querySelector('.sort-control');
-    if (sortControl) {
-        sortControl.addEventListener('click', function () {
-            const sorted = [...getFilteredRooms()].sort((a, b) => b.price - a.price);
-            renderRooms(sorted);
-        });
-    }
-});
-
-// Xử lý lọc tỉnh thành, giá, diện tích
-document.addEventListener('DOMContentLoaded', function() {
-    const provinceSelect = document.getElementById('provinceSelect');
-    const priceFilter = document.getElementById('priceFilter');
-    const areaFilter = document.getElementById('areaFilter');
-    const clearBtn = document.querySelector('.clear-filters');
-    // Lưu lại hàm renderRooms từ main.js
-    let roomsData = window.roomsData || [];
-    if (!roomsData.length && window.rooms) roomsData = window.rooms;
-    function getFilteredRooms() {
-        let filtered = roomsData;
-        // Lọc tỉnh thành
-        const province = provinceSelect.value;
-        if (province) {
-            filtered = filtered.filter(r => r.address && r.address.includes(province));
-        }
-        // Lọc giá
-        switch (priceFilter.value) {
-            case '1': filtered = filtered.filter(r => r.price < 1000000); break;
-            case '2': filtered = filtered.filter(r => r.price >= 1000000 && r.price <= 2000000); break;
-            case '3': filtered = filtered.filter(r => r.price > 2000000 && r.price <= 3000000); break;
-            case '4': filtered = filtered.filter(r => r.price > 3000000); break;
-        }
-        // Lọc diện tích
-        switch (areaFilter.value) {
-            case '1': filtered = filtered.filter(r => r.area < 15); break;
-            case '2': filtered = filtered.filter(r => r.area >= 15 && r.area <= 25); break;
-            case '3': filtered = filtered.filter(r => r.area > 25 && r.area <= 35); break;
-            case '4': filtered = filtered.filter(r => r.area > 35); break;
-        }
-        return filtered;
-    }
-    function updateRooms() {
-        if (window.renderRooms) {
-            window.renderRooms(getFilteredRooms());
-        }
-    }
-    provinceSelect.addEventListener('change', updateRooms);
-    priceFilter.addEventListener('change', updateRooms);
-    areaFilter.addEventListener('change', updateRooms);
-    clearBtn.addEventListener('click', function() {
-        provinceSelect.value = '';
-        priceFilter.value = '';
-        areaFilter.value = '';
-        updateRooms();
-    });
-});
+}
 
