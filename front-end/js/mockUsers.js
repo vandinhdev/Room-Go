@@ -8,6 +8,8 @@ const usersList = [
         email: "admin@gmail.com", // Email như trong file login.js cũ
         phone: "0123456789",
         role: "admin",
+        avatar: "https://i.pravatar.cc/150?img=3",
+        status: "active",
         created_at: "2025-09-01T08:00:00Z"
     },
     {
@@ -18,6 +20,8 @@ const usersList = [
         email: "usera@example.com",
         phone: "0987654321", 
         role: "user",
+        avatar: "https://i.pravatar.cc/150?img=5",
+        status: "active",
         created_at: "2025-09-01T08:00:00Z"
     },
     {
@@ -28,7 +32,33 @@ const usersList = [
         email: "userb@example.com",
         phone: "0987654322",
         role: "user",
+        avatar: "https://i.pravatar.cc/150?img=9",
+        status: "active",
         created_at: "2025-09-01T08:00:00Z"
+    },
+    {
+        id: 104,
+        username: "user3",
+        password: "user123",
+        fullName: "Lê Văn C",
+        email: "userc@example.com",
+        phone: "0987654323",
+        role: "user",
+        avatar: "https://i.pravatar.cc/150?img=7",
+        status: "inactive",
+        created_at: "2025-09-15T10:30:00Z"
+    },
+    {
+        id: 105,
+        username: "admin2",
+        password: "admin123",
+        fullName: "Nguyễn Thị Admin",
+        email: "admin2@example.com",
+        phone: "0123456790",
+        role: "admin",
+        avatar: "https://i.pravatar.cc/150?img=12",
+        status: "active",
+        created_at: "2025-08-20T14:15:00Z"
     }
 ];
 
@@ -38,7 +68,13 @@ function login(username, password) {
     const user = usersList.find(u => u.username === username && u.password === password);
     if (user) {
         currentUser = user;
+        // Tạo userInfo object với token để tương thích với header.js
+        const userInfo = {
+            ...user,
+            token: `token-${user.id}-${Date.now()}`
+        };
         localStorage.setItem('currentUser', JSON.stringify(user));
+        localStorage.setItem('userInfo', JSON.stringify(userInfo));
         return user;
     }
     return null;
@@ -47,6 +83,7 @@ function login(username, password) {
 function logout() {
     currentUser = null;
     localStorage.removeItem('currentUser');
+    localStorage.removeItem('userInfo');
 }
 
 function getCurrentUser() {
@@ -64,5 +101,18 @@ function isAdmin() {
     return user && user.role === 'admin';
 }
 
-export const users = usersList;
-export { login, logout, getCurrentUser, isAdmin };
+// Helper function để đồng bộ currentUser và userInfo
+function syncUserData(user) {
+    if (user) {
+        const userInfo = {
+            ...user,
+            token: user.token || `token-${user.id}-${Date.now()}`
+        };
+        localStorage.setItem('currentUser', JSON.stringify(user));
+        localStorage.setItem('userInfo', JSON.stringify(userInfo));
+    }
+}
+
+// Export mutable users array for admin management
+export { usersList as users, login, logout, getCurrentUser, isAdmin, syncUserData };
+export const allUsers = usersList; // Alternative export

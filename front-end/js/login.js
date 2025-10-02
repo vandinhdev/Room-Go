@@ -1,5 +1,12 @@
 let isLoginForm = true;
 
+document.getElementById('forgotPasswordBtn')?.addEventListener('click', showForgotPassword);
+document.getElementById('googleLoginBtn')?.addEventListener('click', loginWithGoogle);
+document.getElementById('facebookLoginBtn')?.addEventListener('click', loginWithFacebook);
+document.getElementById('toggleLoginPassword')?.addEventListener('click', () => togglePassword('loginPassword'));
+document.getElementById('toggleRegisterPassword')?.addEventListener('click', () => togglePassword('registerPassword'));
+document.getElementById('toggleConfirmPassword')?.addEventListener('click', () => togglePassword('confirmPassword'));
+
 function toggleAuthForm() {
     const loginForm = document.getElementById('loginForm');
     const registerForm = document.getElementById('registerForm');

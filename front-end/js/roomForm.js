@@ -289,7 +289,7 @@ function handleFiles(files) {
                 imageContainer.appendChild(imgDiv);
                 
                 // Store image data
-                uploadedImages.push({
+                window.uploadedImages.push({
                     id: imgId,
                     file: file,
                     dataUrl: e.target.result
@@ -299,8 +299,9 @@ function handleFiles(files) {
                 imgDiv.querySelector('.delete-image').addEventListener('click', function() {
                     const imageId = this.getAttribute('data-id');
                     
-                    // Check minimum number of images (3)
-                    if (document.querySelectorAll('.image-upload').length <= 3) {
+                    // Check minimum number of images (3) - only prevent deletion if we would go below 3
+                    const currentImageCount = document.querySelectorAll('.image-upload').length;
+                    if (currentImageCount <= 3) {
                         alert('Phải có ít nhất 3 hình ảnh cho phòng trọ!');
                         return;
                     }
@@ -325,9 +326,9 @@ function removeImage(imageId, element) {
     element.remove();
     
     // Remove from our array
-    const index = uploadedImages.findIndex(img => img.id === imageId);
+    const index = window.uploadedImages.findIndex(img => img.id === imageId);
     if (index !== -1) {
-        uploadedImages.splice(index, 1);
+        window.uploadedImages.splice(index, 1);
     }
     
     // Update numbering
@@ -480,7 +481,7 @@ function loadRoomData(roomId) {
     document.getElementById('price').value = room.price;
     document.getElementById('area').value = room.area;
     document.getElementById('address').value = room.address;
-    document.getElementById('status').value = room.status;
+    
     
     // Lưu tọa độ nếu có
     if (room.latitude) document.getElementById('latitude').value = room.latitude;
@@ -739,81 +740,122 @@ function updateAddressSuggestion() {
 async function handleSubmit(event) {
     event.preventDefault();
     
-    if (!event.target.checkValidity()) {
-        event.stopPropagation();
-        event.target.classList.add('was-validated');
-        return;
-    }
+    // Show loading state
+    const submitBtn = document.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Đang lưu...';
+    submitBtn.disabled = true;
     
-    // Check if we have enough images
-    const imageCount = document.querySelectorAll('.image-upload').length;
-    if (imageCount < 3) {
-        alert('Vui lòng tải lên ít nhất 3 hình ảnh cho phòng trọ.');
-        return;
-    }
-    
-    const formData = {
-        id: document.getElementById('roomId').value || Date.now(),
-        owner_id: 101, // Hardcoded for now, should come from authenticated user
-        title: document.getElementById('title').value,
-        description: document.getElementById('description').value,
-        price: parseInt(document.getElementById('price').value),
-        area: parseFloat(document.getElementById('area').value),
-        address: document.getElementById('address').value,
-        ward: document.getElementById('ward').value,
-        district: document.getElementById('district').value,
-        province: document.getElementById('province').value,
-        status: document.getElementById('status').value,
-        latitude: document.getElementById('latitude')?.value || null,
-        longitude: document.getElementById('longitude')?.value || null,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-    };
-    
-    // Get images
-    const images = [];
-    
-    // Get images from uploadedImages array (now global)
-    if (window.uploadedImages && window.uploadedImages.length > 0) {
-        // New UI: get images from uploadedImages array
-        window.uploadedImages.forEach((img, index) => {
-            images.push({
-                id: Date.now() + index,
-                room_id: formData.id,
-                url: img.dataUrl,
-                description: img.description || '',
-                created_at: new Date().toISOString()
-            });
-        });
-    } else {
-        // Fallback: get images from DOM (for backward compatibility)
-        const imageUploads = document.querySelectorAll('.image-upload');
+    try {
+        // Basic form validation
+        if (!event.target.checkValidity()) {
+            event.stopPropagation();
+            event.target.classList.add('was-validated');
+            throw new Error('Vui lòng điền đầy đủ thông tin bắt buộc');
+        }
         
-        for (let i = 0; i < imageUploads.length; i++) {
-            const imgElement = imageUploads[i].querySelector('img.image-preview');
+        // Check if we have enough images
+        const imageCount = document.querySelectorAll('.image-upload').length;
+        if (imageCount < 3) {
+            throw new Error('Vui lòng tải lên ít nhất 3 hình ảnh cho phòng trọ.');
+        }
+        
+        // Validate required location fields
+        const province = document.getElementById('province').value;
+        const district = document.getElementById('district').value;
+        const ward = document.getElementById('ward').value;
+        const address = document.getElementById('address').value;
+        
+        if (!province || !district || !ward || !address) {
+            throw new Error('Vui lòng điền đầy đủ thông tin địa chỉ (tỉnh/thành phố, quận/huyện, phường/xã và địa chỉ cụ thể)');
+        }
+        
+        // Validate price and area are positive numbers
+        const price = parseInt(document.getElementById('price').value);
+        const area = parseFloat(document.getElementById('area').value);
+        
+        if (price <= 0) {
+            throw new Error('Giá thuê phải lớn hơn 0');
+        }
+        
+        if (area <= 0) {
+            throw new Error('Diện tích phải lớn hơn 0');
+        }
+        
+        const formData = {
+            id: document.getElementById('roomId').value || Date.now(),
+            owner_id: 101, // Hardcoded for now, should come from authenticated user
+            title: document.getElementById('title').value,
+            description: document.getElementById('description').value,
+            price: parseInt(document.getElementById('price').value),
+            area: parseFloat(document.getElementById('area').value),
+            address: document.getElementById('address').value,
+            ward: document.getElementById('ward').value,
+            district: document.getElementById('district').value,
+            province: document.getElementById('province').value,
             
-            if (imgElement && imgElement.src) {
+            latitude: document.getElementById('latitude')?.value || null,
+            longitude: document.getElementById('longitude')?.value || null,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+        };
+        
+        // Get images
+        const images = [];
+        
+        // Get images from uploadedImages array (now global)
+        if (window.uploadedImages && window.uploadedImages.length > 0) {
+            // New UI: get images from uploadedImages array
+            window.uploadedImages.forEach((img, index) => {
                 images.push({
-                    id: Date.now() + i,
+                    id: Date.now() + index,
                     room_id: formData.id,
-                    url: imgElement.src,
-                    description: '',
+                    url: img.dataUrl,
+                    description: img.description || '',
                     created_at: new Date().toISOString()
                 });
+            });
+        } else {
+            // Fallback: get images from DOM (for backward compatibility)
+            const imageUploads = document.querySelectorAll('.image-upload');
+            
+            for (let i = 0; i < imageUploads.length; i++) {
+                const imgElement = imageUploads[i].querySelector('img.image-preview');
+                
+                if (imgElement && imgElement.src) {
+                    images.push({
+                        id: Date.now() + i,
+                        room_id: formData.id,
+                        url: imgElement.src,
+                        description: '',
+                        created_at: new Date().toISOString()
+                    });
+                }
             }
         }
+        
+        formData.images = images;
+        
+        // Update or add to rooms array
+        const index = rooms.findIndex(r => r.id === parseInt(formData.id));
+        if (index !== -1) {
+            rooms[index] = { ...rooms[index], ...formData };
+        } else {
+            rooms.push(formData);
+        }
+        
+        // Show success message
+        alert('Đăng tin thành công! Tin của bạn đã được lưu.');
+        
+        // Redirect back to listing page
+        window.location.href = 'index.html';
+        
+    } catch (error) {
+        console.error('Error submitting form:', error);
+        alert(error.message || 'Có lỗi xảy ra khi đăng tin. Vui lòng thử lại.');
+    } finally {
+        // Restore button state
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
     }
-    
-    formData.images = images;
-    
-    // Update or add to rooms array
-    const index = rooms.findIndex(r => r.id === parseInt(formData.id));
-    if (index !== -1) {
-        rooms[index] = { ...rooms[index], ...formData };
-    } else {
-        rooms.push(formData);
-    }
-    
-    // Redirect back to listing page
-    window.location.href = 'index.html';
 }

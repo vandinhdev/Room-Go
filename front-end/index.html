@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="access/css/pagination.css">
     <link rel="stylesheet" href="access/css/responsive.css">
     <link rel="stylesheet" href="access/css/auth.css">
+    <link rel="stylesheet" href="access/css/favourite.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 </head>
 <body>
@@ -93,51 +94,78 @@
     <script type="module" src="./js/main.js" defer></script>
     <script>
         // Xử lý lọc tỉnh thành, giá, diện tích
-        document.addEventListener('DOMContentLoaded', function() {
+        function initializeFilters() {
             const provinceSelect = document.getElementById('provinceSelect');
             const priceFilter = document.getElementById('priceFilter');
             const areaFilter = document.getElementById('areaFilter');
             const clearBtn = document.querySelector('.clear-filters');
+            
             // Lưu lại hàm renderRooms từ main.js
             let roomsData = window.roomsData || [];
             if (!roomsData.length && window.rooms) roomsData = window.rooms;
+            
             function getFilteredRooms() {
                 let filtered = roomsData;
-                // Lọc tỉnh thành
-                const province = provinceSelect.value;
-                if (province) {
+                // Lọc tỉnh thành (kiểm tra tồn tại trước khi sử dụng)
+                if (provinceSelect && provinceSelect.value) {
+                    const province = provinceSelect.value;
                     filtered = filtered.filter(r => r.address && r.address.includes(province));
                 }
                 // Lọc giá
-                switch (priceFilter.value) {
-                    case '1': filtered = filtered.filter(r => r.price < 1000000); break;
-                    case '2': filtered = filtered.filter(r => r.price >= 1000000 && r.price <= 2000000); break;
-                    case '3': filtered = filtered.filter(r => r.price > 2000000 && r.price <= 3000000); break;
-                    case '4': filtered = filtered.filter(r => r.price > 3000000); break;
+                if (priceFilter && priceFilter.value) {
+                    switch (priceFilter.value) {
+                        case '1': filtered = filtered.filter(r => r.price < 1000000); break;
+                        case '2': filtered = filtered.filter(r => r.price >= 1000000 && r.price <= 2000000); break;
+                        case '3': filtered = filtered.filter(r => r.price > 2000000 && r.price <= 3000000); break;
+                        case '4': filtered = filtered.filter(r => r.price > 3000000); break;
+                    }
                 }
                 // Lọc diện tích
-                switch (areaFilter.value) {
-                    case '1': filtered = filtered.filter(r => r.area < 15); break;
-                    case '2': filtered = filtered.filter(r => r.area >= 15 && r.area <= 25); break;
-                    case '3': filtered = filtered.filter(r => r.area > 25 && r.area <= 35); break;
-                    case '4': filtered = filtered.filter(r => r.area > 35); break;
+                if (areaFilter && areaFilter.value) {
+                    switch (areaFilter.value) {
+                        case '1': filtered = filtered.filter(r => r.area < 15); break;
+                        case '2': filtered = filtered.filter(r => r.area >= 15 && r.area <= 25); break;
+                        case '3': filtered = filtered.filter(r => r.area > 25 && r.area <= 35); break;
+                        case '4': filtered = filtered.filter(r => r.area > 35); break;
+                    }
                 }
                 return filtered;
             }
+            
             function updateRooms() {
                 if (window.renderRooms) {
                     window.renderRooms(getFilteredRooms());
                 }
             }
-            provinceSelect.addEventListener('change', updateRooms);
-            priceFilter.addEventListener('change', updateRooms);
-            areaFilter.addEventListener('change', updateRooms);
-            clearBtn.addEventListener('click', function() {
-                provinceSelect.value = '';
-                priceFilter.value = '';
-                areaFilter.value = '';
-                updateRooms();
-            });
+            
+            // Chỉ thêm event listener nếu element tồn tại
+            if (provinceSelect) {
+                provinceSelect.addEventListener('change', updateRooms);
+            }
+            if (priceFilter) {
+                priceFilter.addEventListener('change', updateRooms);
+            }
+            if (areaFilter) {
+                areaFilter.addEventListener('change', updateRooms);
+            }
+            if (clearBtn) {
+                clearBtn.addEventListener('click', function() {
+                    if (provinceSelect) provinceSelect.value = '';
+                    if (priceFilter) priceFilter.value = '';
+                    if (areaFilter) areaFilter.value = '';
+                    updateRooms();
+                });
+            }
+        }
+        
+        // Khởi tạo filters sau khi DOM load
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeFilters();
+        });
+        
+        // Khởi tạo lại filters sau khi header load
+        document.addEventListener('headerLoaded', function() {
+            initializeFilters();
         });
     </script>
     <script type="module" src="js/header.js"></script>
