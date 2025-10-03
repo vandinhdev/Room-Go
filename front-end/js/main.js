@@ -1,6 +1,8 @@
 // main.js - Tách toàn bộ JS từ index.html
 import { rooms } from './mockRooms.js';
-import { getCurrentUser, isAdmin } from './mockUsers.js';
+import { users} from './mockUsers.js';
+
+
 
 
 // Quản lý tin đã lưu
@@ -97,11 +99,25 @@ function renderRooms(rooms) {
 
     paginatedRooms.forEach(room => {
         const isSaved = saved.find(p => p.id === room.id);
+        // Tìm thông tin chủ phòng thật
+        const owner = users.find(u => u.id === room.owner_id);
+        const ownerName = owner ? owner.fullName : `Chủ phòng #${room.owner_id}`;
+        const ownerAvatar = owner ? owner.fullName.charAt(0).toUpperCase() : String(room.owner_id).slice(-1);
+        
         const card = document.createElement('div');
         card.className = 'listing-card';
+        
+        // Lấy ảnh chính (ảnh đầu tiên) từ mảng images
+        const mainImage = room.images && room.images.length > 0 
+            ? room.images[0].url 
+            : '';
+        
         card.innerHTML = `
             <div class="listing-image">
-                <div style="background: linear-gradient(135deg, #8B4513, #D2B48C); width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px;">${room.title}</div>
+                ${mainImage 
+                    ? `<img src="${mainImage}" alt="${room.title}" style="width: 100%; height: 100%; object-fit: cover;">` 
+                    : `<div style="background: linear-gradient(135deg, #8B4513, #D2B48C); width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px;">${room.title}</div>`
+                }
                 <div class="image-overlay">${room.status === 'available' ? 'Có phòng' : 'Đã thuê'}</div>
                 <div class="heart-icon">
                     <i class="${isSaved ? 'fa-solid heart-filled' : 'fa-regular heart-empty'} fa-heart"></i>
@@ -113,22 +129,14 @@ function renderRooms(rooms) {
                 <div class="listing-price">${formatPrice(room.price)}</div>
                 <div class="listing-area">${room.area ? room.area + ' m²' : ''}</div>
                 <div class="listing-location">
-                    <span>📍</span>
+                    <span class="location-icon"><i class="fa-solid fa-location-dot"></i></span>
                     <span>${room.address || ''}</span>
                 </div>
                 <div class="listing-footer">
                     <div class="user-info">
-                        <div class="user-avatar">${String(room.owner_id).slice(-1)}</div>
-                        <span>Chủ phòng #${room.owner_id}</span>
-                        <span>${room.status === 'available' ? 'Còn phòng' : 'Đã thuê'}</span>
+                        <div class="user-avatar">${ownerAvatar}</div>
+                        <span>${ownerName}</span>
                     </div>
-                    ${isAdmin() ? `
-                    <div class="listing-actions">
-                        <a href="roomForm.html?id=${room.id}" class="btn-edit" onclick="event.stopPropagation()">
-                            <span>✏️</span> Sửa
-                        </a>
-                    </div>
-                    ` : ''}
                 </div>
             </div>
         `;
@@ -151,6 +159,8 @@ function renderRooms(rooms) {
         grid.appendChild(card);
     });
 }
+
+
 
 function getFilteredRooms() {
     let filtered = rooms;
@@ -213,83 +223,57 @@ window.testLogout = async function() {
     updateAuthUI();
 };
 
+// Function to update authentication UI based on login status
+function updateAuthUI() {
+    const authButtons = document.getElementById('authButtons');
+    const userMenu = document.querySelector('.user-menu');
+    const userNameLarge = document.querySelector('.user-name-large');
+    const userEmail = document.querySelector('.user-email');
+    
+    if (!authButtons || !userMenu) {
+        console.warn("authButtons hoặc userMenu chưa có trong DOM, bỏ qua updateAuthUI");
+        return;
+    }
+    
+    // Check if user is logged in
+    const currentUser = localStorage.getItem('currentUser');
+    
+    if (currentUser) {
+        // User is logged in
+        const user = JSON.parse(currentUser);
+        
+        // Hide auth buttons and show user menu
+        authButtons.style.display = 'none';
+        userMenu.classList.remove('d-none');
+        
+        // Update user info in dropdown
+        if (userNameLarge) {
+            userNameLarge.textContent = user.username || user.email || 'User';
+        }
+        if (userEmail) {
+            userEmail.textContent = user.email || '';
+        }
+    } else {
+        // User is not logged in - show login/register buttons
+        authButtons.style.display = 'block';
+        userMenu.classList.add('d-none');
+        
+        // Populate auth buttons if empty
+        if (authButtons.innerHTML.trim() === '') {
+            authButtons.innerHTML = `
+                <a href="auth.html" class="auth-btn login-btn">Đăng nhập</a>
+                <a href="auth.html?mode=register" class="auth-btn register-btn">Đăng ký</a>
+            `;
+        }
+    }
+}
+
 // Function to wait for header elements to be loaded
 function waitForHeaderAndUpdateAuth() {
     // Listen for the custom headerLoaded event
     document.addEventListener('headerLoaded', function() {
         updateAuthUI();
     });
-}
-
-function updateAuthUI() {
-    const user = getCurrentUser();
-    const authButtons = document.getElementById('authButtons');
-    const userMenu = document.querySelector('.user-menu');
-    const addRoomBtn = document.querySelector('.btn-add-room');
-
-    if (!authButtons || !userMenu) {
-        console.warn("authButtons hoặc userMenu chưa có trong DOM, bỏ qua updateAuthUI");
-        return;
-    }
-
-    if (user) {
-        // User đã đăng nhập - Ẩn nút đăng nhập và hiển thị user menu
-        authButtons.innerHTML = '';
-        authButtons.style.display = 'none';
-        userMenu.classList.remove('d-none');
-        userMenu.style.display = 'block';
-
-        const avatar = userMenu.querySelector('.user-avatar');
-        const name = userMenu.querySelector('.user-name');
-        const avatarLarge = userMenu.querySelector('.user-avatar-large');
-        const nameLarge = userMenu.querySelector('.user-name-large');
-        const email = userMenu.querySelector('.user-email');
-
-        if (avatar) {
-            avatar.textContent = user.fullName[0].toUpperCase();
-            // Thêm style cho avatar
-            avatar.style.backgroundColor = '#ff6b35';
-            avatar.style.color = 'white';
-            avatar.style.fontWeight = 'bold';
-            avatar.style.display = 'flex';
-            avatar.style.alignItems = 'center';
-            avatar.style.justifyContent = 'center';
-            avatar.style.width = '32px';
-            avatar.style.height = '32px';
-            avatar.style.borderRadius = '50%';
-        }
-        if (name) name.textContent = user.fullName;
-        if (avatarLarge) {
-            avatarLarge.textContent = user.fullName[0].toUpperCase();
-            // Thêm style cho avatar lớn
-            avatarLarge.style.backgroundColor = '#ff6b35';
-            avatarLarge.style.color = 'white';
-            avatarLarge.style.fontWeight = 'bold';
-            avatarLarge.style.display = 'flex';
-            avatarLarge.style.alignItems = 'center';
-            avatarLarge.style.justifyContent = 'center';
-            avatarLarge.style.width = '48px';
-            avatarLarge.style.height = '48px';
-            avatarLarge.style.borderRadius = '50%';
-        }
-        if (nameLarge) nameLarge.textContent = user.fullName;
-        if (email) email.textContent = user.email;
-
-        if (addRoomBtn) addRoomBtn.style.display = isAdmin() ? 'block' : 'none';
-        
-        console.log('User đã đăng nhập:', user.fullName);
-    } else {
-        // User chưa đăng nhập - Hiển thị nút đăng nhập và ẩn user menu
-        authButtons.innerHTML = `
-            <a href="auth.html" class="header-btn login-btn">Đăng nhập</a>
-        `;
-        authButtons.style.display = 'block';
-        userMenu.classList.add('d-none');
-        userMenu.style.display = 'none';
-        if (addRoomBtn) addRoomBtn.style.display = 'none';
-        
-        console.log('User chưa đăng nhập');
-    }
 }
 
 document.addEventListener('DOMContentLoaded', function () {

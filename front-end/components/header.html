@@ -19,8 +19,9 @@
     </div>
     
     <div class="header-right">
-        <a href="chat.html" class="header-btn mobile-hide"><i class="fa-regular fa-message"></i></a>
-        <div class="header-btn mobile-hide" id="favourite-btn"><i class="fa-regular fa-heart"></i></div>
+        <div class="header-btn chat-btn mobile-hide" id="chat-btn"><i class="fa-regular fa-message"></i></div>
+
+        <div class="header-btn favourite-btn mobile-hide" id="favourite-btn"><i class="fa-regular fa-heart"></i></div>
         <div class="favourite-room">
             <div class="favourite-header">
                 Tin đăng đã lưu
@@ -30,17 +31,34 @@
                 <span>Lưu tin yêu thích, tin sẽ hiển thị ở đây để bạn dễ dàng quay lại sau.</span>
             </div>
         </div>
+        
+        <div class="header-btn notification-btn mobile-show" id="notification-btn">
+            <i class="fa-regular fa-bell"></i>
+            <span class="notification-badge" id="notification-badge">3</span>
+        </div>
+        <div class="notification-dropdown" id="notification-dropdown">
+            <div class="notification-header">
+                <h3>Thông báo</h3>
+                <button class="mark-all-read" id="mark-all-read">Đánh dấu tất cả đã đọc</button>
+            </div>
+            <div class="notification-content" id="notification-content">
+                <!-- thông báo sẽ được thêm vào đây -->
+            </div>
+            <div class="notification-footer">
+                <a href="#" class="view-all-notifications">Xem tất cả thông báo</a>
+            </div>
+        </div>
+        
         <a href="roomForm.html" class="header-btn post-btn">Đăng tin</a>
-        <!-- Test buttons for development -->
+        
         
         <div id="authButtons" class="auth-buttons">
-            <!-- Will be populated by JS -->
+            <!-- Các nút đăng nhập sẽ được thêm vào đây -->
         </div>
         <div class="user-menu d-none">
             <div class="user-menu-trigger">
                 <div class="user-avatar"></div>
-                <span class="user-name"></span>
-                <span class="dropdown-arrow"><i class="fas fa-chevron-down"></i></span>
+               
             </div>
             <div class="dropdown-menu">
                 <div class="dropdown-header">
@@ -53,25 +71,37 @@
                     </div>
                 </div>
                 <div class="dropdown-body">
-                    <a href="#" class="menu-item">
+                    <a href="profile.html" class="menu-item" id="profileMenuItem">
                         <i class="fas fa-user"></i> 
                         <div class="menu-item-content">
                             <span class="menu-item-title">Trang cá nhân</span>
-                            <span class="menu-item-desc">Xem và cập nhật thông tin</span>
                         </div>
                     </a>
-                    <a href="#" class="menu-item">
-                        <i class="fas fa-list"></i> 
+                    <a href="#" class="menu-item" id="userManagementMenuItem">
+                        <i class="fa-solid fa-users"></i>
+                        <div class="menu-item-content">
+                            <span class="menu-item-title">Quản lý người dùng</span>
+                            
+                        </div>
+                    </a>
+                    <a href="#" class="menu-item" id="postManagementMenuItem">
+                        <i class="fa-solid fa-house"></i>
                         <div class="menu-item-content">
                             <span class="menu-item-title">Quản lý tin đăng</span>
-                            <span class="menu-item-desc">Tin đăng của bạn</span>
+                            
                         </div>
                     </a>
-                    <a href="#" class="menu-item">
+                    <a href="#" class="menu-item" id="statisticsMenuItem">
+                        <i class="fas fa-chart-line"></i>
+                        <div class="menu-item-content">
+                            <span class="menu-item-title">Thống kê</span>
+                            
+                        </div>
+                    </a>
+                    <a href="#" class="menu-item" id="favouriteMenuItem">
                         <i class="fas fa-heart"></i> 
                         <div class="menu-item-content">
-                            <span class="menu-item-title">Tin đã lưu</span>
-                            <span class="menu-item-desc">Phòng bạn quan tâm</span>
+                            <span class="menu-item-title">Tin đã lưu</span>                   
                         </div>
                     </a>
                     <div class="dropdown-divider"></div>
