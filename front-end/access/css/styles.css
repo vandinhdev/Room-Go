@@ -310,9 +310,6 @@ body {
     border-bottom: 1px solid #f0f0f0;
 }
 
-.notification-btn {
-    position: relative;
-}
 
 .fa-regular {
     padding: 4px;
@@ -359,10 +356,12 @@ body {
     box-shadow: -2px -2px 4px rgba(0,0,0,0.1);
 }
 
-.notification-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+.favourite-remove {
+    position: absolute;
+    right: 18px;
+    top: 48px;
+    font-size: 24px;
+    cursor: pointer;
 }
 
 .notification-header h3 {
