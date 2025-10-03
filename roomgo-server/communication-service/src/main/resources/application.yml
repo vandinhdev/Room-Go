@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 8083
   compression:
     enabled: true
     mime-types: application/json
@@ -22,3 +22,13 @@ logging:
     org.springframework.web: DEBUG
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+eureka:
+  client:
+    register-with-eureka: true       # Cho phép client đăng ký với Eureka
+    fetch-registry: true             # Cho phép lấy thông tin registry từ Eureka
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/  # Link tới Eureka Server
+  instance:
+    prefer-ip-address: true          # Đăng ký theo IP thay vì hostname
+    instance-id: ${spring.application.name}:${server.port}  # Tạo ID duy nhất

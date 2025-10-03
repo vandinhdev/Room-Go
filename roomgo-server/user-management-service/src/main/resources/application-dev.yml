@@ -44,3 +44,13 @@ jwt:
   expiryDay: ${JWT_EXPIRY_DAY:14}
   accessKey: ${JWT_ACCESS_KEY:IIwLeRIVsznVTPFEYmA6HiVVBrlKkKqC36OpWzqw8mk=}
   refreshKey: ${JWT_REFRESH_KEY:tvszknimPZQEdy3c9TCERBLAkOyoCc2ZvOmGcHsRJgg=}
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}

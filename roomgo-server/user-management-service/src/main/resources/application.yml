@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 8080 # Changed from 8080 to avoid conflict with ESB-Camel
   compression:
     enabled: true
     mime-types: application/json
@@ -22,3 +22,14 @@ logging:
     org.springframework.web: DEBUG
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+eureka:
+  client:
+    register-with-eureka: true
+    fetch-registry: true
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+ # Tạo ID duy nhất

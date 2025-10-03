@@ -1,0 +1,29 @@
+server:
+  port: 8080   # ESB-Camel chạy trên 8080
+
+spring:
+  application:
+    name: esb-camel
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka/   # URL của Eureka server
+    fetch-registry: true
+    register-with-eureka: true
+  instance:
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
+
+camel:
+  servlet:
+    mapping:
+      context-path: /api/esb/*   # tất cả route Camel REST sẽ chạy dưới /api/esb/
+  cloud:
+    service-call:
+      load-balancer:
+        enabled: true
+      service-discovery:
+        type: spring-cloud   # Camel sẽ dùng Spring Cloud DiscoveryClient (Eureka)
+

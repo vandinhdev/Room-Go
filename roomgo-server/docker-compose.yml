@@ -1,5 +1,15 @@
-
 services:
+  eureka-server:
+    build:
+      context: ./eureka-server
+      dockerfile: Dockerfile
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    networks:
+      - soa-net
+    restart: always
+
   postgres:
     image: postgres:15
     environment:
@@ -21,43 +31,58 @@ services:
     container_name: user-management-service
     depends_on:
       - postgres
+      - eureka-server
+    ports:
+      - "8081:8080"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/room_go_db
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: password
+      SPRING_APPLICATION_NAME: user-management-service
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
     networks:
       - soa-net
     restart: always
 
-  room-management-service:
-    build:
-      context: ./room-management-service
-      dockerfile: Dockerfile
-    container_name: room-management-service
-    depends_on:
-      - postgres
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/room_go_db
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: password
-    networks:
-      - soa-net
-    restart: always
-
-  communication-service:
-    build:
-      context: ./communication-service
-      dockerfile: Dockerfile
-    container_name: communication-service
-    depends_on:
-      - postgres
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/room_go_db
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: password
-    networks:
-      - soa-net
-    restart: always
+#  room-management-service:
+#    build:
+#      context: ./room-management-service
+#      dockerfile: Dockerfile
+#    container_name: room-management-service
+#    depends_on:
+#      - postgres
+#      - eureka-server
+#    environment:
+#      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/room_go_db
+#      SPRING_DATASOURCE_USERNAME: postgres
+#      SPRING_DATASOURCE_PASSWORD: password
+#      SPRING_APPLICATION_NAME: room-management-service
+#      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+#    ports:
+#      - "8082:8080"
+#    networks:
+#      - soa-net
+#    restart: always
+#
+#  communication-service:
+#    build:
+#      context: ./communication-service
+#      dockerfile: Dockerfile
+#    container_name: communication-service
+#    depends_on:
+#      - postgres
+#      - eureka-server
+#    environment:
+#      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/room_go_db
+#      SPRING_DATASOURCE_USERNAME: postgres
+#      SPRING_DATASOURCE_PASSWORD: password
+#      SPRING_APPLICATION_NAME: communication-service
+#      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+#    ports:
+#      - "8083:8080"
+#    networks:
+#      - soa-net
+#    restart: always
 
   esb-camel:
     build:
@@ -67,9 +92,13 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      - communication-service
+      #- communication-service
       - user-management-service
-      - room-management-service
+      #- room-management-service
+      - eureka-server
+    environment:
+      SPRING_APPLICATION_NAME: esb-camel
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
     networks:
       - soa-net
     restart: always
