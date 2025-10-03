@@ -156,6 +156,7 @@ body {
 }
 
 .post-item {
+    position: relative;
     display: flex;
     font-size: 14px;
     gap: 16px;
