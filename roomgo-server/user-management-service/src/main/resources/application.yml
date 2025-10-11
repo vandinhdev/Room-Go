@@ -25,11 +25,12 @@ logging:
 
 eureka:
   client:
-    register-with-eureka: true
-    fetch-registry: true
     service-url:
       defaultZone: http://eureka-server:8761/eureka/
+    fetch-registry: true
+    register-with-eureka: true
   instance:
     prefer-ip-address: true
-    instance-id: ${spring.application.name}:${server.port}
- # Tạo ID duy nhất
+    metadata-map:
+      management.port: ${server.port}
+      instanceId: ${spring.application.name}:${server.port}

@@ -15,15 +15,22 @@ eureka:
     prefer-ip-address: true
     lease-renewal-interval-in-seconds: 10
     lease-expiration-duration-in-seconds: 30
+    appname: ${spring.application.name}   # ✅ giữ nguyên tên app như trong spring.application.name
 
 camel:
   servlet:
     mapping:
       context-path: /api/esb/*   # tất cả route Camel REST sẽ chạy dưới /api/esb/
   cloud:
+    service-discovery:
+      type: spring-cloud          # Camel sẽ dùng Spring Cloud DiscoveryClient (Eureka)
     service-call:
       load-balancer:
         enabled: true
-      service-discovery:
-        type: spring-cloud   # Camel sẽ dùng Spring Cloud DiscoveryClient (Eureka)
+
+logging:
+  level:
+    org.apache.camel.cloud: DEBUG
+    org.apache.camel.impl.cloud: DEBUG
+    org.springframework.cloud.netflix.eureka: INFO
 

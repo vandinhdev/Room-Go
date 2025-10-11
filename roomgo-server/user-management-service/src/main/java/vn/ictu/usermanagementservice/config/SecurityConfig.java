@@ -35,7 +35,8 @@ public class SecurityConfig {
             "/swagger-ui/**",
             "/v3/**",
             "/webjars/**",
-            "/favicon.ico"
+            "/favicon.ico",
+            "/actuator/**",
     };
 
     @Bean
@@ -52,6 +53,16 @@ public class SecurityConfig {
 
         return http.build();
     }
+
+    @Bean
+    public SecurityFilterChain actuatorSecurityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/actuator/**")
+                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+                .csrf(AbstractHttpConfigurer::disable);
+        return http.build();
+    }
+
 
     @Bean
     public AuthenticationProvider authenticationProvider() {

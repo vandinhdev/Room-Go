@@ -39,24 +39,34 @@ public class EsbRoutes extends RouteBuilder {
                 .log("👉 [ESB] Forwarding login via Eureka: ${body}")
                 .setHeader(Exchange.CONTENT_TYPE, constant("application/json"))
                 .marshal().json(JsonLibrary.Jackson)
-                .serviceCall("user-management-service/api/user/auth/login?bridgeEndpoint=true")
+
+                // Gọi qua Eureka (Camel tự lookup IP + port từ registry)
+                .serviceCall()
+                .name("USER-MANAGEMENT-SERVICE")
+                .expression().simple("/api/user/auth/login")
+                .loadBalancer("roundrobin")       // cân bằng tải (nếu nhiều instance)
+                .serviceFilter("healthy")         // chỉ chọn service đang UP
+                .end()
+
+                .log("✅ [ESB] Response from user-management-service: ${body}")
                 .unmarshal().json(JsonLibrary.Jackson);
 
-        from("direct:register")
-                .routeId("register-route")
-                .log("👉 [ESB] Forwarding register: ${body}")
-                .setHeader(Exchange.CONTENT_TYPE, constant("application/json"))
-                .marshal().json(JsonLibrary.Jackson)
-                .serviceCall("user-management-service/api/user/auth/register?bridgeEndpoint=true")
-                .unmarshal().json(JsonLibrary.Jackson);
 
-        from("direct:refresh")
-                .routeId("refresh-route")
-                .log("👉 [ESB] Forwarding refresh token")
-                .setHeader(Exchange.CONTENT_TYPE, constant("application/json"))
-                .marshal().json(JsonLibrary.Jackson)
-                .serviceCall("user-management-service/api/user/auth/refresh-token?bridgeEndpoint=true")
-                .unmarshal().json(JsonLibrary.Jackson);
+//        from("direct:register")
+//                .routeId("register-route")
+//                .log("👉 [ESB] Forwarding register: ${body}")
+//                .setHeader(Exchange.CONTENT_TYPE, constant("application/json"))
+//                .marshal().json(JsonLibrary.Jackson)
+//                .serviceCall("user-management-service/api/user/auth/register?bridgeEndpoint=true")
+//                .unmarshal().json(JsonLibrary.Jackson);
+//
+//        from("direct:refresh")
+//                .routeId("refresh-route")
+//                .log("👉 [ESB] Forwarding refresh token")
+//                .setHeader(Exchange.CONTENT_TYPE, constant("application/json"))
+//                .marshal().json(JsonLibrary.Jackson)
+//                .serviceCall("user-management-service/api/user/auth/refresh-token?bridgeEndpoint=true")
+//                .unmarshal().json(JsonLibrary.Jackson);
 
 //                .unmarshal().json(JsonLibrary.Jackson);
 //

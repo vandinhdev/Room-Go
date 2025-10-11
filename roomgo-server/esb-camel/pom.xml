@@ -22,7 +22,6 @@
         <java.version>17</java.version>
     </properties>
 
-    <!-- Quản lý version đồng bộ -->
     <dependencyManagement>
         <dependencies>
             <!-- Spring Cloud BOM -->
@@ -34,11 +33,11 @@
                 <scope>import</scope>
             </dependency>
 
-            <!-- Apache Camel BOM -->
+            <!-- Apache Camel BOM (3.21.0) -->
             <dependency>
                 <groupId>org.apache.camel.springboot</groupId>
                 <artifactId>camel-spring-boot-dependencies</artifactId>
-                <version>4.9.0</version>
+                <version>3.21.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -46,52 +45,17 @@
     </dependencyManagement>
 
     <dependencies>
-        <!-- Spring Boot core -->
+
+        <!-- Spring Boot Core -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-        <!-- Actuator (health, metrics) -->
+        <!-- Spring Boot Actuator (for health checks) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
-        </dependency>
-
-        <!-- Eureka Client -->
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
-        </dependency>
-
-        <!-- Camel core + Spring Boot -->
-        <dependency>
-            <groupId>org.apache.camel.springboot</groupId>
-            <artifactId>camel-spring-boot-starter</artifactId>
-        </dependency>
-
-        <!-- Camel ServiceCall EIP -->
-        <dependency>
-            <groupId>org.apache.camel.springboot</groupId>
-            <artifactId>camel-service-starter</artifactId>
-        </dependency>
-
-        <!-- Camel REST DSL -->
-        <dependency>
-            <groupId>org.apache.camel.springboot</groupId>
-            <artifactId>camel-rest-starter</artifactId>
-        </dependency>
-
-        <!-- Camel Servlet (expose REST qua servlet path) -->
-        <dependency>
-            <groupId>org.apache.camel.springboot</groupId>
-            <artifactId>camel-servlet-starter</artifactId>
-        </dependency>
-
-        <!-- Camel JSON binding -->
-        <dependency>
-            <groupId>org.apache.camel.springboot</groupId>
-            <artifactId>camel-jackson-starter</artifactId>
         </dependency>
 
         <!-- Spring Cloud Eureka Client -->
@@ -100,11 +64,46 @@
             <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
         </dependency>
 
-        <!-- JWT support -->
+        <!-- Apache Camel Core -->
         <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-api</artifactId>
-            <version>0.11.5</version>
+            <groupId>org.apache.camel.springboot</groupId>
+            <artifactId>camel-spring-boot-starter</artifactId>
+        </dependency>
+
+        <!-- Camel REST DSL -->
+        <dependency>
+            <groupId>org.apache.camel.springboot</groupId>
+            <artifactId>camel-rest-starter</artifactId>
+        </dependency>
+
+        <!-- Camel Servlet (for exposing routes under /api/esb/*) -->
+        <dependency>
+            <groupId>org.apache.camel.springboot</groupId>
+            <artifactId>camel-servlet-starter</artifactId>
+        </dependency>
+
+        <!-- Camel HTTP (for REST forwarding) -->
+        <dependency>
+            <groupId>org.apache.camel.springboot</groupId>
+            <artifactId>camel-http-starter</artifactId>
+        </dependency>
+
+        <!-- Camel JSON (Jackson for marshal/unmarshal) -->
+        <dependency>
+            <groupId>org.apache.camel.springboot</groupId>
+            <artifactId>camel-jackson-starter</artifactId>
+        </dependency>
+
+        <!-- Camel Cloud (Service Discovery Core) -->
+        <dependency>
+            <groupId>org.apache.camel.springboot</groupId>
+            <artifactId>camel-cloud-starter</artifactId>
+        </dependency>
+
+        <!-- Camel Eureka Integration -->
+        <dependency>
+            <groupId>org.apache.camel.springboot</groupId>
+            <artifactId>camel-eureka-starter</artifactId>
         </dependency>
 
         <!-- Lombok -->
@@ -114,16 +113,17 @@
             <optional>true</optional>
         </dependency>
 
+        <!-- JWT (nếu bạn có xác thực token) -->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+            <version>0.11.5</version>
+        </dependency>
+
         <!-- Testing -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -136,5 +136,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>

@@ -44,7 +44,8 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
             "/swagger-ui/**",
             "/v3/**",
             "/webjars/**",
-            "/favicon.ico"
+            "/favicon.ico",
+            "/actuator/**",
     };
 
     @Override

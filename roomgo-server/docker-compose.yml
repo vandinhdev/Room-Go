@@ -9,9 +9,16 @@ services:
     networks:
       - soa-net
     restart: always
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8761/actuator/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
 
   postgres:
     image: postgres:15
+    container_name: roomgo-postgres
     environment:
       POSTGRES_DB: room_go_db
       POSTGRES_USER: postgres
@@ -23,6 +30,12 @@ services:
     networks:
       - soa-net
     restart: always
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   user-management-service:
     build:
@@ -40,11 +53,18 @@ services:
       SPRING_DATASOURCE_PASSWORD: password
       SPRING_APPLICATION_NAME: user-management-service
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     networks:
       - soa-net
     restart: always
 
-#  room-management-service:
+
+  #  room-management-service:
 #    build:
 #      context: ./room-management-service
 #      dockerfile: Dockerfile
@@ -89,19 +109,25 @@ services:
       context: ./esb-camel
       dockerfile: Dockerfile
     container_name: esb-camel
+    depends_on:
+      eureka-server:
+        condition: service_healthy
+      user-management-service:
+        condition: service_healthy
     ports:
       - "8080:8080"
-    depends_on:
-      #- communication-service
-      - user-management-service
-      #- room-management-service
-      - eureka-server
     environment:
       SPRING_APPLICATION_NAME: esb-camel
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
     networks:
       - soa-net
     restart: always
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
 networks:
   soa-net:
