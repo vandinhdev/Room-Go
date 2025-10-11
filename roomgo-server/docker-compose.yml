@@ -1,4 +1,3 @@
-
 services:
   postgres:
     image: postgres:15
@@ -9,7 +8,20 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - soa-net
+    restart: always
+
+  consul-server:
+    image: hashicorp/consul:1.18
+    container_name: consul-server
+    command: "agent -server -bootstrap-expect=1 -ui -bind=0.0.0.0 -client=0.0.0.0"
+    ports:
+      - "8500:8500"   # Web UI
+      - "8600:8600/udp"
+    volumes:
+      - consul-data:/consul/data
     networks:
       - soa-net
     restart: always
@@ -21,43 +33,55 @@ services:
     container_name: user-management-service
     depends_on:
       - postgres
+      - consul-server
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/room_go_db
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: password
+      SPRING_CLOUD_CONSUL_HOST: consul-server
+      SPRING_CLOUD_CONSUL_PORT: 8500
+      SPRING_APPLICATION_NAME: user-management-service
     networks:
       - soa-net
     restart: always
 
-  room-management-service:
-    build:
-      context: ./room-management-service
-      dockerfile: Dockerfile
-    container_name: room-management-service
-    depends_on:
-      - postgres
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/room_go_db
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: password
-    networks:
-      - soa-net
-    restart: always
-
-  communication-service:
-    build:
-      context: ./communication-service
-      dockerfile: Dockerfile
-    container_name: communication-service
-    depends_on:
-      - postgres
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/room_go_db
-      SPRING_DATASOURCE_USERNAME: postgres
-      SPRING_DATASOURCE_PASSWORD: password
-    networks:
-      - soa-net
-    restart: always
+#  room-management-service:
+#    build:
+#      context: ./room-management-service
+#      dockerfile: Dockerfile
+#    container_name: room-management-service
+#    depends_on:
+#      - postgres
+#      - consul-server
+#    environment:
+#      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/room_go_db
+#      SPRING_DATASOURCE_USERNAME: postgres
+#      SPRING_DATASOURCE_PASSWORD: password
+#      SPRING_CLOUD_CONSUL_HOST: consul-server
+#      SPRING_CLOUD_CONSUL_PORT: 8500
+#      SPRING_APPLICATION_NAME: room-management-service
+#    networks:
+#      - soa-net
+#    restart: always
+#
+#  communication-service:
+#    build:
+#      context: ./communication-service
+#      dockerfile: Dockerfile
+#    container_name: communication-service
+#    depends_on:
+#      - postgres
+#      - consul-server
+#    environment:
+#      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/room_go_db
+#      SPRING_DATASOURCE_USERNAME: postgres
+#      SPRING_DATASOURCE_PASSWORD: password
+#      SPRING_CLOUD_CONSUL_HOST: consul-server
+#      SPRING_CLOUD_CONSUL_PORT: 8500
+#      SPRING_APPLICATION_NAME: communication-service
+#    networks:
+#      - soa-net
+#    restart: always
 
   esb-camel:
     build:
@@ -67,9 +91,14 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      - communication-service
+      #- communication-service
       - user-management-service
-      - room-management-service
+      #- room-management-service
+      - consul-server
+    environment:
+      SPRING_CLOUD_CONSUL_HOST: consul-server
+      SPRING_CLOUD_CONSUL_PORT: 8500
+      SPRING_APPLICATION_NAME: esb-camel
     networks:
       - soa-net
     restart: always
@@ -80,3 +109,4 @@ networks:
 
 volumes:
   postgres-data:
+  consul-data:

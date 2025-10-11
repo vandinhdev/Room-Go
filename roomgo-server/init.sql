@@ -224,3 +224,8 @@ INSERT INTO roles (role_name) VALUES
                   ('ADMIN'),
                   ('USER'),
                   ('GUEST');
+
+INSERT INTO users (username, password_hash, first_name, last_name, email, role_id, user_status) VALUES
+                  ('admin', '$2a$10$7EqJtq98hPqEX7fNZaFWoO5eFh8z6j6k5Z5b6a5r5H6j6a5r5H6', 'Admin', 'User', 'admin@gmail.com', 1, 'ACTIVE');
+
+UPDATE users SET password_hash = '$2a$12$ctWdtAMuUIEQbdl9Fm8qm.saoqmBxOpGYR1fxUZWyPGpmvtxLhYWS' WHERE id = 1;
