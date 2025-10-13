@@ -3,6 +3,7 @@
 -- ========================
 -- USER
 CREATE TYPE gender AS ENUM ('MALE', 'FEMALE', 'OTHER');
+
 CREATE TYPE user_status AS ENUM ('ACTIVE', 'INACTIVE', 'PENDING');
 
 -- ROOM
@@ -226,6 +227,5 @@ INSERT INTO roles (role_name) VALUES
                   ('GUEST');
 
 INSERT INTO users (username, password_hash, first_name, last_name, email, role_id, user_status) VALUES
-                  ('admin', '$2a$10$7EqJtq98hPqEX7fNZaFWoO5eFh8z6j6k5Z5b6a5r5H6j6a5r5H6', 'Admin', 'User', 'admin@gmail.com', 1, 'ACTIVE');
+                  ('admin', '$2a$12$o8nGU.IB4Le0a.qLV.7SQ.vXfuDhQFTTL96jghKS/tHr8QxzA9U9y', 'Admin', 'User', 'admin@gmail.com', 1, 'ACTIVE');
 
-UPDATE users SET password_hash = '$2a$12$ctWdtAMuUIEQbdl9Fm8qm.saoqmBxOpGYR1fxUZWyPGpmvtxLhYWS' WHERE id = 1;

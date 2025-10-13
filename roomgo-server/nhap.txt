@@ -1,57 +1,12 @@
-package vn.ictu.esbcamel.routes;
-
-import lombok.RequiredArgsConstructor;
-import org.apache.camel.Exchange;
-import org.apache.camel.builder.RouteBuilder;
-import org.apache.camel.model.rest.RestBindingMode;
-import org.springframework.stereotype.Component;
-import org.apache.camel.model.dataformat.JsonLibrary;
-import vn.ictu.esbcamel.processor.JwtProcessor;
-
-@Component
-@RequiredArgsConstructor
-public class EsbRoutes extends RouteBuilder {
-    private final JwtProcessor jwtProcessor;
-
-
-    @Override
-    public void configure() throws Exception {
-
-        restConfiguration()
-                .component("platform-http")   // ✅ đổi từ servlet sang platform-http
-                .contextPath("/api/esb")
-                .bindingMode(RestBindingMode.json);
-
-        rest("/auth")
-                .post("/login").to("direct:login")
-                .post("/register").to("direct:register")
-                .post("/refresh-token").to("direct:refresh");
-
-        from("direct:login")
-                .routeId("login-route")
-                .log("👉 [ESB] Forwarding login: ${body}")
-                .setHeader(Exchange.CONTENT_TYPE, constant("application/json"))
-                .marshal().json(JsonLibrary.Jackson)
-                .to("http://user-management-service:8080/api/user/auth/login?bridgeEndpoint=true&httpMethod=POST")
-                .unmarshal().json(JsonLibrary.Jackson);
-
-        from("direct:register")
-                .routeId("register-route")
-                .log("👉 [ESB] Forwarding register: ${body}")
-                .setHeader(Exchange.CONTENT_TYPE, constant("application/json"))
-                .marshal().json(JsonLibrary.Jackson)
-                .to("http://user-management-service:8080/api/user/auth/register?bridgeEndpoint=true&httpMethod=POST")
-                .unmarshal().json(JsonLibrary.Jackson);
-
-        // User routes
+// User routes
         rest("/user")
                 .get("/list").to("direct:getUserList")
                 .get("/{id}").to("direct:getUserById")
                 .get("/email/{email}").to("direct:getUserByEmail")
                 .get("/profile").to("direct:getUserProfile")
-                .put("/update-status/{id}").to("direct:updateUserStatus")
+                .put("/update-status/{userId}").to("direct:updateUserStatus")
                 .put("/update-profile").to("direct:updateUserProfile")
-                .delete("/{id}").to("direct:deleteUser")
+                .delete("/{userId}").to("direct:deleteUser")
                 .patch("/change-password").to("direct:changePassword")
                 .post("/forgot-password").to("direct:forgotPassword")
                 .post("/reset-password").to("direct:resetPassword");
@@ -77,7 +32,7 @@ public class EsbRoutes extends RouteBuilder {
                 .log("👉 [ESB] Forwarding get user by email request: ${header.email}")
                 .process(jwtProcessor)
                 .setHeader(Exchange.CONTENT_TYPE, constant("application/json"))
-                .toD("http://user-management-service:8080/api/user/${header.email}?bridgeEndpoint=true&httpMethod=GET")
+                .toD("http://user-management-service:8080/api/user/email/${header.email}?bridgeEndpoint=true&httpMethod=GET")
                 .unmarshal().json(JsonLibrary.Jackson);
 
         from("direct:getUserProfile")
@@ -138,5 +93,3 @@ public class EsbRoutes extends RouteBuilder {
                 .marshal().json(JsonLibrary.Jackson)
                 .to("http://user-management-service:8080/api/user/reset-password?bridgeEndpoint=true&httpMethod=POST")
                 .unmarshal().json(JsonLibrary.Jackson);
-    }
-}

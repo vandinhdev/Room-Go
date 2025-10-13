@@ -4,8 +4,10 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcType;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.dialect.PostgreSQLEnumJdbcType;
 import org.hibernate.type.SqlTypes;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -54,7 +56,8 @@ public class UserEntity implements UserDetails, Serializable {
 
     @Column(name = "phone")
     private String phone;
-    @Enumerated(EnumType.STRING)
+
+
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(name = "gender")
     private Gender gender;
@@ -68,6 +71,7 @@ public class UserEntity implements UserDetails, Serializable {
     private Role role;
 
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(name = "user_status", nullable = false)
     private UserStatus status;
 

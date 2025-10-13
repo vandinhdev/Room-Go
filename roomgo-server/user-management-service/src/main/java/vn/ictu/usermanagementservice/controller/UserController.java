@@ -43,7 +43,7 @@ public class UserController {
     }
 
     @Operation(summary = "Get user detail", description = "API retrieve user detail by ID from database")
-    @GetMapping("detail/{userId}")
+    @GetMapping("/{id}")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
     public ApiResponse getUserDetail(@PathVariable @Min(value = 1, message = "userId must be equals or greater than 1") Long userId) {
         log.info("Get user detail by ID: {}", userId);
@@ -55,7 +55,7 @@ public class UserController {
                 .build();
     }
     @Operation(summary = "Get user detail", description = "API retrieve user detail by ID from database")
-    @GetMapping("by-email")
+    @GetMapping("/email/{email}")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
     public ApiResponse getUserDetailByEmail(@RequestParam String email) {
         log.info("Get user detail by email: {}", email);
@@ -80,7 +80,7 @@ public class UserController {
     }
 
     @Operation(summary = "Update User Status", description = "API update user status to database")
-    @PatchMapping("/update-status/{userId}")
+    @PatchMapping("/update-status/{id}")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')" )
     public ApiResponse updateStatus(@PathVariable @Min(value = 1, message = "userId must be equals or greater than 1") Long userId,
                                     @RequestParam String status) {
@@ -121,7 +121,7 @@ public class UserController {
     }
 
     @Operation(summary = "Change Password", description = "API change password for user to database")
-    @PatchMapping("/change-pwd")
+    @PatchMapping("/change-password")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_STUDENT','ROLE_OWNER')")
     public ApiResponse changePassword(@RequestBody @Valid UserPasswordRequest request, Authentication authentication) {
         String email = authentication.getName();
@@ -141,7 +141,7 @@ public class UserController {
         userService.sendResetOtp(email);
         return ApiResponse.builder()
                 .status(HttpStatus.OK.value())
-                .message("Mã OTP đã được gửi đến email của bạn")
+                .message("OTP has been sent to your email")
                 .data("")
                 .build();
     }
@@ -153,7 +153,7 @@ public class UserController {
         userService.resetPassword(email, otp, newPassword);
         return ApiResponse.builder()
                 .status(HttpStatus.OK.value())
-                .message("Mật khẩu đã được đặt lại thành công")
+                .message("Password has been reset successfully")
                 .data("")
                 .build();
     }
