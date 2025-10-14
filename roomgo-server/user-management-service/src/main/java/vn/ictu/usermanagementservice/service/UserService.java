@@ -14,9 +14,7 @@ public interface UserService {
     void updateStatus(long id, String status);
     UserResponse getProfile(String email);
     void updateProfile(UpdateProfileRequest req, String email);
-    void changePassword(UserPasswordRequest req, String email);
     void deleteUser(long id);
 
-    void sendResetOtp(String email);
-    void resetPassword(String email, String otp, String newPassword);
+
 }

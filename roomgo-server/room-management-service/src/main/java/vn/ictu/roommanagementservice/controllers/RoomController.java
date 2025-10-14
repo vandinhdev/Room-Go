@@ -33,7 +33,7 @@ public class RoomController {
                                   @RequestParam(required = false) BigDecimal maxPrice,
                                   @RequestParam(required = false) BigDecimal minArea,
                                   @RequestParam(required = false) BigDecimal maxArea,
-                                  @RequestParam(defaultValue = "0") int page,
+                                  @RequestParam(defaultValue = "1") int page,
                                   @RequestParam(defaultValue = "20") int size,
                                   @RequestParam(required = false) String sort,
                                   @RequestHeader("X-User-Email") String email,
@@ -63,7 +63,7 @@ public class RoomController {
     @GetMapping("/me")
     public ApiResponse getRoomMe(@RequestParam(required = false) String keyword,
                                  @RequestParam(required = false) String sort,
-                                 @RequestParam(defaultValue = "0") int page,
+                                 @RequestParam(defaultValue = "1") int page,
                                  @RequestParam(defaultValue = "20") int size,
                                  @RequestHeader("X-User-Email") String email,
                                  @RequestHeader("Authorization") String authorizationHeader) {
@@ -77,14 +77,14 @@ public class RoomController {
     }
 
     @Operation(summary = "Get Room detail", description = "API retrieve room detail by ID from database")
-    @GetMapping("/detail/{id}")
+    @GetMapping("/detail/{roomId}")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
-    public ApiResponse getRoomById(@PathVariable Long id) {
-        log.info("Get room detail by ID: {}", id);
+    public ApiResponse getRoomById(@PathVariable Long roomId) {
+        log.info("Get room detail by ID: {}", roomId);
         return ApiResponse.builder()
                 .status(HttpStatus.OK.value())
                 .message("room")
-                .data(roomService.getRoomById(id))
+                .data(roomService.getRoomById(roomId))
                 .build();
     }
 
@@ -120,12 +120,12 @@ public class RoomController {
     }
 
     @Operation(summary = "Delete Room", description = "API delete room from database")
-    @DeleteMapping("/delete/{id}")
+    @DeleteMapping("/delete/{roomId}")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
     @ResponseStatus(HttpStatus.OK)
-    public ApiResponse deleteRoom(@PathVariable Long id) {
-        log.info("Delete room with id: {}", id);
-        roomService.deleteRoom(id);
+    public ApiResponse deleteRoom(@PathVariable Long roomId) {
+        log.info("Delete room with id: {}", roomId);
+        roomService.deleteRoom(roomId);
 
         return ApiResponse.builder()
                 .status(200)

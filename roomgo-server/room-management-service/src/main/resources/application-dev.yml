@@ -20,7 +20,7 @@ spring:
           region.factory_class: org.hibernate.cache.jcache.JCacheRegionFactory
     show-sql: false
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
 
 # application-dev.yml
 springdoc:
@@ -36,4 +36,4 @@ openapi:
     version: 1.0.0
 
 serpapi:
-  key: ${SERPAPI_KEY:dummy-key}
+  key: ${SERPAPI_KEY:acdda4c258f533346bf0651e79076443eec0fe6595a7f71dd65b117da9ee69dd}

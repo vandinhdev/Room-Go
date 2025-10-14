@@ -45,25 +45,25 @@ services:
       - soa-net
     restart: always
 
-#  room-management-service:
-#    build:
-#      context: ./room-management-service
-#      dockerfile: Dockerfile
-#    container_name: room-management-service
-#    depends_on:
-#      - postgres
-#      - consul-server
-#    environment:
-#      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/room_go_db
-#      SPRING_DATASOURCE_USERNAME: postgres
-#      SPRING_DATASOURCE_PASSWORD: password
-#      SPRING_CLOUD_CONSUL_HOST: consul-server
-#      SPRING_CLOUD_CONSUL_PORT: 8500
-#      SPRING_APPLICATION_NAME: room-management-service
-#    networks:
-#      - soa-net
-#    restart: always
-#
+  room-management-service:
+    build:
+      context: ./room-management-service
+      dockerfile: Dockerfile
+    container_name: room-management-service
+    depends_on:
+      - postgres
+      - consul-server
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/room_go_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_CLOUD_CONSUL_HOST: consul-server
+      SPRING_CLOUD_CONSUL_PORT: 8500
+      SPRING_APPLICATION_NAME: room-management-service
+    networks:
+      - soa-net
+    restart: always
+
 #  communication-service:
 #    build:
 #      context: ./communication-service
@@ -91,9 +91,9 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      #- communication-service
       - user-management-service
-      #- room-management-service
+      - room-management-service
+      #- communication-service
       - consul-server
     environment:
       SPRING_CLOUD_CONSUL_HOST: consul-server

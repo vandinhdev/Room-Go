@@ -10,6 +10,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import vn.ictu.usermanagementservice.common.enums.UserStatus;
 import vn.ictu.usermanagementservice.common.response.TokenResponse;
@@ -81,26 +82,48 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public TokenResponse getRefreshToken(String refreshToken) {
         if (!StringUtils.hasLength(refreshToken)) {
-            throw new InvalidDataException("Token must be not blank");
+            throw new InvalidDataException("Refresh token must not be blank");
+        }
+
+        long periodCount = refreshToken.chars().filter(ch -> ch == '.').count();
+        if (periodCount != 2) {
+            log.error("❌ Invalid JWT format. Expected 2 periods, found: {}. Token length: {}, Token preview: {}",
+                    periodCount, refreshToken.length(),
+                    refreshToken.length() > 50 ? refreshToken.substring(0, 50) + "..." : refreshToken);
+            throw new InvalidDataException("Invalid refresh token format. JWT must contain exactly 2 period characters.");
         }
 
         try {
             String email = jwtService.extractEmail(refreshToken, REFRESH_TOKEN);
+            log.info("Extracted email from refresh token: {}", email);
 
             UserEntity userEmail = userRepository.findByEmail(email);
+
+            if (userEmail == null) {
+                throw new InvalidDataException("User not found for email: " + email);
+            }
 
             List<String> authorities = new ArrayList<>();
             userEmail.getAuthorities().forEach(authority -> authorities.add(authority.getAuthority()));
 
             String accessToken = jwtService.generateAccessToken(userEmail.getEmail(), authorities);
 
+            log.info("✅ Successfully refreshed token for email: {}", email);
             return TokenResponse.builder().accessToken(accessToken).refreshToken(refreshToken).build();
+        } catch (org.springframework.security.access.AccessDeniedException e) {
+            log.error("❌ Access denied during token refresh: {}", e.getMessage());
+            throw new ForBiddenException("Invalid or expired refresh token: " + e.getMessage());
+        } catch (InvalidDataException e) {
+            log.error("❌ Invalid data during token refresh: {}", e.getMessage());
+            throw e;
         } catch (Exception e) {
-            throw new ForBiddenException(e.getMessage());
+            log.error("❌ Unexpected error during token refresh: {}", e.getMessage(), e);
+            throw new ForBiddenException("Failed to refresh token: " + e.getMessage());
         }
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void register(SignUpRequest request) {
         if (userRepository.findByEmail(request.getEmail()) != null) {
             throw new InvalidDataException("Email is already in use");

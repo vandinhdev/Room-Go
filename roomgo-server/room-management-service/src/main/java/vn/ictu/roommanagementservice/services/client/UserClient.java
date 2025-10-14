@@ -28,8 +28,8 @@ public class UserClient {
         headers.set("Authorization", bearerToken);
         HttpEntity<Void> entity = new HttpEntity<>(headers);
 
-        String url = "http://esb-camel:8080/api/esb/user/by-email?email=" + email;
-        log.info("Request URL: {}", url);                                   // log URL
+        String url = "http://esb-camel:8080/api/esb/user/email?email=" + email;
+        log.info("Request URL: {}", url);
         ResponseEntity<ApiResponse> response =
                 restTemplate.exchange(url, HttpMethod.GET, entity, ApiResponse.class);
 

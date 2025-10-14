@@ -90,14 +90,18 @@ public class UserEntity implements UserDetails, Serializable {
         return List.of((GrantedAuthority) () -> "ROLE_" + role.getRoleName());
     }
 
+    public String getUserName() {
+        return username;
+    }
+
     @Override
     public String getUsername() {
-        return email; // login bằng email
+        return email;
     }
 
     @Override
     public String getPassword() {
-        return password; // để rõ ràng (Spring Security dùng trường này để so khớp)
+        return password;
     }
 
     @Override

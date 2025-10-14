@@ -43,19 +43,20 @@ public class UserController {
     }
 
     @Operation(summary = "Get user detail", description = "API retrieve user detail by ID from database")
-    @GetMapping("/{id}")
+    @GetMapping("/{userId}")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
     public ApiResponse getUserDetail(@PathVariable @Min(value = 1, message = "userId must be equals or greater than 1") Long userId) {
         log.info("Get user detail by ID: {}", userId);
-
         return ApiResponse.builder()
                 .status(HttpStatus.OK.value())
                 .message("user")
                 .data(userService.getUserById(userId))
                 .build();
     }
+
+
     @Operation(summary = "Get user detail", description = "API retrieve user detail by ID from database")
-    @GetMapping("/email/{email}")
+    @GetMapping("/email")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
     public ApiResponse getUserDetailByEmail(@RequestParam String email) {
         log.info("Get user detail by email: {}", email);
@@ -75,7 +76,7 @@ public class UserController {
         return ApiResponse.builder()
                 .status(HttpStatus.OK.value())
                 .message("user")
-                .data(userService.getUserByEmail(email))
+                .data(userService.getProfile(email))
                 .build();
     }
 
@@ -120,41 +121,5 @@ public class UserController {
                 .build();
     }
 
-    @Operation(summary = "Change Password", description = "API change password for user to database")
-    @PatchMapping("/change-password")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_STUDENT','ROLE_OWNER')")
-    public ApiResponse changePassword(@RequestBody @Valid UserPasswordRequest request, Authentication authentication) {
-        String email = authentication.getName();
-        log.info("Changing password for user: {}", request);
 
-        userService.changePassword(request, email);
-
-        return ApiResponse.builder()
-                .status(HttpStatus.NO_CONTENT.value())
-                .message("Password updated successfully")
-                .data("")
-                .build();
-    }
-
-    @PostMapping("/forgot-password")
-    public ApiResponse forgotPassword(@RequestParam String email) {
-        userService.sendResetOtp(email);
-        return ApiResponse.builder()
-                .status(HttpStatus.OK.value())
-                .message("OTP has been sent to your email")
-                .data("")
-                .build();
-    }
-
-    @PostMapping("/reset-password")
-    public ApiResponse resetPassword(@RequestParam String email,
-                                                @RequestParam String otp,
-                                                @RequestParam String newPassword) {
-        userService.resetPassword(email, otp, newPassword);
-        return ApiResponse.builder()
-                .status(HttpStatus.OK.value())
-                .message("Password has been reset successfully")
-                .data("")
-                .build();
-    }
 }
