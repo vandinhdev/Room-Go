@@ -22,7 +22,7 @@ public class UserServiceDetail implements UserDetailsService {
         UserEntity user = userRepository.findByEmail(email);
         if (user == null) {
             log.warn("User not found with email: {}", email);
-            throw new UsernameNotFoundException("User not found");
+            throw new UsernameNotFoundException("User not found with email: " + email);
         }
         log.info("Found user in DB: {}", user.getEmail());
         return user;

@@ -2,12 +2,10 @@ package vn.ictu.usermanagementservice.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.DisabledException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -54,8 +52,6 @@ public class AuthServiceImpl implements AuthService {
             );
 
             log.info("✅ Login success for email={}", request.getEmail());
-            log.info(request.getPassword());
-
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
             List<String> authorities = authentication.getAuthorities()
@@ -72,11 +68,24 @@ public class AuthServiceImpl implements AuthService {
                     .build();
 
         } catch (BadCredentialsException e) {
+            log.warn("❌ Sai mật khẩu cho email={}", request.getEmail());
             throw new BadCredentialsException("Sai email hoặc mật khẩu");
+
+        } catch (InternalAuthenticationServiceException e) {
+            log.warn("⚠️ User không tồn tại: {}", request.getEmail());
+
+            // Nếu root cause là UsernameNotFoundException → login sai
+            if (e.getCause() instanceof UsernameNotFoundException) {
+                throw new BadCredentialsException("Sai email hoặc mật khẩu");
+            }
+
+            // Nếu lỗi khác → hệ thống
+            throw new RuntimeException("Lỗi hệ thống khi xác thực", e);
         } catch (DisabledException e) {
             throw new DisabledException("Tài khoản bị vô hiệu hóa");
         }
     }
+
 
 
     @Override

@@ -20,7 +20,12 @@ public class EsbRoutes extends RouteBuilder {
         restConfiguration()
                 .component("platform-http")
                 .contextPath("/api/esb")
-                .bindingMode(RestBindingMode.json);
+                .bindingMode(RestBindingMode.json)
+                .corsHeaderProperty("Access-Control-Allow-Origin", "http://127.0.0.1:5500,http://localhost:5500,http://127.0.0.1:3000,http://localhost:3000")
+                .corsHeaderProperty("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
+                .corsHeaderProperty("Access-Control-Allow-Headers", "*")
+                .corsHeaderProperty("Access-Control-Allow-Credentials", "true")
+                .corsHeaderProperty("Access-Control-Max-Age", "3600");
 
         rest("/auth")
                 .post("/login").to("direct:login")
