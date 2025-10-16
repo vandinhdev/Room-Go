@@ -2,12 +2,15 @@ package vn.ictu.usermanagementservice.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import vn.ictu.usermanagementservice.model.UserEntity;
 import vn.ictu.usermanagementservice.repository.UserRepository;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -18,6 +21,14 @@ public class UserServiceDetail implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        if (email.startsWith("guest_")) {
+            log.info("🧾 Guest user detected: {}", email);
+            return new org.springframework.security.core.userdetails.User(
+                    email,
+                    "", // no password
+                    List.of(new SimpleGrantedAuthority("ROLE_GUEST"))
+            );
+        }
         log.info("Loading user by email: {}", email);
         UserEntity user = userRepository.findByEmail(email);
         if (user == null) {

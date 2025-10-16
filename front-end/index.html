@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="access/css/responsive.css">
     <link rel="stylesheet" href="access/css/auth.css">
     <link rel="stylesheet" href="access/css/favourite.css">
+    <link rel="stylesheet" href="access/css/loading.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 </head>
 <body>
@@ -19,7 +20,13 @@
 
     <!-- Main Container -->
     <div class="main-container">
-    
+
+        <!-- Loading Spinner -->
+        <div id="loadingSpinner" class="loading-spinner" style="display: none;">
+            <div class="spinner"></div>
+            <p>Đang tải...</p>
+        </div>
+
 
         <!-- Filters -->
         <div class="filters">
@@ -91,7 +98,6 @@
         <div id="paginationContainer" class="pagination-container"></div>
     </div>
 
-    <script type="module" src="./js/main.js" defer></script>
     <script>
         // Xử lý lọc tỉnh thành, giá, diện tích
         function initializeFilters() {
@@ -168,6 +174,9 @@
             initializeFilters();
         });
     </script>
+    <script src="js/utils.js"></script>
+    <script src="js/util.js"></script>
+    <script type="module" src="./js/main.js"></script>
     <script type="module" src="js/header.js"></script>
     <script src="js/footer.js"></script>
 </body>

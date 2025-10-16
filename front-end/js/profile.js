@@ -1,5 +1,4 @@
-// Profile Page JavaScript
-import { getCurrentUser, users } from './mockUsers.js';
+import { API_BASE_URL } from "./config.js";
 
 document.addEventListener('DOMContentLoaded', function() {
     initializeProfile();
@@ -11,9 +10,39 @@ document.addEventListener('DOMContentLoaded', function() {
     loadFavorites();
 });
 
-function initializeProfile() {
-    const user = getCurrentUser();
-    
+// fetch current user from API
+async function getCurrentUser() {
+    const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+    if (!userInfo || !userInfo.token) {
+        return null;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/user/profile`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${userInfo.token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            const apiResponse = await response.json();
+            console.log('Fetched user profile:', apiResponse.data);
+            return apiResponse.data;
+        } else {
+            console.error('Error fetching user profile:', response.statusText);
+            return null;
+        }
+    } catch (error) {
+        console.error('Error fetching user profile:', error);
+        return null;
+    }
+}
+
+async function initializeProfile() {
+    const user = await getCurrentUser();
+
     if (!user) {
         // User chưa đăng nhập, chuyển về trang login
         window.location.href = 'auth.html';
@@ -38,12 +67,12 @@ function updateProfileHeader(user) {
     }
 
     // Cập nhật thông tin
-    profileName.textContent = user.fullName || 'Tên người dùng';
+    profileName.textContent = user.lastName + " " + user.firstName || 'Tên người dùng';
     profileEmail.textContent = user.email || 'email@example.com';
     
     // Cập nhật role
-    profileRole.textContent = user.role === 'admin' ? 'Quản trị viên' : 'Người dùng';
-    if (user.role === 'admin') {
+    profileRole.textContent = user.role === 'ADMIN' ? 'Quản trị viên' : 'Người dùng';
+    if (user.role === 'ADMIN') {
         profileRole.classList.add('admin');
     }
 }
@@ -214,13 +243,13 @@ function setupModals() {
     });
 }
 
-function loadUserData() {
-    const user = getCurrentUser();
+async function loadUserData() {
+    const user = await getCurrentUser();
     if (!user) return;
 
     // Load basic info display
-    document.getElementById('displayFullName').textContent = user.fullName || 'Chưa cập nhật';
-    document.getElementById('displayBirthDate').textContent = user.birthDate || 'Chưa cập nhật';
+    document.getElementById('displayFullName').textContent = user.lastName + " " + user.firstName || 'Chưa cập nhật';
+    document.getElementById('displayBirthDate').textContent = user.dateOfBirth || 'Chưa cập nhật';
     document.getElementById('displayAddress').textContent = user.address || 'Chưa cập nhật';
     document.getElementById('displayBio').textContent = user.bio || 'Chưa cập nhật';
 
@@ -305,9 +334,9 @@ function togglePhoneEdit(showEdit) {
 }
 
 // Update functions
-function updateBasicInfo() {
-    const user = getCurrentUser();
-    if (!user) return;
+async function updateBasicInfo() {
+    const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+    if (!userInfo || !userInfo.token) return;
 
     // Lấy dữ liệu từ form
     const formData = new FormData(document.getElementById('basicInfoForm'));
@@ -316,32 +345,45 @@ function updateBasicInfo() {
     const address = formData.get('address');
     const bio = formData.get('bio');
 
-    // Cập nhật thông tin user
-    const updatedUser = {
-        ...user,
+    const updateData = {
         fullName,
         birthDate,
         address,
         bio
     };
 
-    // Lưu vào localStorage
-    localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+    try {
+        const response = await fetch(`${API_BASE_URL}/user/update-profile`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${userInfo.token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(updateData)
+        });
 
-    // Cập nhật display
-    loadUserData();
-    toggleBasicInfoEdit(false);
+        if (response.ok) {
+            const apiResponse = await response.json();
+            
+            // Cập nhật display
+            await loadUserData();
+            toggleBasicInfoEdit(false);
 
-    // Cập nhật header
-    updateProfileHeader(updatedUser);
-
-    // Hiển thị thông báo thành công
-    showNotification('Cập nhật thông tin cơ bản thành công!', 'success');
+            // Hiển thị thông báo thành công
+            showNotification('Cập nhật thông tin cơ bản thành công!', 'success');
+        } else {
+            const errorResponse = await response.json();
+            showNotification(errorResponse.message || 'Có lỗi xảy ra khi cập nhật thông tin!', 'error');
+        }
+    } catch (error) {
+        console.error('Error updating profile:', error);
+        showNotification('Có lỗi xảy ra khi cập nhật thông tin!', 'error');
+    }
 }
 
-function updateEmail() {
-    const user = getCurrentUser();
-    if (!user) return;
+async function updateEmail() {
+    const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+    if (!userInfo || !userInfo.token) return;
 
     const newEmail = document.getElementById('newEmail').value;
     
@@ -350,42 +392,44 @@ function updateEmail() {
         return;
     }
 
-    // Simulate email verification process
-    const confirmChange = confirm(`Bạn sẽ nhận email xác thực tại: ${newEmail}\nTiếp tục?`);
-    
-    if (confirmChange) {
-        // Cập nhật email và đặt trạng thái chưa xác thực
-        const updatedUser = {
-            ...user,
-            email: newEmail,
-            emailVerified: false
-        };
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newEmail)) {
+        showNotification('Email không hợp lệ!', 'error');
+        return;
+    }
 
-        localStorage.setItem('currentUser', JSON.stringify(updatedUser));
-        
-        // Simulate sending verification email
-        setTimeout(() => {
-            if (confirm('Mã xác thực đã được gửi đến email của bạn. Nhấn OK để mô phỏng xác thực thành công.')) {
-                const verifiedUser = {
-                    ...updatedUser,
-                    emailVerified: true
-                };
-                localStorage.setItem('currentUser', JSON.stringify(verifiedUser));
-                loadUserData();
-                showNotification('Email đã được cập nhật và xác thực thành công!', 'success');
-            }
-        }, 1000);
+    const updateData = {
+        email: newEmail
+    };
 
-        loadUserData();
-        toggleEmailEdit(false);
-        updateProfileHeader(updatedUser);
-        showNotification('Email đang được xác thực...', 'success');
+    try {
+        const response = await fetch(`${API_BASE_URL}/user/update-profile`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${userInfo.token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(updateData)
+        });
+
+        if (response.ok) {
+            await loadUserData();
+            toggleEmailEdit(false);
+            showNotification('Cập nhật email thành công!', 'success');
+        } else {
+            const errorResponse = await response.json();
+            showNotification(errorResponse.message || 'Có lỗi xảy ra khi cập nhật email!', 'error');
+        }
+    } catch (error) {
+        console.error('Error updating email:', error);
+        showNotification('Có lỗi xảy ra khi cập nhật email!', 'error');
     }
 }
 
-function updatePhone() {
-    const user = getCurrentUser();
-    if (!user) return;
+async function updatePhone() {
+    const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+    if (!userInfo || !userInfo.token) return;
 
     const newPhone = document.getElementById('newPhone').value;
     
@@ -401,54 +445,41 @@ function updatePhone() {
         return;
     }
 
-    // Simulate SMS verification process
-    const confirmChange = confirm(`Bạn sẽ nhận mã xác thực qua SMS tại: ${newPhone}\nTiếp tục?`);
-    
-    if (confirmChange) {
-        // Cập nhật phone và đặt trạng thái chưa xác thực
-        const updatedUser = {
-            ...user,
-            phone: newPhone,
-            phoneVerified: false
-        };
+    const updateData = {
+        phone: newPhone
+    };
 
-        localStorage.setItem('currentUser', JSON.stringify(updatedUser));
-        
-        // Simulate sending SMS verification
-        setTimeout(() => {
-            const verificationCode = prompt('Nhập mã xác thực (nhập "123456" để mô phỏng):');
-            if (verificationCode === '123456') {
-                const verifiedUser = {
-                    ...updatedUser,
-                    phoneVerified: true
-                };
-                localStorage.setItem('currentUser', JSON.stringify(verifiedUser));
-                loadUserData();
-                showNotification('Số điện thoại đã được cập nhật và xác thực thành công!', 'success');
-            } else {
-                showNotification('Mã xác thực không đúng!', 'error');
-            }
-        }, 1000);
+    try {
+        const response = await fetch(`${API_BASE_URL}/user/update-profile`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${userInfo.token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(updateData)
+        });
 
-        loadUserData();
-        togglePhoneEdit(false);
-        showNotification('Mã xác thực đang được gửi...', 'success');
+        if (response.ok) {
+            await loadUserData();
+            togglePhoneEdit(false);
+            showNotification('Cập nhật số điện thoại thành công!', 'success');
+        } else {
+            const errorResponse = await response.json();
+            showNotification(errorResponse.message || 'Có lỗi xảy ra khi cập nhật số điện thoại!', 'error');
+        }
+    } catch (error) {
+        console.error('Error updating phone:', error);
+        showNotification('Có lỗi xảy ra khi cập nhật số điện thoại!', 'error');
     }
 }
 
-function changePassword() {
+async function changePassword() {
     const currentPassword = document.getElementById('currentPassword').value;
     const newPassword = document.getElementById('newPassword').value;
     const confirmPassword = document.getElementById('confirmPassword').value;
 
-    const user = getCurrentUser();
-    if (!user) return;
-
-    // Kiểm tra mật khẩu hiện tại
-    if (user.password !== currentPassword) {
-        showNotification('Mật khẩu hiện tại không đúng!', 'error');
-        return;
-    }
+    const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+    if (!userInfo || !userInfo.token) return;
 
     // Kiểm tra mật khẩu mới
     if (newPassword.length < 6) {
@@ -461,18 +492,33 @@ function changePassword() {
         return;
     }
 
-    // Cập nhật mật khẩu
-    const updatedUser = {
-        ...user,
-        password: newPassword
+    const changePasswordData = {
+        oldPassword: currentPassword,
+        newPassword: newPassword
     };
 
-    localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+    try {
+        const response = await fetch(`${API_BASE_URL}/user/change-password`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${userInfo.token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(changePasswordData)
+        });
 
-    // Reset form
-    document.getElementById('changePasswordForm').reset();
-
-    showNotification('Đổi mật khẩu thành công!', 'success');
+        if (response.ok) {
+            // Reset form
+            document.getElementById('changePasswordForm').reset();
+            showNotification('Đổi mật khẩu thành công!', 'success');
+        } else {
+            const errorResponse = await response.json();
+            showNotification(errorResponse.message || 'Có lỗi xảy ra khi đổi mật khẩu!', 'error');
+        }
+    } catch (error) {
+        console.error('Error changing password:', error);
+        showNotification('Có lỗi xảy ra khi đổi mật khẩu!', 'error');
+    }
 }
 
 function handleAvatarChange(event) {
@@ -518,41 +564,71 @@ function saveNotificationSettings() {
     showNotification('Lưu cài đặt thông báo thành công!', 'success');
 }
 
-function loadUserPosts() {
-    const user = getCurrentUser();
-    if (!user) return;
+async function loadUserPosts() {
+    const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+    if (!userInfo || !userInfo.token) return;
 
-    // Giả lập dữ liệu tin đăng của user
-    const userPosts = JSON.parse(localStorage.getItem('userPosts')) || [];
-    const postsContainer = document.getElementById('userPosts');
+    try {
+        const response = await fetch(`${API_BASE_URL}/room/me`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${userInfo.token}`,
+                'Content-Type': 'application/json'
+            }
+        });
 
-    if (userPosts.length === 0) {
-        return; // Hiển thị empty state
+        if (response.ok) {
+            const apiResponse = await response.json();
+            const userPosts = apiResponse.data?.rooms || [];
+            const postsContainer = document.getElementById('userPosts');
+
+            if (userPosts.length === 0) {
+                postsContainer.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-home"></i>
+                        <h4>Chưa có tin đăng nào</h4>
+                        <p>Bạn chưa đăng tin nào. Hãy tạo tin đăng đầu tiên!</p>
+                        <a href="roomForm.html" class="btn-primary">Đăng tin mới</a>
+                    </div>
+                `;
+                return;
+            }
+
+            // Render tin đăng
+            const postsHTML = userPosts.map(post => {
+                const mainImage = post.images && post.images.length > 0 
+                    ? post.images[0].url 
+                    : 'https://via.placeholder.com/120x90';
+
+                return `
+                    <div class="post-item" data-id="${post.id}">
+                        <div class="post-image">
+                            <img src="${mainImage}" alt="${post.title}">
+                        </div>
+                        <div class="post-info">
+                            <h4 class="post-title">${post.title}</h4>
+                            <div class="post-price">${formatPrice(post.price)}</div>
+                            <div class="post-address">${post.address}</div>
+                            <div class="post-actions">
+                                <button class="edit-btn" onclick="editPost(${post.id})">
+                                    <i class="fas fa-edit"></i> Sửa
+                                </button>
+                                <button class="delete-btn" onclick="deletePost(${post.id})">
+                                    <i class="fas fa-trash"></i> Xóa
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            postsContainer.innerHTML = postsHTML;
+        } else {
+            console.error('Error fetching user posts:', response.statusText);
+        }
+    } catch (error) {
+        console.error('Error fetching user posts:', error);
     }
-
-    // Render tin đăng
-    const postsHTML = userPosts.map(post => `
-        <div class="post-item" data-id="${post.id}">
-            <div class="post-image">
-                <img src="${post.image || 'https://via.placeholder.com/120x90'}" alt="${post.title}">
-            </div>
-            <div class="post-info">
-                <h4 class="post-title">${post.title}</h4>
-                <div class="post-price">${formatPrice(post.price)}</div>
-                <div class="post-address">${post.address}</div>
-                <div class="post-actions">
-                    <button class="edit-btn" onclick="editPost(${post.id})">
-                        <i class="fas fa-edit"></i> Sửa
-                    </button>
-                    <button class="delete-btn" onclick="deletePost(${post.id})">
-                        <i class="fas fa-trash"></i> Xóa
-                    </button>
-                </div>
-            </div>
-        </div>
-    `).join('');
-
-    postsContainer.innerHTML = postsHTML;
 }
 
 function loadFavorites() {
@@ -653,13 +729,31 @@ window.editPost = function(postId) {
     window.location.href = `roomForm.html?edit=${postId}`;
 };
 
-window.deletePost = function(postId) {
+window.deletePost = async function(postId) {
     if (confirm('Bạn có chắc chắn muốn xóa tin đăng này?')) {
-        let userPosts = JSON.parse(localStorage.getItem('userPosts')) || [];
-        userPosts = userPosts.filter(post => post.id !== postId);
-        localStorage.setItem('userPosts', JSON.stringify(userPosts));
-        loadUserPosts();
-        showNotification('Xóa tin đăng thành công!', 'success');
+        const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+        if (!userInfo || !userInfo.token) return;
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/room/delete/${postId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${userInfo.token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                await loadUserPosts();
+                showNotification('Xóa tin đăng thành công!', 'success');
+            } else {
+                const errorResponse = await response.json();
+                showNotification(errorResponse.message || 'Có lỗi xảy ra khi xóa tin đăng!', 'error');
+            }
+        } catch (error) {
+            console.error('Error deleting post:', error);
+            showNotification('Có lỗi xảy ra khi xóa tin đăng!', 'error');
+        }
     }
 };
 

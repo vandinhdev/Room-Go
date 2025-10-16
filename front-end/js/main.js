@@ -1,11 +1,65 @@
-// main.js - Tách toàn bộ JS từ index.html
-import { rooms } from './mockRooms.js';
-import { users} from './mockUsers.js';
+// ================== CONFIG ==================
+import { API_BASE_URL } from './config.js';
 
+// ================== FALLBACK GUEST TOKEN ==================
+async function fallbackGetGuestToken() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/guest-token`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
 
+    if (!response.ok) {
+      throw new Error(`Lỗi lấy guest token (${response.status})`);
+    }
 
+    const data = await response.json();
+    console.log('Guest token response (fallback):', data);
+    
+    if (data && data.accessToken) {
+      return data.accessToken;
+    } else if (data && data.status === 200 && data.data && data.data.token) {
+      return data.data.token;
+    } else if (data && data.status === 200 && data.data && data.data.accessToken) {
+      return data.data.accessToken;
+    }
+    
+    throw new Error('Invalid guest token response');
+  } catch (error) {
+    console.error('Lỗi lấy guest token (fallback):', error);
+    throw error;
+  }
+}
 
-// Quản lý tin đã lưu
+async function fallbackGetAuthToken() {
+  const userToken = JSON.parse(localStorage.getItem('userInfo'))?.token;
+  if (userToken) {
+    console.log('Sử dụng user token (fallback)');
+    return userToken;
+  }
+
+  try {
+    const guestToken = await fallbackGetGuestToken();
+    console.log('Sử dụng guest token (fallback)');
+    return guestToken;
+  } catch (error) {
+    console.error('Không thể lấy token (fallback):', error);
+    throw new Error('Không thể kết nối tới server. Vui lòng thử lại sau.');
+  }
+}
+
+// ================== STATE & UTILITIES ==================
+let rooms = [];
+
+const state = {
+  currentPage: 1,
+  roomsPerPage: 9,
+  filteredRooms: [],
+};
+
+// ----------------- Favourite Rooms -----------------
 function getFavouriteRooms() {
   return JSON.parse(localStorage.getItem("favouriteRooms")) || [];
 }
@@ -23,310 +77,348 @@ function removeRoom(id) {
   localStorage.setItem("favouriteRooms", JSON.stringify(favourite));
 }
 
-// Global state
-const state = {
-    currentPage: 1,
-    roomsPerPage: 9,
-    filteredRooms: [...rooms]
-};
-
+// ----------------- Format Price -----------------
 function formatPrice(price) {
-    if (!price) return '';
-    if (price >= 1000000) {
-        return (price / 1000000).toFixed(1).replace(/\.0$/, '') + ' triệu/tháng';
-    }
-    return price.toLocaleString('vi-VN') + ' đ/tháng';
+  if (!price) return '';
+  if (price >= 1000000) {
+    return (price / 1000000).toFixed(1).replace(/\.0$/, '') + ' triệu/tháng';
+  }
+  return price.toLocaleString('vi-VN') + ' đ/tháng';
 }
 
+// ================== PAGINATION ==================
 function renderPagination(totalRooms) {
-    const totalPages = Math.ceil(totalRooms / state.roomsPerPage);
-    const container = document.getElementById('paginationContainer');
-    if (!container) return;
+  const totalPages = Math.ceil(totalRooms / state.roomsPerPage);
+  const container = document.getElementById('paginationContainer');
+  if (!container) return;
 
-    let paginationHTML = `
-        <button class="pagination-button" onclick="window.app.changePage(${state.currentPage - 1})" ${state.currentPage === 1 ? 'disabled' : ''}>
-            <i class="fas fa-chevron-left"></i>
-        </button>
-    `;
+  let html = `
+      <button class="pagination-button" onclick="window.app.changePage(${state.currentPage - 1})" ${state.currentPage === 1 ? 'disabled' : ''}>
+        <i class="fas fa-chevron-left"></i>
+      </button>
+  `;
 
-    for (let i = 1; i <= totalPages; i++) {
-        if (i === 1 || i === totalPages || (i >= state.currentPage - 1 && i <= state.currentPage + 1)) {
-            paginationHTML += `
-                <button class="pagination-button ${i === state.currentPage ? 'active' : ''}" 
-                        onclick="window.app.changePage(${i})">
-                    ${i}
-                </button>
-            `;
-        } else if (i === state.currentPage - 2 || i === state.currentPage + 2) {
-            paginationHTML += `<span class="pagination-info">...</span>`;
-        }
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || (i >= state.currentPage - 1 && i <= state.currentPage + 1)) {
+      html += `
+        <button class="pagination-button ${i === state.currentPage ? 'active' : ''}" 
+                onclick="window.app.changePage(${i})">
+          ${i}
+        </button>`;
+    } else if (i === state.currentPage - 2 || i === state.currentPage + 2) {
+      html += `<span class="pagination-info">...</span>`;
     }
+  }
 
-    paginationHTML += `
-        <button class="pagination-button" onclick="window.app.changePage(${state.currentPage + 1})" ${state.currentPage === totalPages ? 'disabled' : ''}>
-            <i class="fas fa-chevron-right"></i>
-        </button>
-    `;
+  html += `
+      <button class="pagination-button" onclick="window.app.changePage(${state.currentPage + 1})" ${state.currentPage === totalPages ? 'disabled' : ''}>
+        <i class="fas fa-chevron-right"></i>
+      </button>
+  `;
 
-    container.innerHTML = paginationHTML;
+  container.innerHTML = html;
 }
 
-// Namespace cho các hàm global
+// ================== GLOBAL APP METHODS ==================
 window.app = {
-    changePage: function (page) {
-        const totalPages = Math.ceil(state.filteredRooms.length / state.roomsPerPage);
-        if (page < 1 || page > totalPages) return;
-        state.currentPage = page;
-        renderRooms(state.filteredRooms);
-    },
-    updateFilteredRooms: function (newRooms) {
-        state.filteredRooms = newRooms;
-        state.currentPage = 1;
-        renderRooms(state.filteredRooms);
-    }
+  changePage(page) {
+    const totalPages = Math.ceil(state.filteredRooms.length / state.roomsPerPage);
+    if (page < 1 || page > totalPages) return;
+    state.currentPage = page;
+    renderRooms(state.filteredRooms);
+  },
+  updateFilteredRooms(newRooms) {
+    state.filteredRooms = newRooms;
+    state.currentPage = 1;
+    renderRooms(state.filteredRooms);
+  },
 };
 
-function renderRooms(rooms) {
-    const grid = document.getElementById('listingsGrid');
-    if (!grid) return;
-    grid.innerHTML = '';
+// ================== FETCH API ROOMS ==================
+async function fetchRooms() {
+  try {
+    // Use Utils if available, otherwise use fallback
+    let token;
+    if (window.Utils && typeof Utils.getAuthToken === 'function') {
+      token = await Utils.getAuthToken();
+    } else {
+      console.warn('Utils not available, using fallback');
+      token = await fallbackGetAuthToken();
+    }
+    console.log('🔑 Using token:', token ? token.substring(0, 20) + '...' : 'No token');
 
-    const saved = getFavouriteRooms();
-    const startIndex = (state.currentPage - 1) * state.roomsPerPage;
-    const paginatedRooms = rooms.slice(startIndex, startIndex + state.roomsPerPage);
-
-    renderPagination(rooms.length);
-
-    paginatedRooms.forEach(room => {
-        const isSaved = saved.find(p => p.id === room.id);
-        // Tìm thông tin chủ phòng thật
-        const owner = users.find(u => u.id === room.owner_id);
-        const ownerName = owner ? owner.fullName : `Chủ phòng #${room.owner_id}`;
-        const ownerAvatar = owner ? owner.fullName.charAt(0).toUpperCase() : String(room.owner_id).slice(-1);
-        
-        const card = document.createElement('div');
-        card.className = 'listing-card';
-        
-        // Lấy ảnh chính (ảnh đầu tiên) từ mảng images
-        const mainImage = room.images && room.images.length > 0 
-            ? room.images[0].url 
-            : '';
-        
-        card.innerHTML = `
-            <div class="listing-image">
-                ${mainImage 
-                    ? `<img src="${mainImage}" alt="${room.title}" style="width: 100%; height: 100%; object-fit: cover;">` 
-                    : `<div style="background: linear-gradient(135deg, #8B4513, #D2B48C); width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px;">${room.title}</div>`
-                }
-                <div class="image-overlay">${room.status === 'available' ? 'Có phòng' : 'Đã thuê'}</div>
-                <div class="heart-icon">
-                    <i class="${isSaved ? 'fa-solid heart-filled' : 'fa-regular heart-empty'} fa-heart"></i>
-                </div>
-            </div>
-            <div class="listing-content">
-                <div class="listing-title">${room.title}</div>
-                <div class="listing-type">${room.description || ''}</div>
-                <div class="listing-price">${formatPrice(room.price)}</div>
-                <div class="listing-area">${room.area ? room.area + ' m²' : ''}</div>
-                <div class="listing-location">
-                    <span class="location-icon"><i class="fa-solid fa-location-dot"></i></span>
-                    <span>${room.address || ''}</span>
-                </div>
-                <div class="listing-footer">
-                    <div class="user-info">
-                        <div class="user-avatar">${ownerAvatar}</div>
-                        <span>${ownerName}</span>
-                    </div>
-                </div>
-            </div>
-        `;
-        card.addEventListener('click', function () {
-            window.location.href = `./detail.html?id=${room.id}`;
-        });
-        card.querySelector('.heart-icon').addEventListener('click', function (e) {
-            e.stopPropagation();
-            const icon = this.querySelector('i');
-            if (icon.classList.contains('heart-filled')) {
-                icon.classList.remove('fa-solid', 'heart-filled');
-                icon.classList.add('fa-regular', 'heart-empty');
-                removeRoom(room.id);
-            } else {
-                icon.classList.remove('fa-regular', 'heart-empty');
-                icon.classList.add('fa-solid', 'heart-filled');
-                saveRoom(room);
-            }
-        });
-        grid.appendChild(card);
+    const response = await fetch(`${API_BASE_URL}/room/list`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
     });
+
+    if (!response.ok) throw new Error(`Lỗi tải phòng (${response.status})`);
+
+    const data = await response.json();
+    console.log('API Response:', data);
+
+    // Handle different response formats
+    let roomsArray = [];
+    if (data && data.status === 200 && data.data && Array.isArray(data.data.rooms)) {
+      roomsArray = data.data.rooms;
+    } else if (data && Array.isArray(data.rooms)) {
+      roomsArray = data.rooms;
+    } else if (data && Array.isArray(data.data)) {
+      roomsArray = data.data;
+    } else if (Array.isArray(data)) {
+      roomsArray = data;
+    } else {
+      console.warn('Unexpected API response format:', data);
+      roomsArray = [];
+    }
+
+    if (roomsArray.length > 0) {
+      rooms = roomsArray;
+
+      const uniqueOwnerIds = [...new Set(rooms.map(r => r.ownerId).filter(Boolean))];
+
+      const ownerMap = {};
+      await Promise.all(uniqueOwnerIds.map(async (userId) => {
+        try {
+          const ownerRes = await fetch(`${API_BASE_URL}/user/${userId}`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          });
+          if (ownerRes.ok) {
+            const ownerData = await ownerRes.json();
+            console.log('🔹 Profile fetch body:', ownerData);
+            ownerMap[userId] = ownerData.data || ownerData;
+          }
+        } catch (e) {
+          console.warn(`Không lấy được chủ nhà ID ${userId}`, e);
+        }
+      }));
+
+      // Gắn tên chủ nhà vào từng phòng
+      rooms = rooms.map(room => {
+        const owner = ownerMap[room.ownerId];
+        const ownerName = owner ? 
+          `${owner.firstName || ''} ${owner.lastName || ''}`.trim() : 
+          `Chủ phòng #${room.ownerId}`;
+          
+        return {
+          ...room,
+          ownerName: ownerName,
+          ownerAvatar: owner?.avatar || null
+        };
+      });
+
+      // =========================
+
+      // Store pagination info if available
+      if (data && data.data) {
+        state.pagination = {
+          pageNumber: data.data.pageNumber || 1,
+          pageSize: data.data.pageSize || roomsArray.length,
+          totalPages: data.data.totalPages || 1,
+          totalElements: data.data.totalElements || roomsArray.length
+        };
+      } else {
+        state.pagination = {
+          pageNumber: 1,
+          pageSize: roomsArray.length,
+          totalPages: 1,
+          totalElements: roomsArray.length
+        };
+      }
+      console.log('Loaded rooms with owners:', rooms);
+    } else {
+      console.warn('No rooms found in API response');
+      rooms = [];
+      state.pagination = null;
+    }
+
+    state.filteredRooms = [...rooms];
+    renderRooms(rooms);
+  } catch (error) {
+    console.error('Lỗi tải phòng:', error);
+    if (error.message.includes('Không thể kết nối')) {
+      Utils.showNotification(error.message, 'error');
+    } else {
+      Utils.showNotification('Không thể tải danh sách phòng. Vui lòng thử lại sau.', 'error');
+    }
+    rooms = [];
+    state.filteredRooms = [];
+    renderRooms([]);
+  }
 }
 
 
+// ================== RENDER ROOMS ==================
+function renderRooms(roomList) {
+  const grid = document.getElementById('listingsGrid');
+  if (!grid) return;
+  
+  // Ensure roomList is an array
+  if (!Array.isArray(roomList)) {
+    console.warn('roomList is not an array:', roomList);
+    roomList = [];
+  }
+  
+  grid.innerHTML = '';
 
+  const saved = getFavouriteRooms();
+  const startIndex = (state.currentPage - 1) * state.roomsPerPage;
+  const paginatedRooms = roomList.slice(startIndex, startIndex + state.roomsPerPage);
+
+  renderPagination(roomList.length);
+
+  paginatedRooms.forEach(room => {
+    const isSaved = saved.find(p => p.id === room.id);
+    
+    // Owner info is now fetched and attached in fetchRooms()
+    const ownerName = room.ownerName || 'Chủ phòng';
+    const ownerAvatar = room.ownerAvatar || ownerName.charAt(0).toUpperCase();
+
+    
+    // Handle both imageUrls (from API) and images (legacy format)
+    const mainImage = room.imageUrls?.length ? room.imageUrls[0] : 
+                     (room.images?.length ? room.images[0].url : '');
+
+    const card = document.createElement('div');
+    card.className = 'listing-card';
+
+    card.innerHTML = `
+      <div class="listing-image">
+        ${mainImage
+          ? `<img src="${mainImage}" alt="${room.title}" style="width: 100%; height: 100%; object-fit: cover;">`
+          : `<div style="background: linear-gradient(135deg, #8B4513, #D2B48C); width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px;">${room.title}</div>`
+        }
+        <div class="image-overlay">${(room.status === 'AVAILABLE' || room.status === 'available') ? 'Có phòng' : 'Đã thuê'}</div>
+        <div class="heart-icon">
+          <i class="${isSaved ? 'fa-solid heart-filled' : 'fa-regular heart-empty'} fa-heart"></i>
+        </div>
+      </div>
+      <div class="listing-content">
+        <div class="listing-title">${room.title}</div>
+        <div class="listing-type">${room.description || ''}</div>
+        <div class="listing-price">${formatPrice(room.price)}</div>
+        <div class="listing-area">${room.area ? room.area + ' m²' : ''}</div>
+        <div class="listing-location">
+          <span class="location-icon"><i class="fa-solid fa-location-dot"></i></span>
+          <span>${room.address || ''}</span>
+        </div>
+        <div class="listing-footer">
+          <div class="user-info">
+            <div class="user-avatar">${ownerAvatar}</div>
+            <span>${ownerName}</span>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Click để xem chi tiết
+    card.addEventListener('click', () => {
+      window.location.href = `./detail.html?id=${room.id}`;
+    });
+
+    // Click trái tim để lưu
+    card.querySelector('.heart-icon').addEventListener('click', (e) => {
+      e.stopPropagation();
+      const icon = e.currentTarget.querySelector('i');
+      if (icon.classList.contains('heart-filled')) {
+        icon.classList.remove('fa-solid', 'heart-filled');
+        icon.classList.add('fa-regular', 'heart-empty');
+        removeRoom(room.id);
+      } else {
+        icon.classList.remove('fa-regular', 'heart-empty');
+        icon.classList.add('fa-solid', 'heart-filled');
+        saveRoom(room);
+      }
+    });
+
+    grid.appendChild(card);
+  });
+}
+
+// ================== FILTER & SEARCH ==================
 function getFilteredRooms() {
-    let filtered = rooms;
-    const provinceSelect = document.getElementById('provinceSelect');
-    const districtSelect = document.getElementById('districtSelect');
-    const wardSelect = document.getElementById('wardSelect');
-    const priceFilter = document.getElementById('priceFilter');
-    const areaFilter = document.getElementById('areaFilter');
+  let filtered = rooms;
+  const provinceSelect = document.getElementById('provinceSelect');
+  const districtSelect = document.getElementById('districtSelect');
+  const wardSelect = document.getElementById('wardSelect');
+  const priceFilter = document.getElementById('priceFilter');
+  const areaFilter = document.getElementById('areaFilter');
 
-    if (provinceSelect && provinceSelect.value) {
-        filtered = filtered.filter(r => r.province && r.province.trim().toLowerCase() === provinceSelect.value.trim().toLowerCase());
-    }
-    if (districtSelect && districtSelect.value) {
-        filtered = filtered.filter(r => r.district && r.district.trim().toLowerCase() === districtSelect.value.trim().toLowerCase());
-    }
-    if (wardSelect && wardSelect.value) {
-        filtered = filtered.filter(r => r.ward && r.ward.trim().toLowerCase() === wardSelect.value.trim().toLowerCase());
-    }
-    switch (priceFilter && priceFilter.value) {
-        case '1': filtered = filtered.filter(r => r.price < 1000000); break;
-        case '2': filtered = filtered.filter(r => r.price >= 1000000 && r.price <= 2000000); break;
-        case '3': filtered = filtered.filter(r => r.price > 2000000 && r.price <= 3000000); break;
-        case '4': filtered = filtered.filter(r => r.price > 3000000); break;
-    }
-    switch (areaFilter && areaFilter.value) {
-        case '1': filtered = filtered.filter(r => r.area < 15); break;
-        case '2': filtered = filtered.filter(r => r.area >= 15 && r.area <= 25); break;
-        case '3': filtered = filtered.filter(r => r.area > 25 && r.area <= 35); break;
-        case '4': filtered = filtered.filter(r => r.area > 35); break;
-    }
-    return filtered;
+  if (provinceSelect?.value)
+    filtered = filtered.filter(r => r.province?.toLowerCase() === provinceSelect.value.toLowerCase());
+  if (districtSelect?.value)
+    filtered = filtered.filter(r => r.district?.toLowerCase() === districtSelect.value.toLowerCase());
+  if (wardSelect?.value)
+    filtered = filtered.filter(r => r.ward?.toLowerCase() === wardSelect.value.toLowerCase());
+
+  switch (priceFilter?.value) {
+    case '1': filtered = filtered.filter(r => r.price < 1000000); break;
+    case '2': filtered = filtered.filter(r => r.price >= 1000000 && r.price <= 2000000); break;
+    case '3': filtered = filtered.filter(r => r.price > 2000000 && r.price <= 3000000); break;
+    case '4': filtered = filtered.filter(r => r.price > 3000000); break;
+  }
+  switch (areaFilter?.value) {
+    case '1': filtered = filtered.filter(r => r.area < 15); break;
+    case '2': filtered = filtered.filter(r => r.area >= 15 && r.area <= 25); break;
+    case '3': filtered = filtered.filter(r => r.area > 25 && r.area <= 35); break;
+    case '4': filtered = filtered.filter(r => r.area > 35); break;
+  }
+  return filtered;
 }
 
 function updateRooms() {
-    renderRooms(getFilteredRooms());
+  renderRooms(getFilteredRooms());
 }
 
-renderRooms(rooms);
-
-// Test function for quick login (for development/testing)
-window.testLogin = async function(email = 'admin@gmail.com', password = 'password') {
-    const { users, login } = await import('./mockUsers.js');
-    const user = users.find(u => u.email === email);
-    if (user && user.password === password) {
-        login(user.username, user.password);
-        console.log('Test login successful:', user);
-        updateAuthUI();
-        return user;
-    } else {
-        console.log('Test login failed');
-        return null;
-    }
-};
-
-// Test function for quick logout
-window.testLogout = async function() {
-    const { logout } = await import('./mockUsers.js');
-    logout();
-    console.log('Test logout successful');
-    updateAuthUI();
-};
-
-// Function to update authentication UI based on login status
+// ================== AUTH UI ==================
 function updateAuthUI() {
-    const authButtons = document.getElementById('authButtons');
-    const userMenu = document.querySelector('.user-menu');
-    const userNameLarge = document.querySelector('.user-name-large');
-    const userEmail = document.querySelector('.user-email');
-    
-    if (!authButtons || !userMenu) {
-        console.warn("authButtons hoặc userMenu chưa có trong DOM, bỏ qua updateAuthUI");
-        return;
-    }
-    
-    // Check if user is logged in
-    const currentUser = localStorage.getItem('currentUser');
-    
-    if (currentUser) {
-        // User is logged in
-        const user = JSON.parse(currentUser);
-        
-        // Hide auth buttons and show user menu
-        authButtons.style.display = 'none';
-        userMenu.classList.remove('d-none');
-        
-        // Update user info in dropdown
-        if (userNameLarge) {
-            userNameLarge.textContent = user.username || user.email || 'User';
-        }
-        if (userEmail) {
-            userEmail.textContent = user.email || '';
-        }
-    } else {
-        // User is not logged in - show login/register buttons
-        authButtons.style.display = 'block';
-        userMenu.classList.add('d-none');
-        
-        // Populate auth buttons if empty
-        if (authButtons.innerHTML.trim() === '') {
-            authButtons.innerHTML = `
-                <a href="auth.html" class="auth-btn login-btn">Đăng nhập</a>
-                <a href="auth.html?mode=register" class="auth-btn register-btn">Đăng ký</a>
-            `;
-        }
-    }
+  const authButtons = document.getElementById('authButtons');
+  const userMenu = document.querySelector('.user-menu');
+  const userNameLarge = document.querySelector('.user-name-large');
+  const userEmail = document.querySelector('.user-email');
+  if (!authButtons || !userMenu) return;
+
+  const currentUser = JSON.parse(localStorage.getItem('userInfo'));
+  if (currentUser?.token) {
+    authButtons.style.display = 'none';
+    userMenu.classList.remove('d-none');
+    if (userNameLarge) userNameLarge.textContent = currentUser.fullName || currentUser.email;
+    if (userEmail) userEmail.textContent = currentUser.email;
+  } else {
+    authButtons.style.display = 'block';
+    userMenu.classList.add('d-none');
+  }
 }
 
-// Function to wait for header elements to be loaded
 function waitForHeaderAndUpdateAuth() {
-    // Listen for the custom headerLoaded event
-    document.addEventListener('headerLoaded', function() {
-        updateAuthUI();
-    });
+  document.addEventListener('headerLoaded', updateAuthUI);
 }
 
-document.addEventListener('DOMContentLoaded', function () {
-    // Wait for header to be loaded before updating auth UI
-    waitForHeaderAndUpdateAuth();
-
-    // Initialize non-header elements and functionality that doesn't depend on header
-    initializeFiltersAndTabs();
-
-    // Wait for header to be loaded before setting up header-dependent functionality
-    document.addEventListener('headerLoaded', function() {
-        initializeHeaderDependentElements();
-    });
+// ================== INIT ==================
+document.addEventListener('DOMContentLoaded', () => {
+  waitForHeaderAndUpdateAuth();
+  initializeFiltersAndTabs();
+  document.addEventListener('headerLoaded', initializeHeaderDependentElements);
+  fetchRooms();
 });
 
+// ================== FILTER INIT ==================
 function initializeFiltersAndTabs() {
-    // Initialize elements that don't depend on header
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.addEventListener('click', function () {
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-        });
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
     });
-    document.querySelectorAll('.tab').forEach(tab => {
-        tab.addEventListener('click', function () {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            this.classList.add('active');
-        });
-    });
-    
-    document.querySelectorAll('.view-btn').forEach(btn => {
-        btn.addEventListener('click', function () {
-            document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-        });
-    });
-    document.querySelectorAll('.price-option').forEach(option => {
-        option.addEventListener('click', function () {
-            document.querySelectorAll('.price-option').forEach(o => o.style.background = '');
-            this.style.background = '#fff3f0';
-            this.style.borderColor = '#ff6b35';
-        });
-    });
-
-    const sortControl = document.querySelector('.sort-control');
-    if (sortControl) {
-        sortControl.addEventListener('click', function () {
-            const sorted = [...getFilteredRooms()].sort((a, b) => b.price - a.price);
-            renderRooms(sorted);
-        });
-    }
+  });
 }
 
+// ================== HEADER ELEMENTS ==================
 function initializeHeaderDependentElements() {
     const provinceSelect = document.getElementById('provinceSelect');
     const districtSelect = document.getElementById('districtSelect');
@@ -429,4 +521,5 @@ function initializeHeaderDependentElements() {
         });
     }
 }
+
 

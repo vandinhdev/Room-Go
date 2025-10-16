@@ -104,7 +104,7 @@ class PostManagement {
         // Try both currentUser and userInfo from localStorage
         this.currentUser = JSON.parse(localStorage.getItem('currentUser')) || 
                           JSON.parse(localStorage.getItem('userInfo')) || null;
-        this.isAdmin = this.currentUser && this.currentUser.role === 'admin';
+        this.isAdmin = this.currentUser && this.currentUser.role === 'ADMIN';
         this.currentTab = 'all';
         
         this.init();

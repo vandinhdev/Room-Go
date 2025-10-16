@@ -1,5 +1,3 @@
-import { rooms } from "./mockRooms.js";
-
 document.addEventListener('DOMContentLoaded', function() {
     // Load the header
     fetch('components/header.html')
@@ -97,7 +95,7 @@ function initializeHeader() {
 
         // Xử lý menu quản lý người dùng (chỉ admin)
         const userManagementMenuItem = document.getElementById('userManagementMenuItem');
-        if (userManagementMenuItem && userInfo.role === 'admin') {
+        if (userManagementMenuItem && userInfo.role === 'ADMIN') {
             userManagementMenuItem.addEventListener('click', function(e) {
                 e.preventDefault();
                 window.location.href = './user-management.html';
@@ -118,7 +116,7 @@ function initializeHeader() {
 
         // Xử lý menu thống kê (chỉ admin)
         const statisticsMenuItem = document.getElementById('statisticsMenuItem');
-        if (statisticsMenuItem && userInfo.role === 'admin') {
+        if (statisticsMenuItem && userInfo.role === 'ADMIN') {
             statisticsMenuItem.addEventListener('click', function(e) {
                 e.preventDefault();
                 window.location.href = './statistics.html';
@@ -545,5 +543,4 @@ function formatRelativeTime(date) {
 
 // Global function to add notifications from other pages
 window.addNotification = addNotification;
-
 

@@ -12,20 +12,37 @@
     <link rel="stylesheet" href="./access/css/auth.css">
     <link rel="stylesheet" href="./access/css/chat.css">
     <link rel="stylesheet" href="./access/css/favourite.css">
+    <link rel="stylesheet" href="./access/css/loading.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 </head>
 <body>
     
     <div class="main-container">
+        <div class="loading-spinner" id="loadingSpinner">
+            <div class="spinner"></div>
+            <p>Đang tải thông tin...</p>
+        </div>
+
+        <div class="error-message" id="errorMessage" style="display: none;">
+            <div class="error-content">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h3>Không thể tải thông tin</h3>
+                <p id="errorText">Đã xảy ra lỗi khi tải thông tin người dùng.</p>
+                <button class="btn btn-primary" onclick="location.reload()">Thử lại</button>
+            </div>
+        </div>
+
         <div id="roomDetail"></div>
-        <div class="similar-form">
+        <div class="similar-form" id="similarForm">
             <div id="similarRoomWrapper"></div>
         </div>
     </div>
 
     
+    <script src="./js/utils.js"></script>
     <script type="module" src="./js/header.js"></script>
     <script src="./js/footer.js"></script>
+    <script src="./js/loading.js"></script>
     <script type="module" src="./js/detail.js"></script>
 </body>
 </html>

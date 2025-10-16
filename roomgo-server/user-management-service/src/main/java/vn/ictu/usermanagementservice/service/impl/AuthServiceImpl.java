@@ -132,6 +132,22 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    public TokenResponse createTokenGuest() {
+        String guestUsername = "guest_" + UUID.randomUUID().toString().substring(0, 8);
+        List<String> roles = List.of("ROLE_GUEST");
+
+        String accessToken = jwtService.generateAccessToken(guestUsername, roles);
+
+
+        log.info("✅ Created guest token for username: {}", guestUsername);
+        return TokenResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(null) // Không trả về refresh token cho guest
+                .build();
+
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public void register(SignUpRequest request) {
         if (userRepository.findByEmail(request.getEmail()) != null) {

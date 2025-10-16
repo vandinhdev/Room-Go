@@ -42,14 +42,17 @@ const testUsers = [
 let currentUsers = [...testUsers];
 let editingUserId = null;
 
-// Kiểm tra quyền admin
+// Kiểm tra quyền admin và load dữ liệu
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOMContentLoaded triggered');
     
     const userInfo = JSON.parse(localStorage.getItem('userInfo'));
     console.log('Current userInfo:', userInfo);
     
-    if (!userInfo || userInfo.role !== 'admin') {
+    // Load users with loading utility
+    loadUsersWithLoading();
+    
+    if (!userInfo || userInfo.role !== 'ADMIN') {
         alert('Bạn không có quyền truy cập trang này!');
         window.location.href = 'index.html';
         return;
@@ -89,6 +92,23 @@ function setupEventListeners() {
             }
         });
     }
+}
+
+// Load users with loading utility
+async function loadUsersWithLoading() {
+    await loadingWrapper(async () => {
+        // Simulate API call delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Load users (in real app, this would be API call)
+        loadUsers();
+        
+        return currentUsers;
+    }, {
+        ...LoadingUtils.managementPage,
+        loadingText: 'Đang tải danh sách người dùng...',
+        onRetry: () => loadUsersWithLoading()
+    });
 }
 
 function loadUsers() {

@@ -24,7 +24,7 @@ public class RoomController {
 
     @Operation(summary = "Get Room list", description = "API retrieve room from database")
     @GetMapping("/list")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER', 'ROLE_GUEST')")
     public ApiResponse getAllRoom(@RequestParam(required = false) String keyword,
                                   @RequestParam(required = false) String province,
                                   @RequestParam(required = false) String district,
@@ -61,6 +61,7 @@ public class RoomController {
 
     @Operation(summary = "Get Room list of user", description = "API retrieve room list of user from database")
     @GetMapping("/me")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
     public ApiResponse getRoomMe(@RequestParam(required = false) String keyword,
                                  @RequestParam(required = false) String sort,
                                  @RequestParam(defaultValue = "1") int page,
@@ -78,7 +79,7 @@ public class RoomController {
 
     @Operation(summary = "Get Room detail", description = "API retrieve room detail by ID from database")
     @GetMapping("/detail/{roomId}")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER','ROLE_GUEST')")
     public ApiResponse getRoomById(@PathVariable Long roomId) {
         log.info("Get room detail by ID: {}", roomId);
         return ApiResponse.builder()

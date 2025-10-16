@@ -68,6 +68,13 @@ public class AuthController {
                 .build();
     }
 
+    @PostMapping("/guest-token")
+    @Operation(summary = "Guest token", description = "Create token for guest user")
+    public TokenResponse createTokenGuest() {
+        log.info("Create token for guest user");
+        return authService.createTokenGuest();
+    }
+
     @Operation(summary = "Verify email", description = "Verify email after register")
     @GetMapping("/verify-email")
     public ApiResponse verifyEmail(@RequestParam String email) {
@@ -79,4 +86,6 @@ public class AuthController {
                 .data(null)
                 .build();
     }
+
+
 }

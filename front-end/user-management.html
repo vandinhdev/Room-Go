@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="access/css/footer.css">
     <link rel="stylesheet" href="access/css/responsive.css">
     <link rel="stylesheet" href="access/css/auth.css">
+    <link rel="stylesheet" href="access/css/loading.css">
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <style>
@@ -359,7 +360,23 @@
 </head>
 <body>
     <div class="main-container">
-        <div class="admin-container">
+        <!-- Loading Spinner -->
+        <div class="loading-spinner" id="loadingSpinner">
+            <div class="spinner"></div>
+            <p>Đang tải...</p>
+        </div>
+
+        <!-- Error Message -->
+        <div class="error-message" id="errorMessage" style="display: none;">
+            <div class="error-content">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h3>Không thể tải thông tin</h3>
+                <p id="errorText">Đã xảy ra lỗi khi tải danh sách người dùng.</p>
+                <button class="btn btn-primary" onclick="location.reload()">Thử lại</button>
+            </div>
+        </div>
+
+        <div class="admin-container" id="managementContent">
             <div class="admin-header">
                 <h1 class="admin-title">Quản Lý Người Dùng</h1>
                 <p class="admin-subtitle">Quản lý tài khoản người dùng trong hệ thống</p>
@@ -399,6 +416,7 @@
 
     <script type="module" src="js/header.js"></script>
     <script src="js/footer.js"></script>
+    <script src="js/loading.js"></script>
     <script src="js/user-management.js"></script>
 </body>
 </html>

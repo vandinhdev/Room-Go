@@ -1,5 +1,4 @@
-import { rooms } from './mockRooms.js';
-import { users, isAdmin, logout } from './mockUsers.js';
+import { API_BASE_URL } from './config.js';
 
 // Quản lý tin đã lưu
 function getFavouriteRooms() {
@@ -19,6 +18,177 @@ function saveRoom(room) {
 function removeRoom(id) {
   let favourite = getFavouriteRooms().filter(p => p.id !== id);
   localStorage.setItem("favouriteRooms", JSON.stringify(favourite));
+}
+
+// ================== API FUNCTIONS ==================
+// Fetch room detail from API
+async function fetchRoomDetail(roomId) {
+    try {
+        const token = await Utils.getAuthToken();
+        
+        const response = await fetch(`${API_BASE_URL}/room/${roomId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error(`Lỗi tải chi tiết phòng (${response.status})`);
+        }
+
+        const data = await response.json();
+        console.log('Room Detail API Response:', data);
+        
+        // Handle different response formats
+        let room = null;
+        if (data && data.status === 200 && data.data) {
+            room = data.data;
+        } else if (data && data.id) {
+            // Direct room object
+            room = data;
+        } else if (data && data.room) {
+            room = data.room;
+        }
+        
+        if (room) {
+            
+            // Fetch owner information if ownerId exists
+            if (room.ownerId) {
+                try {
+                    const ownerResponse = await fetch(`${API_BASE_URL}/user/${room.ownerId}`, {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`,
+                        },
+                    });
+                    
+                    if (ownerResponse.ok) {
+                        const ownerData = await ownerResponse.json();
+                        console.log('Owner info:', ownerData);
+                        
+                        const owner = ownerData.data || ownerData;
+                        room.ownerName = `${owner.firstName || ''} ${owner.lastName || ''}`.trim();
+                        room.ownerUserName = owner.userName;
+                        room.ownerEmail = owner.email;
+                        room.ownerAvatar = owner.avatar;
+                    }
+                } catch (ownerError) {
+                    console.warn('Không thể tải thông tin chủ phòng:', ownerError);
+                    room.ownerName = `Chủ phòng #${room.ownerId}`;
+                }
+            }
+            
+            return room;
+        } else {
+            console.warn('Unexpected room detail API response format:', data);
+            return null;
+        }
+    } catch (error) {
+        console.error('Lỗi tải chi tiết phòng:', error);
+        throw error;
+    }
+}
+
+// Fetch similar rooms from API
+async function fetchSimilarRooms(currentRoom) {
+    try {
+        const token = await Utils.getAuthToken();
+        
+        const response = await fetch(`${API_BASE_URL}/room/list`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error(`Lỗi tải danh sách phòng (${response.status})`);
+        }
+
+        const data = await response.json();
+        console.log('Similar Rooms API Response:', data);
+        
+        if (data && data.status === 200 && data.data && Array.isArray(data.data.rooms)) {
+            let rooms = data.data.rooms;
+            
+            // Fetch owner information for all rooms
+            const uniqueOwnerIds = [...new Set(rooms.map(r => r.ownerId).filter(Boolean))];
+            
+            if (uniqueOwnerIds.length > 0 && token) {
+                const ownerMap = {};
+                await Promise.all(uniqueOwnerIds.map(async (userId) => {
+                    try {
+                        const ownerRes = await fetch(`${API_BASE_URL}/user/${userId}`, {
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json',
+                            },
+                        });
+                        if (ownerRes.ok) {
+                            const ownerData = await ownerRes.json();
+                            ownerMap[userId] = ownerData.data || ownerData;
+                        }
+                    } catch (e) {
+                        console.warn(`⚠️ Không lấy được chủ nhà ID ${userId}`, e);
+                    }
+                }));
+
+                // Attach owner info to rooms
+                rooms = rooms.map(room => {
+                    const owner = ownerMap[room.ownerId];
+                    const ownerName = owner ? 
+                        `${owner.firstName || ''} ${owner.lastName || ''}`.trim() : 
+                        `Chủ phòng #${room.ownerId}`;
+                        
+                    return {
+                        ...room,
+                        ownerName: ownerName,
+                        ownerAvatar: owner?.avatar || null
+                    };
+                });
+            }
+            
+            // Filter and score similar rooms
+            return getSimilarRooms(currentRoom, rooms);
+        } else {
+            console.warn('Unexpected similar rooms API response format:', data);
+            return [];
+        }
+    } catch (error) {
+        console.error('🚨 Lỗi tải phòng tương tự:', error);
+        return [];
+    }
+}
+
+// Load room detail and similar rooms
+window.loadRoomDetail = async function loadRoomDetail(roomId) {
+    // Sử dụng loading utility với cấu hình cho trang detail
+    await loadingWrapper(async () => {
+        // Fetch room detail
+        const room = await fetchRoomDetail(roomId);
+        if (!room) {
+            throw new Error('Không tìm thấy phòng!');
+        }
+
+        // Render room detail
+        renderRoomDetail(room);
+
+        // Fetch and render similar rooms
+        const similarRooms = await fetchSimilarRooms(room);
+        renderSimilarRoom(similarRooms);
+
+        return room;
+    }, {
+        ...LoadingUtils.detailPage,
+        loadingText: 'Đang tải thông tin phòng...',
+        onRetry: () => loadRoomDetail(roomId)
+    }).catch(error => {
+        console.error('Lỗi tải chi tiết phòng:', error);
+    });
 }
 
 // Lấy ID phòng từ URL
@@ -419,19 +589,22 @@ function renderRoomDetail(room) {
             </div>
         `;
     }
-    // Danh sách ảnh
-    const images = room.images && room.images.length > 0
-        ? room.images.map(img => img.url)
-        : ['https://via.placeholder.com/800x600?text=No+Image'];
+    // Danh sách ảnh - xử lý cả imageUrls (từ API) và images (format cũ)
+    const images = room.imageUrls && room.imageUrls.length > 0
+        ? room.imageUrls
+        : (room.images && room.images.length > 0
+            ? room.images.map(img => img.url)
+            : ['https://via.placeholder.com/800x600?text=No+Image']);
     let imagesHtml = '';
     images.forEach((img, idx) => {
         imagesHtml += `<img src="${img}" class="room-img" data-idx="${idx}" style="width:100%;height:100%;object-fit:cover;display:${idx===0?'block':'none'};position:absolute;top:0;left:0;transition:opacity 0.3s;">`;
     });
     
     let thumbsHtml = images.map((img, idx) => `<img src="${img}" class="room-thumb" data-idx="${idx}" style="width:64px;height:48px;object-fit:cover;border-radius:6px;border:2px solid ${idx===0?'#ff6b35':'#eee'};margin-right:8px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.07);">`).join('');
-    const owner = users.find(u => u.id === room.owner_id);
-    const ownerName = owner ? owner.fullName : "Chủ nhà không xác định";
-    const ownerAvatar = owner ? owner.fullName.charAt(0).toUpperCase() : "?";
+    // Handle owner info - use fetched owner data or fallback
+    const ownerId = room.ownerId || room.owner_id;
+    const ownerName = room.ownerName || `Chủ phòng #${ownerId}`;
+    const ownerAvatar = ownerName.charAt(0).toUpperCase();
 
     container.innerHTML = `
         <div class="room-detail">
@@ -475,18 +648,18 @@ function renderRoomDetail(room) {
                             <div class="info-value">${room.district}</div>
                         </div>
                     </div>
-                    <div class="info-item">
+                        <div class="info-item">
                         <i class="fas fa-check-circle"></i>
                         <div>
                             <div class="info-label">Trạng thái</div>
-                            <div class="info-value">${room.status === 'available' ? 'Còn trống' : 'Đã thuê'}</div>
+                            <div class="info-value">${(room.status === 'AVAILABLE' || room.status === 'available') ? 'Còn trống' : 'Đã thuê'}</div>
                         </div>
                     </div>
                 </div>
                 <div class="user-section">
-                    <div class="user-avatar">${ownerAvatar}</div>
+                    <div class="user-avatar" style="transition: all 0.3s ease;">${ownerAvatar}</div>
                     <div class="user-info">
-                        <div class="user-name">${ownerName}</div>
+                        <div class="user-name" style="transition: all 0.3s ease;">${ownerName}</div>
                         <div class="user-status">Đang hoạt động</div>
                         <div class="user-stats">
                             <div class="stat-item">
@@ -503,19 +676,19 @@ function renderRoomDetail(room) {
                     
                 </div>
                 
-                <div style="margin-bottom:16px;color:#666;">Ngày đăng: <b>${room.created_at ? new Date(room.created_at).toLocaleDateString('vi-VN') : ''}</b></div>
                 
+                <h3 style="font-size:20px;color:#222;margin-bottom:12px;">Mô tả chi tiết</h3>
                 <div class="listing-type" style="font-size:17px;color:#444;margin-bottom:24px;line-height:1.7;background:#f8f9fa;padding:16px;border-radius:8px;">${room.description || ''}</div>
-                <div style="font-size:14px;color:#aaa;">Mã phòng: ${room.id}</div>
+                <div style="margin-bottom:16px;color:#666;">Ngày đăng: <b>${room.created_at ? new Date(room.created_at).toLocaleDateString('vi-VN') : ''}</b></div>
                 ${mapSection}
             </div>
         </div>
             <div id="chatPopup" class="chat-popup">
                 <div class="chat-popup-header">
                     <div class="chat-owner-info">
-                        <div class="chat-owner-avatar">${String(room.owner_id).slice(-1)}</div>
+                        <div class="chat-owner-avatar">${String(ownerId).slice(-1)}</div>
                         <div class="chat-owner-details">
-                            <h4>Chủ nhà #${room.owner_id}</h4>
+                            <h4>${ownerName}</h4>
                             <div class="chat-owner-status">
                                 <div class="status-dot"></div>
                                 <span>Đang hoạt động</span>
@@ -595,9 +768,28 @@ function renderRoomDetail(room) {
         });
     }, 100);
 
-    // Xử lý popup chat
     setTimeout(() => {
         initChatPopup(room);
+    }, 100);
+
+    setTimeout(() => {
+        const userAvatar = container.querySelector('.user-avatar');
+        const userName = container.querySelector('.user-name');
+
+
+        const handleOwnerClick = (e) => {
+            e.preventDefault();
+            const ownerId = room.ownerId || room.owner_id;
+            if (ownerId) {
+                window.location.href = `user-profile.html?userId=${ownerId}`;
+            } else {
+                console.warn('Không tìm thấy ID chủ phòng');
+            }
+        };
+
+        userAvatar.addEventListener('click', handleOwnerClick);
+        userName.addEventListener('click', handleOwnerClick);
+
     }, 100);
 }
 
@@ -617,6 +809,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     };
+
+    
     
     // Thử setup ngay lập tức
     setupLogoutHandler();
@@ -630,8 +824,10 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.href = 'index.html';
         return;
     }
-    const room = rooms.find(r => r.id === roomId);
-    renderRoomDetail(room);
+    
+    // Load room detail from API
+    loadRoomDetail(roomId);
+
     
     // Xử lý sự kiện chuyển ảnh (đặt sau khi render room detail)
     setTimeout(() => {
@@ -650,6 +846,33 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }, 100);
 });
+
+function getSimilarRooms(currentRoom, allRooms) {
+  if (!currentRoom || !allRooms || !Array.isArray(allRooms)) return [];
+
+  return allRooms
+    .filter(r => r.id !== currentRoom.id)
+    .map(r => {
+      let score = 0;
+
+      // Cùng khu vực: +2 điểm
+      if (r.district === currentRoom.district) score += 2;
+
+      // Giá chênh lệch < 1 triệu: +1 điểm
+      if (Math.abs(r.price - currentRoom.price) <= 1000000) score += 1;
+
+      // Diện tích chênh lệch < 5m²: +1 điểm
+      if (Math.abs(r.area - currentRoom.area) <= 5) score += 1;
+
+      // Cùng trạng thái: +1 điểm
+      if (r.status === currentRoom.status) score += 1;
+
+      return { ...r, score };
+    })
+    .filter(r => r.score > 0) // chỉ giữ phòng có điểm tương đồng > 0
+    .sort((a, b) => b.score - a.score) // sắp xếp giảm dần theo điểm
+    .slice(0, 6); // lấy tối đa 6 phòng tương tự nhất
+}
 
 let currentPage = 0;
 const visible = 3; // số card hiển thị cùng lúc 
@@ -687,15 +910,24 @@ function renderSimilarRoom(rooms) {
 
     rooms.forEach(room => {
         const isSaved = saved.some(p => p.id === room.id);
-        const mainImage = room.images?.[0]?.url || 'https://via.placeholder.com/240x180?text=No+Image';
+        // Handle both imageUrls (from API) and images (legacy format)
+        const mainImage = room.imageUrls?.[0] || 
+                         (room.images?.[0]?.url) || 
+                         'https://via.placeholder.com/240x180?text=No+Image';
+
+        const ownerId = room.ownerId || room.owner_id;
+        const ownerName = room.ownerName || `Chủ phòng #${ownerId}`;
+        const ownerAvatar = ownerName.charAt(0).toUpperCase();
 
         const card = document.createElement('div');
         card.className = 'similar-card';
         card.innerHTML = `
             <div class="similar-image">
                 <img src="${mainImage}" alt="${room.title}" />
-                <div class="image-overlay">${room.status === 'available' ? 'Có phòng' : 'Đã thuê'}</div>
-                <div class="heart-icon">${isSaved ? '❤️' : '🤍'}</div>
+                <div class="image-overlay">${(room.status === 'AVAILABLE' || room.status === 'available') ? 'Có phòng' : 'Đã thuê'}</div>
+                <div class="heart-icon">
+                    <i class="${isSaved ? 'fa-solid heart-filled' : 'fa-regular heart-empty'} fa-heart"></i>
+                </div>
             </div>
             <div class="similar-content">
                 <div class="similar-title">${room.title}</div>
@@ -703,14 +935,13 @@ function renderSimilarRoom(rooms) {
                 <div class="similar-price">${formatPrice(room.price)}</div>
                 <div class="similar-area">${room.area ? room.area + ' m²' : ''}</div>
                 <div class="similar-location">
-                    <span>📍</span>
+                    <span class="location-icon"><i class="fa-solid fa-location-dot"></i></span>
                     <span>${room.address || ''}</span>
                 </div>
                 <div class="similar-footer">
                     <div class="user-info">
-                        <div class="user-avatar">${String(room.owner_id).slice(-1)}</div>
-                        <span>Chủ phòng #${room.owner_id}</span>
-                        <span>${room.status === 'available' ? 'Còn phòng' : 'Đã thuê'}</span>
+                        <div class="user-avatar">${ownerAvatar}</div>
+                        <span>${ownerName}</span>
                     </div>
                 </div>
             </div>
@@ -724,12 +955,15 @@ function renderSimilarRoom(rooms) {
         // Event: click tim
         card.querySelector('.heart-icon').addEventListener('click', function (e) {
             e.stopPropagation();
-            if (this.innerHTML === '🤍') {
-                this.innerHTML = '❤️';
-                saveRoom(room);
-            } else {
-                this.innerHTML = '🤍';
+            const icon = this.querySelector('i');
+            if (icon.classList.contains('heart-filled')) {
+                icon.classList.remove('fa-solid', 'heart-filled');
+                icon.classList.add('fa-regular', 'heart-empty');
                 removeRoom(room.id);
+            } else {
+                icon.classList.remove('fa-regular', 'heart-empty');
+                icon.classList.add('fa-solid', 'heart-filled');
+                saveRoom(room);
             }
         });
 
@@ -737,6 +971,11 @@ function renderSimilarRoom(rooms) {
     });
 
     updateSlider(rooms.length);
+    
+    // Setup slider navigation after rendering
+    setTimeout(() => {
+        setupSliderNavigation();
+    }, 100);
 }
 
 
@@ -750,28 +989,36 @@ function updateSlider(total) {
   document.querySelector('.next').style.display = 'inline-block';
 }
 
-// Gắn event
-document.addEventListener('DOMContentLoaded', () => {
-  renderSimilarRoom(rooms);
+// Setup slider navigation events
+function setupSliderNavigation() {
+  const prevBtn = document.querySelector('.prev');
+  const nextBtn = document.querySelector('.next');
+  
+  if (prevBtn) {
+    prevBtn.addEventListener('click', () => {
+      if (currentPage > 0) {
+        currentPage--;
+        updateSlider(document.querySelectorAll('.similar-card').length);
+      }
+    });
+  }
 
-  document.querySelector('.prev').addEventListener('click', () => {
-    if (currentPage > 0) {
-      currentPage--;
-      updateSlider(document.querySelectorAll('.similar-card').length);
-    }
-  });
+  if (nextBtn) {
+    nextBtn.addEventListener('click', () => {
+      const total = document.querySelectorAll('.similar-card').length;
+      const totalPages = Math.ceil(total / visible);
 
-  document.querySelector('.next').addEventListener('click', () => {
-    const total = document.querySelectorAll('.similar-card').length;
-    const totalPages = Math.ceil(total / visible);
+      if (currentPage < totalPages - 1) {
+        currentPage++;
+      } else {
+        currentPage = 0; // quay lại đầu khi bấm Next ở cuối
+      }
+      updateSlider(total);
+    });
+  }
+}
 
-    if (currentPage < totalPages - 1) {
-      currentPage++;
-    } else {
-      currentPage = 0; // quay lại đầu khi bấm Next ở cuối
-    }
-    updateSlider(total);
-  });
-});
+// ================== LOADING FUNCTIONS ==================
+// Loading functions đã được chuyển sang loading.js để tái sử dụng
 
 

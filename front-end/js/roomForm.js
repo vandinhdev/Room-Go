@@ -1,5 +1,5 @@
 // roomForm.js
-import { rooms } from './mockRooms.js';
+import { API_BASE_URL } from './config.js';
 
 // Initialize the uploaded images array
 window.uploadedImages = [];
@@ -471,24 +471,50 @@ function addImageField() {
     document.getElementById('fileUpload').click();
 }
 
-function loadRoomData(roomId) {
-    const room = rooms.find(r => r.id === roomId);
-    if (!room) return;
+async function loadRoomData(roomId) {
+    try {
+        // Get user authentication info
+        const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+        if (!userInfo || !userInfo.token) {
+            alert('Vui lòng đăng nhập để chỉnh sửa tin đăng!');
+            window.location.href = 'auth.html';
+            return;
+        }
+
+        // Fetch room data from API
+        const response = await fetch(`${API_BASE_URL}/room/${roomId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${userInfo.token}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Không thể tải thông tin tin đăng!');
+        }
+
+        const result = await response.json();
+        const room = result.data;
+        
+        if (!room) {
+            throw new Error('Không tìm thấy tin đăng!');
+        }
+
+        // Fill form with room data
+        document.getElementById('roomId').value = room.id;
+        document.getElementById('title').value = room.title || '';
+        document.getElementById('description').value = room.description || '';
+        document.getElementById('price').value = room.price || '';
+        document.getElementById('area').value = room.area || '';
+        document.getElementById('address').value = room.address || '';
+        
+        // Set coordinates if available
+        if (room.latitude) document.getElementById('latitude').value = room.latitude;
+        if (room.longitude) document.getElementById('longitude').value = room.longitude;
     
-    document.getElementById('roomId').value = room.id;
-    document.getElementById('title').value = room.title;
-    document.getElementById('description').value = room.description;
-    document.getElementById('price').value = room.price;
-    document.getElementById('area').value = room.area;
-    document.getElementById('address').value = room.address;
-    
-    
-    // Lưu tọa độ nếu có
-    if (room.latitude) document.getElementById('latitude').value = room.latitude;
-    if (room.longitude) document.getElementById('longitude').value = room.longitude;
-    
-    // Load location data
-    document.getElementById('province').value = room.province;
+        // Load location data
+        document.getElementById('province').value = room.province || '';
     
     // Wait for districts to load before setting district value
     loadDistricts().then(async () => {
@@ -587,8 +613,80 @@ function loadRoomData(roomId) {
             toggleUploadZoneDisplay();
         }
         
-        // Toggle upload zone display after loading images
-        toggleUploadZoneDisplay();
+        // Handle images from API response
+        if (room.imageUrls && room.imageUrls.length > 0) {
+            const imageContainer = document.getElementById('imageContainer');
+            imageContainer.innerHTML = ''; // Clear default image field
+            
+            room.imageUrls.forEach((imageUrl, index) => {
+                const imgId = 'img_' + Date.now() + '_' + Math.floor(Math.random() * 1000) + '_' + index;
+                
+                // Create image preview element
+                const imgDiv = document.createElement('div');
+                imgDiv.className = 'image-upload';
+                
+                imgDiv.innerHTML = `
+                    <div class="image-preview-wrapper">
+                        <img src="${imageUrl}" class="image-preview" alt="Ảnh phòng trọ">
+                        <div class="image-caption">Ảnh ${index + 1}</div>
+                        <div class="delete-image" data-id="${imgId}">
+                            <i class="fas fa-times"></i>
+                        </div>
+                    </div>
+                `;
+
+                imageContainer.appendChild(imgDiv);
+                
+                // Add to uploadedImages array
+                window.uploadedImages.push({
+                    id: imgId,
+                    dataUrl: imageUrl,
+                    description: ''
+                });
+                
+                // Add event listener for delete button
+                imgDiv.querySelector('.delete-image').addEventListener('click', function() {
+                    const imageId = this.getAttribute('data-id');
+                    
+                    // Only allow deletion if there will be at least 3 images left
+                    if (document.querySelectorAll('.image-upload').length <= 3) {
+                        alert('Phải có ít nhất 3 hình ảnh cho phòng trọ!');
+                        return;
+                    }
+                    
+                    removeImage(imageId, imgDiv);
+                });
+            });
+            
+            // Function to remove image (defined here to access variables in this scope)
+            function removeImage(imageId, element) {
+                // Remove element from DOM
+                element.remove();
+                
+                // Remove from uploadedImages array
+                const index = window.uploadedImages.findIndex(img => img.id === imageId);
+                if (index !== -1) {
+                    window.uploadedImages.splice(index, 1);
+                }
+                
+                // Update numbering
+                document.querySelectorAll('.image-upload').forEach((div, index) => {
+                    div.querySelector('.image-caption').textContent = `Ảnh ${index + 1}`;
+                });
+                
+                // Toggle upload zone display after removing image
+                toggleUploadZoneDisplay();
+            }
+            
+            // Toggle upload zone display after loading images
+            toggleUploadZoneDisplay();
+        }
+    }
+        
+    } catch (error) {
+        console.error('Error loading room data:', error);
+        alert('Có lỗi xảy ra khi tải thông tin tin đăng: ' + error.message);
+        window.location.href = 'index.html';
     }
 }
 
@@ -782,73 +880,74 @@ async function handleSubmit(event) {
             throw new Error('Diện tích phải lớn hơn 0');
         }
         
-        const formData = {
-            id: document.getElementById('roomId').value || Date.now(),
-            owner_id: 101, // Hardcoded for now, should come from authenticated user
-            title: document.getElementById('title').value,
-            description: document.getElementById('description').value,
-            price: parseInt(document.getElementById('price').value),
+        // Prepare room data
+        const roomId = document.getElementById('roomId').value;
+        const isEditMode = !!roomId;
+        
+        // Get user authentication info
+        const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+        if (!userInfo || !userInfo.token) {
+            throw new Error('Vui lòng đăng nhập để đăng tin!');
+        }
+        
+        // Prepare room data for API
+        const roomData = {
+            title: document.getElementById('title').value.trim(),
+            description: document.getElementById('description').value.trim(),
+            price: parseFloat(document.getElementById('price').value),
             area: parseFloat(document.getElementById('area').value),
-            address: document.getElementById('address').value,
+            address: document.getElementById('address').value.trim(),
             ward: document.getElementById('ward').value,
             district: document.getElementById('district').value,
             province: document.getElementById('province').value,
-            
             latitude: document.getElementById('latitude')?.value || null,
             longitude: document.getElementById('longitude')?.value || null,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
+            status: 'AVAILABLE'
         };
-        
-        // Get images
-        const images = [];
-        
-        // Get images from uploadedImages array (now global)
+
+        // Convert images to base64 array for API
+        const imageUrls = [];
         if (window.uploadedImages && window.uploadedImages.length > 0) {
-            // New UI: get images from uploadedImages array
-            window.uploadedImages.forEach((img, index) => {
-                images.push({
-                    id: Date.now() + index,
-                    room_id: formData.id,
-                    url: img.dataUrl,
-                    description: img.description || '',
-                    created_at: new Date().toISOString()
-                });
+            window.uploadedImages.forEach((img) => {
+                imageUrls.push(img.dataUrl);
             });
-        } else {
-            // Fallback: get images from DOM (for backward compatibility)
-            const imageUploads = document.querySelectorAll('.image-upload');
-            
-            for (let i = 0; i < imageUploads.length; i++) {
-                const imgElement = imageUploads[i].querySelector('img.image-preview');
-                
-                if (imgElement && imgElement.src) {
-                    images.push({
-                        id: Date.now() + i,
-                        room_id: formData.id,
-                        url: imgElement.src,
-                        description: '',
-                        created_at: new Date().toISOString()
-                    });
-                }
-            }
         }
         
-        formData.images = images;
-        
-        // Update or add to rooms array
-        const index = rooms.findIndex(r => r.id === parseInt(formData.id));
-        if (index !== -1) {
-            rooms[index] = { ...rooms[index], ...formData };
-        } else {
-            rooms.push(formData);
+        if (imageUrls.length > 0) {
+            roomData.imageUrls = imageUrls;
         }
+
+        // If editing, add room ID
+        if (isEditMode) {
+            roomData.id = parseInt(roomId);
+        }
+
+        // Make API call
+        const apiUrl = isEditMode ? `${API_BASE_URL}/room/update` : `${API_BASE_URL}/room/add`;
+        const method = isEditMode ? 'PUT' : 'POST';
         
+        const response = await fetch(apiUrl, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${userInfo.token}`
+            },
+            body: JSON.stringify(roomData)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || `Có lỗi xảy ra khi ${isEditMode ? 'cập nhật' : 'tạo'} tin đăng!`);
+        }
+
+        const result = await response.json();
+        console.log('API Response:', result);
+
         // Show success message
-        alert('Đăng tin thành công! Tin của bạn đã được lưu.');
+        alert(isEditMode ? 'Cập nhật tin thành công!' : 'Đăng tin thành công!');
         
-        // Redirect back to listing page
-        window.location.href = 'index.html';
+        // Redirect back to listing page or profile
+        window.location.href = 'profile.html';
         
     } catch (error) {
         console.error('Error submitting form:', error);

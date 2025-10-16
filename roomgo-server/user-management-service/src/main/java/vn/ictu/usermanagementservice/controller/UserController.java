@@ -26,7 +26,6 @@ public class UserController {
     private final UserService userService;
     private final PasswordEncoder passwordService;
 
-    @Operation(summary = "Get user list", description = "API retrieve user from database")
     @GetMapping("/list")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
     public ApiResponse getList(@RequestParam(required = false) String keyword,
@@ -44,7 +43,7 @@ public class UserController {
 
     @Operation(summary = "Get user detail", description = "API retrieve user detail by ID from database")
     @GetMapping("/{userId}")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER','ROLE_GUEST')")
     public ApiResponse getUserDetail(@PathVariable @Min(value = 1, message = "userId must be equals or greater than 1") Long userId) {
         log.info("Get user detail by ID: {}", userId);
         return ApiResponse.builder()
@@ -97,6 +96,7 @@ public class UserController {
 
     @Operation(summary = "Update User", description = "API update user to database")
     @PutMapping("/update-profile")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')" )
     public ApiResponse updateProfile(@RequestBody @Valid UpdateProfileRequest request, Authentication authentication) {
         String email = authentication.getName();
         log.info("Update user profile: {}", email);

@@ -31,10 +31,7 @@ import vn.ictu.roommanagementservice.utils.SearchQueryBuilder;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -65,20 +62,31 @@ public class RoomServiceImpl implements RoomService {
                 minPrice, maxPrice, minArea, maxArea, pageable
         );
 
-        // Save search history only if email and bearerToken are provided
-        if (StringUtils.hasText(email) && StringUtils.hasText(bearerToken)) {
+        // ✅ Chỉ lưu lịch sử khi có tìm kiếm thực sự (không phải refresh)
+        boolean isMeaningfulSearch =
+                StringUtils.hasText(keyword) ||
+                        StringUtils.hasText(province) ||
+                        StringUtils.hasText(district) ||
+                        StringUtils.hasText(ward) ||
+                        minPrice != null || maxPrice != null ||
+                        minArea != null || maxArea != null;
+
+        if (isMeaningfulSearch && StringUtils.hasText(email) && StringUtils.hasText(bearerToken)) {
             try {
                 Long userId = userClient.getUserIdByEmail(email, bearerToken);
                 if (userId != null) {
-                    saveSearchHistory(keyword, province, district, ward, minPrice, maxPrice, minArea, maxArea, sort, page, size, userId);
+                    saveSearchHistory(keyword, province, district, ward,
+                            minPrice, maxPrice, minArea, maxArea,
+                            sort, page, size, userId);
                 }
             } catch (Exception e) {
-                log.warn("Failed to save search history for email: {}", email, e);
+                log.warn("⚠️ Failed to save search history for email: {}", email, e);
             }
         }
 
         return roomMapper.toRoomPageResponse(entityPage, page, size);
     }
+
 
     @Override
     public List<SearchHistory> getSearchHistoryByUserEmail(String userEmail, String bearerToken) {
@@ -129,7 +137,10 @@ public class RoomServiceImpl implements RoomService {
 
         setGeoLocation(req, room, fullAddress);
         RoomEntity savedRoom = roomRepository.save(room);
+        log.info("Room entity saved with ID: {}", savedRoom.getId());
         saveRoomImages(savedRoom, req.getImageUrls());
+        log.info("📸 Received image URLs: {}", req.getImageUrls());
+        log.info("Saved images for room ID: {}", savedRoom.getId());
 
         log.info("Created room id: {}", savedRoom.getId());
         return savedRoom.getId();
@@ -179,21 +190,31 @@ public class RoomServiceImpl implements RoomService {
                                    BigDecimal minArea, BigDecimal maxArea,
                                    String sort, int page, int size, Long userId) {
 
-        Map<String, Object> params = Map.ofEntries(
-                Map.entry("keyword", keyword),
-                Map.entry("province", province),
-                Map.entry("district", district),
-                Map.entry("ward", ward),
-                Map.entry("minPrice", minPrice),
-                Map.entry("maxPrice", maxPrice),
-                Map.entry("minArea", minArea),
-                Map.entry("maxArea", maxArea),
-                Map.entry("sort", sort),
-                Map.entry("page", page),
-                Map.entry("size", size)
-        );
+        // ✅ Dùng HashMap để chấp nhận null
+        Map<String, Object> params = new HashMap<>();
+        params.put("keyword", keyword);
+        params.put("province", province);
+        params.put("district", district);
+        params.put("ward", ward);
+        params.put("minPrice", minPrice);
+        params.put("maxPrice", maxPrice);
+        params.put("minArea", minArea);
+        params.put("maxArea", maxArea);
+        params.put("sort", sort);
+        params.put("page", page);
+        params.put("size", size);
 
         String query = SearchQueryBuilder.buildQuery(params);
+
+        // ✅ Kiểm tra bản ghi gần nhất xem có trùng không
+        Optional<SearchHistory> lastHistoryOpt =
+                searchHistoryRepository.findTopByUserIdOrderBySearchedAtDesc(userId);
+
+        if (lastHistoryOpt.isPresent() &&
+                query.equals(lastHistoryOpt.get().getSearchQuery())) {
+            log.debug("🔁 Skip saving duplicate search query for user {}", userId);
+            return;
+        }
 
         SearchHistory history = SearchHistory.builder()
                 .keyword(keyword)
@@ -210,7 +231,17 @@ public class RoomServiceImpl implements RoomService {
                 .build();
 
         searchHistoryRepository.save(history);
+
+        // ✅ Giới hạn số lượng lịch sử (VD: giữ tối đa 50 bản gần nhất)
+        List<SearchHistory> allHistories = searchHistoryRepository.findByUserIdOrderBySearchedAtDesc(userId);
+        if (allHistories.size() > 50) {
+            List<SearchHistory> toDelete = allHistories.subList(50, allHistories.size());
+            searchHistoryRepository.deleteAll(toDelete);
+        }
+
+        log.info("✅ Saved search history for user {} | query={}", userId, query);
     }
+
 
     private void saveRoomImages(RoomEntity room, List<String> imageUrls) {
         if (imageUrls == null || imageUrls.isEmpty()) return;
@@ -223,7 +254,11 @@ public class RoomServiceImpl implements RoomService {
                         .build())
                 .toList();
 
+
+
         roomImageRepository.saveAll(images);
+        log.info("💾 Saving {} images for room {}", imageUrls == null ? 0 : imageUrls.size(), room.getId());
+
         log.info("Saved {} images for room {}", images.size(), room.getId());
     }
 

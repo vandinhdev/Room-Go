@@ -30,7 +30,8 @@ public class EsbRoutes extends RouteBuilder {
         rest("/auth")
                 .post("/login").to("direct:login")
                 .post("/register").to("direct:register")
-                .post("/refresh-token").to("direct:refresh");
+                .post("/refresh-token").to("direct:refresh")
+                .post("/guest-token").to("direct:guestToken");
 
         from("direct:login")
                 .routeId("login-route")
@@ -54,6 +55,13 @@ public class EsbRoutes extends RouteBuilder {
                 .setHeader(Exchange.CONTENT_TYPE, constant("application/json"))
                 .marshal().json(JsonLibrary.Jackson)
                 .to("http://user-management-service:8080/api/user/auth/refresh-token?bridgeEndpoint=true&httpMethod=POST")
+                .unmarshal().json(JsonLibrary.Jackson);
+
+        from("direct:guestToken")
+                .routeId("guest-token-route")
+                .log("👉 [ESB] Forwarding guest token request")
+                .setHeader(Exchange.CONTENT_TYPE, constant("application/json"))
+                .to("http://user-management-service:8080/api/user/auth/guest-token?bridgeEndpoint=true&httpMethod=POST")
                 .unmarshal().json(JsonLibrary.Jackson);
 
         // User routes
@@ -223,6 +231,38 @@ public class EsbRoutes extends RouteBuilder {
                 .setHeader(Exchange.CONTENT_TYPE, constant("application/json"))
                 .toD("http://room-management-service:8080/api/room/delete/${header.roomId}?bridgeEndpoint=true&httpMethod=DELETE")
                 .unmarshal().json(JsonLibrary.Jackson);
+
+        // favorite room routes
+        rest("/favorite-rooms")
+                .get("/me").to("direct:getFavoriteRoomsByUserEmail")
+                .post("/{roomId}").to("direct:addFavoriteRoom")
+                .delete("/remove/{roomId}").to("direct:removeFavoriteRoom");
+
+        from("direct:getFavoriteRoomsByUserEmail")
+                .routeId("get-favorite-rooms-by-user-email-route")
+                .log("👉 [ESB] Forwarding get favorite rooms by user email request")
+                .process(jwtProcessor)
+                .setHeader(Exchange.CONTENT_TYPE, constant("application/json"))
+                .to("http://room-management-service:8080/api/favorite-rooms/me?bridgeEndpoint=true&httpMethod=GET")
+                .unmarshal().json(JsonLibrary.Jackson);
+
+        from("direct:addFavoriteRoom")
+                .routeId("add-favorite-room-route")
+                .log("👉 [ESB] Forwarding add favorite room request: ${header.roomId}")
+                .process(jwtProcessor)
+                .setHeader(Exchange.CONTENT_TYPE, constant("application/json"))
+                .toD("http://room-management-service:8080/api/favorite-rooms/${header.roomId}?bridgeEndpoint=true&httpMethod=POST")
+                .unmarshal().json(JsonLibrary.Jackson);
+
+        from("direct:removeFavoriteRoom")
+                .routeId("remove-favorite-room-route")
+                .log("👉 [ESB] Forwarding remove favorite room request: ${header.roomId}")
+                .process(jwtProcessor)
+                .setHeader(Exchange.CONTENT_TYPE, constant("application/json"))
+                .toD("http://room-management-service:8080/api/favorite-rooms/remove/${header.roomId}?bridgeEndpoint=true&httpMethod=DELETE")
+                .unmarshal().json(JsonLibrary.Jackson);
+
+
 
     }
 }
