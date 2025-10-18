@@ -15,10 +15,148 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(error => console.error('Error loading header:', error));
 });
 
+async function fetchUserProfile(token) {
+    if (!token) return null;
+
+    try {
+        const { API_BASE_URL } = await import('./config.js');
+        const response = await fetch(`${API_BASE_URL}/user/profile`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            console.error('Error fetching profile:', response.status, response.statusText);
+            return null;
+        }
+
+        const payload = await response.json();
+        return payload?.data || payload || null;
+    } catch (error) {
+        console.error('Error calling profile API:', error);
+        return null;
+    }
+}
+
+function buildFullName(user) {
+    if (!user) return '';
+    const first = user.firstName || '';
+    const last = user.lastName || '';
+    const candidate = [last, first].join(' ').trim();
+    return candidate || user.fullName || user.userName || '';
+}
+
+function updateAvatarDisplay(avatarUrl) {
+    const fallback = 'https://cdn-icons-png.freepik.com/128/3135/3135715.png';
+    const finalUrl = avatarUrl || fallback;
+    const avatarHtml = `<img src="${finalUrl}" alt="User avatar" onerror="this.onerror=null;this.src='${fallback}';" />`;
+
+    document.querySelectorAll('.user-avatar-large').forEach(el => {
+        el.style.backgroundImage = 'none';
+        el.innerHTML = avatarHtml;
+        el.style.display = 'block';
+    });
+
+    document.querySelectorAll('.user-avatar').forEach(el => {
+        el.style.backgroundImage = 'none';
+        el.innerHTML = avatarHtml;
+        el.style.display = 'block';
+    });
+}
+
+function renderUserInfo(userInfo) {
+    if (!userInfo) return;
+
+    const fullName = buildFullName(userInfo) || 'Người dùng';
+    document.querySelectorAll('.user-name, .user-name-large').forEach(el => {
+        el.textContent = fullName;
+    });
+
+    const emailEl = document.querySelector('.user-email');
+    if (emailEl) {
+        emailEl.textContent = userInfo.email || 'No email';
+    }
+
+    const avatarUrl = userInfo.avatarUrl || userInfo.avatar || null;
+    updateAvatarDisplay(avatarUrl);
+}
+
+async function refreshHeaderUserInfo() {
+    const stored = JSON.parse(localStorage.getItem('userInfo'));
+    if (!stored || !stored.token) return;
+
+    const latestProfile = await fetchUserProfile(stored.token);
+    if (!latestProfile) {
+        renderUserInfo(stored);
+        return;
+    }
+
+    const updatedInfo = {
+        ...stored,
+        firstName: latestProfile.firstName ?? stored.firstName,
+        lastName: latestProfile.lastName ?? stored.lastName,
+        fullName: buildFullName({ ...stored, ...latestProfile }),
+        email: latestProfile.email ?? stored.email,
+        role: latestProfile.role ?? stored.role,
+    avatarUrl: latestProfile.avatarUrl ?? latestProfile.avatar ?? stored.avatarUrl ?? stored.avatar,
+        phone: latestProfile.phone ?? stored.phone,
+        address: latestProfile.address ?? stored.address,
+        bio: latestProfile.bio ?? stored.bio
+    };
+
+    localStorage.setItem('userInfo', JSON.stringify(updatedInfo));
+    renderUserInfo(updatedInfo);
+}
+
+document.addEventListener('userProfileUpdated', () => {
+    refreshHeaderUserInfo();
+});
+
+document.addEventListener('avatarUpdated', () => {
+    refreshHeaderUserInfo();
+});
+
+window.refreshUserHeader = refreshHeaderUserInfo;
+
 // Function to check if user is authenticated
 function isUserAuthenticated() {
-    const userInfo = JSON.parse(localStorage.getItem('userInfo'));
-    return userInfo && userInfo.token;
+    try {
+        // Sử dụng dynamic import để tránh circular dependency
+        import('./auth.js').then(({ authManager }) => {
+            return authManager.isAuthenticated();
+        });
+        
+        // Fallback check
+        const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+        return userInfo && userInfo.token;
+    } catch (error) {
+        console.error('Error checking authentication:', error);
+        return false;
+    }
+}
+
+// Function to handle logout
+async function handleLogout() {
+    try {
+        const { authManager } = await import('./auth.js');
+        
+        // Xóa thông tin user và token
+        authManager.logout();
+        
+        // Hiển thị thông báo và reload trang
+        Utils.showNotification('Đã đăng xuất thành công!', 'success');
+        setTimeout(() => {
+            window.location.reload();
+        }, 1000);
+    } catch (error) {
+        console.error('Error during logout:', error);
+        // Fallback logout
+        localStorage.removeItem('userInfo');
+        window.location.reload();
+    }
 }
 
 // Function to show login required message
@@ -27,7 +165,280 @@ function showLoginRequiredMessage(action = 'sử dụng tính năng này') {
     window.location.href = 'auth.html';
 }
 
-function initializeHeader() {
+// Build a custom-styled province dropdown that stays synced with the hidden native select.
+function setupProvinceSelectorUI(provinces) {
+    const provinceSelect = document.getElementById('provinceSelect');
+    const customSelect = document.getElementById('provinceCustomSelect');
+    const customDropdown = document.getElementById('provinceCustomDropdown');
+    if (!provinceSelect || !customSelect || !customDropdown) return;
+
+    const placeholder = customSelect.dataset.placeholder || 'Chọn khu vực';
+    const valueLabel = customSelect.querySelector('.custom-select-value');
+    const locationSelector = customSelect.closest('.location-selector');
+    const selectValueDescriptor = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
+    let optionElements = [];
+    const state = {
+        open: false,
+        focusedIndex: -1
+    };
+
+    const ensureOptions = () => {
+        optionElements = Array.from(customDropdown.querySelectorAll('.custom-select-option'));
+        return optionElements;
+    };
+
+    const markActiveOption = (value) => {
+        ensureOptions().forEach((el, index) => {
+            const isActive = el.dataset.value === value;
+            el.classList.toggle('active', isActive);
+            if (isActive) {
+                state.focusedIndex = index;
+            }
+        });
+    };
+
+    const syncDisplay = (value) => {
+        const currentValue = value ?? '';
+        const matchingOption = Array.from(provinceSelect.options).find(opt => opt.value === currentValue && currentValue !== '');
+        const text = matchingOption ? matchingOption.textContent : currentValue || placeholder;
+        const selectedCode = matchingOption?.dataset?.code || '';
+        if (valueLabel) valueLabel.textContent = text;
+        customSelect.classList.toggle('is-placeholder', !currentValue);
+        if (selectedCode) {
+            customSelect.dataset.selectedCode = selectedCode;
+        } else {
+            delete customSelect.dataset.selectedCode;
+        }
+        markActiveOption(currentValue);
+    };
+
+    const openDropdown = () => {
+        if (state.open) return;
+        state.open = true;
+        customDropdown.classList.add('open');
+        customDropdown.setAttribute('aria-hidden', 'false');
+        customSelect.classList.add('open');
+        if (locationSelector) locationSelector.classList.add('open');
+        customSelect.setAttribute('aria-expanded', 'true');
+        const options = ensureOptions();
+        if (state.focusedIndex < 0 && provinceSelect.value) {
+            state.focusedIndex = options.findIndex(opt => opt.dataset.value === provinceSelect.value);
+        }
+        if (state.focusedIndex < 0) state.focusedIndex = 0;
+        focusOption(state.focusedIndex);
+    };
+
+    const closeDropdown = () => {
+        if (!state.open) return;
+        state.open = false;
+        customDropdown.classList.remove('open');
+        customDropdown.setAttribute('aria-hidden', 'true');
+        customSelect.classList.remove('open');
+        if (locationSelector) locationSelector.classList.remove('open');
+        customSelect.setAttribute('aria-expanded', 'false');
+        clearFocusedOption();
+    };
+
+    const focusOption = (index) => {
+        const options = ensureOptions();
+        if (!options.length) return;
+        const boundedIndex = Math.max(0, Math.min(index, options.length - 1));
+        state.focusedIndex = boundedIndex;
+        options.forEach((el, idx) => {
+            const shouldFocus = idx === boundedIndex;
+            el.classList.toggle('focus', shouldFocus);
+            if (shouldFocus) {
+                el.scrollIntoView({ block: 'nearest' });
+            }
+        });
+    };
+
+    const clearFocusedOption = () => {
+        ensureOptions().forEach(el => el.classList.remove('focus'));
+        state.focusedIndex = -1;
+    };
+
+    const selectOption = (optionEl) => {
+        if (!optionEl) return;
+        const value = optionEl.dataset.value || '';
+        const previousValue = provinceSelect.value;
+        if (provinceSelect.value !== value) {
+            provinceSelect.value = value;
+            provinceSelect.dispatchEvent(new Event('change', { bubbles: true }));
+        } else {
+            syncDisplay(value);
+        }
+        markActiveOption(value);
+        closeDropdown();
+        customSelect.focus({ preventScroll: true });
+        if (previousValue !== value) {
+            // Scroll into view already handled in sync
+        }
+    };
+
+    const onOptionPointer = (event) => {
+        const optionEl = event.target.closest('.custom-select-option');
+        if (!optionEl) return;
+        const options = ensureOptions();
+        const idx = options.indexOf(optionEl);
+        if (idx >= 0) {
+            focusOption(idx);
+        }
+    };
+
+    const onOptionClick = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const optionEl = event.target.closest('.custom-select-option');
+        selectOption(optionEl);
+    };
+
+    const handleKeydown = (event) => {
+        const options = ensureOptions();
+        if (!options.length) return;
+
+        switch (event.key) {
+            case 'ArrowDown':
+                event.preventDefault();
+                if (!state.open) openDropdown();
+                focusOption(state.focusedIndex >= 0 ? state.focusedIndex + 1 : 0);
+                break;
+            case 'ArrowUp':
+                event.preventDefault();
+                if (!state.open) openDropdown();
+                focusOption(state.focusedIndex >= 0 ? state.focusedIndex - 1 : options.length - 1);
+                break;
+            case 'Enter':
+            case ' ': {
+                event.preventDefault();
+                if (!state.open) {
+                    openDropdown();
+                } else {
+                    const focused = options[state.focusedIndex >= 0 ? state.focusedIndex : 0];
+                    selectOption(focused);
+                }
+                break;
+            }
+            case 'Escape':
+                if (state.open) {
+                    event.preventDefault();
+                    closeDropdown();
+                }
+                break;
+            case 'Tab':
+                closeDropdown();
+                break;
+            default:
+                break;
+        }
+    };
+
+    const mountOptions = () => {
+        const existingValue = provinceSelect.value;
+        provinceSelect.innerHTML = '';
+        customDropdown.innerHTML = '';
+
+        const placeholderOption = document.createElement('option');
+        placeholderOption.value = '';
+        placeholderOption.textContent = placeholder;
+        provinceSelect.appendChild(placeholderOption);
+
+        const placeholderEl = document.createElement('div');
+        placeholderEl.className = 'custom-select-option placeholder-option';
+        placeholderEl.dataset.value = '';
+        placeholderEl.setAttribute('role', 'option');
+        placeholderEl.tabIndex = -1;
+        placeholderEl.textContent = placeholder;
+        customDropdown.appendChild(placeholderEl);
+
+        provinces.forEach(province => {
+            const option = document.createElement('option');
+            option.value = province.name;
+            option.textContent = province.name;
+            option.dataset.code = province.code;
+            provinceSelect.appendChild(option);
+
+            const optionEl = document.createElement('div');
+            optionEl.className = 'custom-select-option';
+            optionEl.dataset.value = province.name;
+            optionEl.dataset.code = province.code;
+            optionEl.setAttribute('role', 'option');
+            optionEl.tabIndex = -1;
+            optionEl.textContent = province.name;
+            customDropdown.appendChild(optionEl);
+        });
+
+        ensureOptions().forEach(el => {
+            el.addEventListener('mouseenter', onOptionPointer);
+            el.addEventListener('mousemove', onOptionPointer);
+        });
+
+        if (existingValue) {
+            const matchByName = provinces.find(p => p.name === existingValue);
+            if (matchByName) {
+                provinceSelect.value = existingValue;
+            } else {
+                const matchByCode = provinces.find(p => String(p.code) === String(existingValue));
+                if (matchByCode) {
+                    provinceSelect.value = matchByCode.name;
+                }
+            }
+        } else {
+            provinceSelect.value = '';
+        }
+    };
+
+    mountOptions();
+    ensureOptions();
+
+    if (selectValueDescriptor && selectValueDescriptor.configurable) {
+        Object.defineProperty(provinceSelect, 'value', {
+            configurable: true,
+            enumerable: selectValueDescriptor.enumerable,
+            get() {
+                return selectValueDescriptor.get.call(this);
+            },
+            set(newValue) {
+                selectValueDescriptor.set.call(this, newValue);
+                syncDisplay(newValue);
+            }
+        });
+    }
+
+    syncDisplay(provinceSelect.value);
+
+    customSelect.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (state.open) {
+            closeDropdown();
+        } else {
+            openDropdown();
+        }
+    });
+
+    customSelect.addEventListener('keydown', handleKeydown);
+
+    customDropdown.addEventListener('mousedown', (event) => {
+        event.preventDefault();
+    });
+
+    customDropdown.addEventListener('click', onOptionClick);
+
+    document.addEventListener('click', (event) => {
+        if (state.open && !customSelect.contains(event.target) && !customDropdown.contains(event.target)) {
+            closeDropdown();
+        }
+    });
+
+    provinceSelect.addEventListener('change', (event) => {
+        syncDisplay(event.target.value);
+    });
+
+    window.addEventListener('resize', closeDropdown);
+}
+
+async function initializeHeader() {
     const logo = document.querySelector('.logo');
     if (logo) {
         logo.addEventListener('click', function() {
@@ -66,22 +477,13 @@ function initializeHeader() {
         // Hiển thị user menu
         userMenu.classList.remove('d-none');
 
-        // Cập nhật thông tin user
-        document.querySelectorAll('.user-name, .user-name-large').forEach(el => {
-            el.textContent = userInfo.fullName || 'User';
-        });
-        
-        if (userInfo.email) {
-            document.querySelector('.user-email').textContent = userInfo.email;
-        } else {
-            document.querySelector('.user-email').textContent = 'No email';
-        }
+        // Refresh profile from API (fallback to stored info)
+        await refreshHeaderUserInfo();
 
         // Xử lý đăng xuất
         document.getElementById('logoutButton').addEventListener('click', function(e) {
             e.preventDefault();
-            localStorage.removeItem('userInfo');
-            window.location.reload();
+            handleLogout();
         });
 
         // Xử lý menu trang cá nhân
@@ -126,60 +528,19 @@ function initializeHeader() {
             statisticsMenuItem.style.display = 'none';
         }
 
-        // Hiển thị avatar nếu có
-        if (userInfo.avatar) {
-            // Cập nhật avatar lớn
-            document.querySelectorAll('.user-avatar-large').forEach(el => {
-                el.style.backgroundImage = `url(${userInfo.avatar})`;
-                el.style.backgroundSize = 'cover';
-                el.style.backgroundPosition = 'center';
-                el.style.backgroundRepeat = 'no-repeat';
-                el.textContent = '';
-                el.style.display = 'block';
-            });
-            // Cập nhật avatar nhỏ
-            document.querySelectorAll('.user-avatar').forEach(el => {
-                el.style.backgroundImage = `url(${userInfo.avatar})`;
-                el.style.backgroundSize = 'cover';
-                el.style.backgroundPosition = 'center';
-                el.style.backgroundRepeat = 'no-repeat';
-                el.textContent = '';
-            });
-        } else {
-            // Hiển thị ảnh mặc định https://cdn-icons-png.freepik.com/128/3135/3135715.png
-            const defaultAvatar = 'https://cdn-icons-png.freepik.com/128/3135/3135715.png';
-            document.querySelectorAll('.user-avatar-large').forEach(el => {
-                el.style.backgroundImage = `url(${defaultAvatar})`;
-                el.style.backgroundSize = 'cover';
-                el.style.backgroundPosition = 'center';
-                el.style.backgroundRepeat = 'no-repeat';
-                el.textContent = '';
-                el.style.display = 'block';
-            }); 
-            document.querySelectorAll('.user-avatar').forEach(el => {
-                el.style.backgroundImage = `url(${defaultAvatar})`;
-                el.style.backgroundSize = 'cover';
-                el.style.backgroundPosition = 'center';
-                el.style.backgroundRepeat = 'no-repeat';
-            }); 
-            document.querySelectorAll('.user-avatar, .user-avatar-large').forEach(el => {
-                el.style.display = 'block';
-            });
-        }
+        renderUserInfo(JSON.parse(localStorage.getItem('userInfo')) || userInfo);
         
         
     } else {
         // User chưa đăng nhập
         userMenu.style.display = 'none';
+        updateAvatarDisplay(null);
         if (authButtons) {
             authButtons.style.display = 'block';
             authButtons.innerHTML = `
                 <a href="auth.html" class="header-btn login-btn">Đăng nhập</a>
             `;
         }
-        
-        
-        // Thêm visual indicator cho các button cần đăng nhập
         const restrictedButtons = [
             { el: document.getElementById('chat-btn'), name: 'chat' },
             { el: document.getElementById('favourite-btn'), name: 'lưu tin yêu thích' },
@@ -211,8 +572,6 @@ function initializeHeader() {
             dropdownMenu.classList.toggle('show');
         });
 
-
-       //Đóng dropdown khi click bên ngoài
         document.addEventListener('click', function (e) {
             if (!userMenuTrigger.contains(e.target) && !dropdownMenu.contains(e.target)) {
                 dropdownMenu.classList.remove('show');
@@ -227,14 +586,7 @@ function initializeHeader() {
     fetch('https://provinces.open-api.vn/api/p/')
         .then(response => response.json())
         .then(data => {
-            const provinceSelect = document.getElementById('provinceSelect');
-            provinceSelect.innerHTML = '<option value="">Chọn khu vực</option>';
-            data.forEach(province => {
-                const option = document.createElement('option');
-                option.value = province.code;
-                option.textContent = province.name;
-                provinceSelect.appendChild(option);
-            });
+            setupProvinceSelectorUI(data || []);
         })
         .catch(error => console.error('Error loading provinces:', error));
     

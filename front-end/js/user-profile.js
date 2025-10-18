@@ -1,5 +1,6 @@
 // User Profile Page JavaScript
 import { API_BASE_URL } from './config.js';
+import { authManager } from './auth.js';
 
 const UserProfile = {
     currentUserId: null,
@@ -45,14 +46,18 @@ const UserProfile = {
     // Load user profile data
     async loadUserProfile(userId) {
         try {
+            console.log('Loading profile for user ID:', userId);
             this.currentUserId = userId;
-            this.showLoading();
+            window.showLoading();
 
             // Fetch user data and rooms data from API
             const [userData, roomsData] = await Promise.all([
                 this.fetchUserData(userId),
                 this.fetchUserRooms(userId)
             ]);
+
+            console.log('Fetched user data:', userData);
+            console.log('Fetched rooms data:', roomsData);
 
             // Calculate stats from actual rooms data
             userData.stats.totalRooms = roomsData.length;
@@ -61,26 +66,31 @@ const UserProfile = {
 
             this.displayUserData(userData);
             this.displayUserRooms(roomsData);
-            this.showProfile();
+            
+            // Hide loading and show profile content
+            window.hideLoading();
+            this.showProfileContent();
 
         } catch (error) {
             console.error('Error loading user profile:', error);
-            this.showError('Không thể tải thông tin người dùng. Vui lòng thử lại sau.');
+            
+            // Try to show demo data if API fails
+            if (error.message && error.message.includes('fetch')) {
+                console.log('API not available, showing demo data');
+                this.showDemoData(userId);
+            } else {
+                window.showError('Không thể tải thông tin người dùng. Vui lòng thử lại sau.');
+            }
         }
     },
+    
 
     // Fetch user data from API
     async fetchUserData(userId) {
         try {
-            const userInfo = JSON.parse(localStorage.getItem('userInfo'));
-            const token = userInfo?.token;
-
-            const response = await fetch(`${API_BASE_URL}/user/${userId}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-                }
+            // Use authManager with auto-refresh token
+            const response = await authManager.makeAuthenticatedRequest(`/user/${userId}`, {
+                method: 'GET'
             });
 
             if (!response.ok) {
@@ -93,12 +103,12 @@ const UserProfile = {
             // Convert API response to expected format
             return {
                 id: userData.id,
-                displayName: `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || userData.userName || 'Người dùng',
+                fullName: `${userData.lastName || ''} ${userData.firstName || ''}`,
                 userName: userData.userName,
-                email: userData.email, // Only show if it's public or same user
-                avatar: userData.avatar,
+                email: userData.email,
+                avatar: userData.avatarUrl,
                 joinDate: userData.createdAt || '2024-01-01',
-                accountType: userData.role === 'ROLE_ADMIN' ? 'Quản trị viên' : 'Người dùng thường',
+                accountType: userData.role === 'ADMIN' ? 'Quản trị viên' : 'Người dùng thường',
                 status: userData.status === 'ACTIVE' ? 'active' : 'inactive',
                 stats: {
                     totalRooms: 0, // Will be calculated from user's rooms
@@ -119,16 +129,11 @@ const UserProfile = {
     // Fetch user's rooms from API
     async fetchUserRooms(userId) {
         try {
-            const userInfo = JSON.parse(localStorage.getItem('userInfo'));
-            const token = userInfo?.token;
             const formatPrice = Utils.formatPrice;
 
-            const response = await fetch(`${API_BASE_URL}/room/list`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-                }
+            // Use authManager with auto-refresh token
+            const response = await authManager.makeAuthenticatedRequest('/room/list', {
+                method: 'GET'
             });
 
             if (!response.ok) {
@@ -173,26 +178,41 @@ const UserProfile = {
 
     // Display user data in the UI
     displayUserData(userData) {
+        console.log('Displaying user data:', userData);
+        
         // User header
-        document.getElementById('userDisplayName').textContent = userData.displayName;
-        document.getElementById('userJoinDate').innerHTML = 
-            `<i class="fas fa-calendar-alt"></i> Tham gia từ: ${Utils.formatDate(userData.created_at)}`;
+        const displayNameElement = document.getElementById('userDisplayName');
+        const joinDateElement = document.getElementById('userJoinDate');
+        
+        if (displayNameElement) {
+            displayNameElement.textContent = userData.fullName || 'Người dùng';
+        }
+        
+        if (joinDateElement) {
+            const joinDate = userData.joinDate || userData.created_at || userData.createdAt || '2024-01-01';
+            
+            joinDateElement.innerHTML = 
+                `<i class="fas fa-calendar-alt"></i> Tham gia từ: ${Utils.formatDate(joinDate)}`;
+        }
 
         // User avatar
         const avatarElement = document.getElementById('userAvatarLarge');
-        if (userData.avatar) {
-            avatarElement.innerHTML = `<img src="${userData.avatar}" alt="${userData.displayName}">`;
-        } else {
-            // Use first letter of name as avatar
-            const firstLetter = userData.displayName.charAt(0).toUpperCase();
-            avatarElement.innerHTML = firstLetter;
+        if (avatarElement) {
+            if (userData.avatar) {
+                avatarElement.innerHTML = `<img src="${userData.avatar}" alt="${userData.displayName}">`;
+            } else {
+                // Use first letter of name as avatar
+                const firstLetter = (userData.displayName || 'U').charAt(0).toUpperCase();
+                avatarElement.innerHTML = firstLetter;
+            }
         }
     },
 
     // Display user rooms
     displayUserRooms(rooms) {
-        this.userRooms = rooms;
-        this.filteredRooms = [...rooms];
+        console.log('Displaying user rooms:', rooms);
+        this.userRooms = rooms || [];
+        this.filteredRooms = [...this.userRooms];
         this.renderRooms();
     },
 
@@ -200,21 +220,36 @@ const UserProfile = {
     renderRooms() {
         const container = document.getElementById('userRoomsList');
         const noRoomsMessage = document.getElementById('noRoomsMessage');
-        const formatDate = this.formatDate;
+
+        console.log('Rendering rooms:', this.filteredRooms);
+
+        if (!container) {
+            console.error('userRoomsList container not found');
+            return;
+        }
 
         if (this.filteredRooms.length === 0) {
             container.style.display = 'none';
-           
+            if (noRoomsMessage) {
+                noRoomsMessage.style.display = 'block';
+            } else {
+                // Create a simple message if no element exists
+                container.innerHTML = '<p class="no-rooms">Người dùng này chưa đăng phòng nào.</p>';
+                container.style.display = 'block';
+            }
             return;
         }
 
         container.style.display = 'grid';
+        if (noRoomsMessage) {
+            noRoomsMessage.style.display = 'none';
+        }
        
 
         container.innerHTML = this.filteredRooms.map(room => `
             <div class="room-card" onclick="UserProfile.viewRoom(${room.id})">
                 <div class="room-image">
-                    <img src="${room.image}" alt="${room.title}" onerror="this.src='access/img/room-default.jpg'">
+                    <img src="${room.image}" alt="${room.title}">
                     <div class="room-status-badge ${room.status}">
                         ${room.status === 'available' ? 'Còn trống' : 'Đã thuê'}
                     </div>
@@ -234,7 +269,7 @@ const UserProfile = {
                         
                     </div>
                     <div class="room-date">
-                        Đăng ngày: ${room.created_at ? formatDate(room.created_at) : ''}
+                        Đăng ngày: ${room.created_at ? Utils.formatDate(room.created_at) : ''}
                     </div>
                 </div>
             </div>
@@ -256,10 +291,82 @@ const UserProfile = {
         this.applyFiltersAndSort();
     },
 
+    // Set sorting option
+    setSorting(sortOption) {
+        this.currentSort = sortOption;
+        this.applyFiltersAndSort();
+    },
+
+    // Apply filters and sorting
+    applyFiltersAndSort() {
+        // Apply filter
+        switch (this.currentFilter) {
+            case 'available':
+                this.filteredRooms = this.userRooms.filter(room => room.status === 'available');
+                break;
+            case 'rented':
+                this.filteredRooms = this.userRooms.filter(room => room.status === 'rented');
+                break;
+            default:
+                this.filteredRooms = [...this.userRooms];
+        }
+
+        // Apply sorting
+        switch (this.currentSort) {
+            case 'newest':
+                this.filteredRooms.sort((a, b) => new Date(b.postedDate) - new Date(a.postedDate));
+                break;
+            case 'oldest':
+                this.filteredRooms.sort((a, b) => new Date(a.postedDate) - new Date(b.postedDate));
+                break;
+            case 'price-low':
+                this.filteredRooms.sort((a, b) => this.parsePrice(a.price) - this.parsePrice(b.price));
+                break;
+            case 'price-high':
+                this.filteredRooms.sort((a, b) => this.parsePrice(b.price) - this.parsePrice(a.price));
+                break;
+        }
+
+        this.renderRooms();
+    },
+
+    // Parse price string to number for sorting
+    parsePrice(priceStr) {
+        if (!priceStr) return 0;
+        return parseInt(priceStr.replace(/[^\d]/g, '')) || 0;
+    },
+
+    // Show contact modal
+    showContactModal() {
+        // For now, just show a simple alert. This can be enhanced with a modal later
+        Utils.showNotification('Tính năng liên hệ sẽ được cập nhật trong phiên bản tiếp theo.', 'info');
+    },
+
     // View room details
     viewRoom(roomId) {
         window.open(`detail.html?id=${roomId}`);
     },
+
+    // Wrapper methods for HTML to use
+    showError(message) {
+        window.showError(message);
+    },
+
+    showLoading() {
+        window.showLoading();
+    },
+
+    hideLoading() {
+        window.hideLoading();
+    },
+
+    // Show profile content
+    showProfileContent() {
+        const profileContainer = document.getElementById('userProfileContainer');
+        if (profileContainer) {
+            profileContainer.style.display = 'block';
+        }
+    }
 
    
 };
@@ -267,25 +374,6 @@ const UserProfile = {
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     UserProfile.init();
-    
-    // Get userId from URL parameters
-    const urlParams = new URLSearchParams(window.location.search);
-    const userId = urlParams.get('userId');
-    
-    if (userId) {
-        UserProfile.loadUserProfile(userId);
-    } else {
-        // Show error if no userId provided
-        const errorMessage = document.getElementById('errorMessage');
-        const errorText = document.getElementById('errorText');
-        const loadingSpinner = document.getElementById('loadingSpinner');
-        
-        if (errorMessage && errorText && loadingSpinner) {
-            loadingSpinner.style.display = 'none';
-            errorText.textContent = 'Không tìm thấy thông tin người dùng. Vui lòng kiểm tra lại đường link.';
-            errorMessage.style.display = 'flex';
-        }
-    }
 });
 
 // Export for global access

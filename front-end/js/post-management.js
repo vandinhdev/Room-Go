@@ -1,125 +1,29 @@
-// Mock data for posts
-const mockPosts = [
-    {
-        id: 1,
-        title: "Phòng trọ cao cấp quận 1",
-        description: "Phòng trọ đầy đủ tiện nghi, gần trung tâm",
-        price: 8000000,
-        location: "Quận 1, TP.HCM",
-        area: 25,
-        images: [
-            { url: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=400" },
-            { url: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=400" }
-        ],
-        userId: 2,
-        userName: "Nguyễn Văn A",
-        userAvatar: "https://i.pravatar.cc/40?img=1",
-        status: "pending",
-        createdAt: new Date("2024-10-01T10:00:00"),
-        updatedAt: new Date("2024-10-01T10:00:00"),
-        views: 45,
-        rejectionReason: null
-    },
-    {
-        id: 2,
-        title: "Căn hộ mini quận 7",
-        description: "Căn hộ mini đẹp, view đẹp, giá tốt",
-        price: 6500000,
-        location: "Quận 7, TP.HCM",
-        area: 20,
-        images: [
-            { url: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400" }
-        ],
-        userId: 3,
-        userName: "Trần Thị B",
-        userAvatar: "https://i.pravatar.cc/40?img=2",
-        status: "approved",
-        createdAt: new Date("2024-09-28T14:30:00"),
-        updatedAt: new Date("2024-09-29T09:15:00"),
-        views: 123,
-        rejectionReason: null
-    },
-    {
-        id: 3,
-        title: "Phòng trọ sinh viên quận Thủ Đức",
-        description: "Phòng trọ dành cho sinh viên, giá rẻ",
-        price: 2500000,
-        location: "Thủ Đức, TP.HCM",
-        area: 15,
-        images: [
-            { url: "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=400" }
-        ],
-        userId: 2,
-        userName: "Nguyễn Văn A",
-        userAvatar: "https://i.pravatar.cc/40?img=1",
-        status: "rejected",
-        createdAt: new Date("2024-09-25T16:45:00"),
-        updatedAt: new Date("2024-09-26T11:20:00"),
-        views: 78,
-        rejectionReason: "Hình ảnh không rõ ràng, thông tin chưa đầy đủ"
-    },
-    {
-        id: 4,
-        title: "Nhà nguyên căn quận 2",
-        description: "Nhà nguyên căn 3 phòng ngủ, có sân vườn",
-        price: 15000000,
-        location: "Quận 2, TP.HCM",
-        area: 80,
-        images: [
-            { url: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400" }
-        ],
-        userId: 4,
-        userName: "Lê Văn C",
-        userAvatar: "https://i.pravatar.cc/40?img=3",
-        status: "pending",
-        createdAt: new Date("2024-10-02T08:20:00"),
-        updatedAt: new Date("2024-10-02T08:20:00"),
-        views: 12,
-        rejectionReason: null
-    },
-    {
-        id: 5,
-        title: "Phòng trọ quận Bình Thạnh",
-        description: "Phòng trọ sạch sẽ, an ninh tốt",
-        price: 4500000,
-        location: "Bình Thạnh, TP.HCM",
-        area: 18,
-        images: [
-            { url: "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=400" }
-        ],
-        userId: 1,
-        userName: "Admin User",
-        userAvatar: "https://i.pravatar.cc/40?img=4",
-        status: "approved",
-        createdAt: new Date("2024-09-30T12:00:00"),
-        updatedAt: new Date("2024-10-01T16:30:00"),
-        views: 89,
-        rejectionReason: null
-    }
-];
+import { API_BASE_URL } from './config.js';
+import { authManager } from './auth.js';
 
 class PostManagement {
     constructor() {
-        this.posts = [...mockPosts];
-        // Try both currentUser and userInfo from localStorage
-        this.currentUser = JSON.parse(localStorage.getItem('currentUser')) || 
-                          JSON.parse(localStorage.getItem('userInfo')) || null;
+        this.allPosts = [];
+        this.myPosts = []; 
+        this.posts = [];
+        this.currentUser = authManager.getCurrentUser() || null;
         this.isAdmin = this.currentUser && this.currentUser.role === 'ADMIN';
         this.currentTab = 'all';
+        this.usersCache = {}; 
         
         this.init();
     }
 
-    init() {
+    async init() {
         this.setupEventListeners();
+        this.checkUserPermissions();
+        await this.fetchPosts();
         this.updateStatistics();
         this.loadPosts();
-        this.checkUserPermissions();
     }
 
     checkUserPermissions() {
         if (!this.currentUser) {
-            // Show login message instead of redirecting immediately
             const container = document.querySelector('.admin-container');
             if (container) {
                 container.innerHTML = `
@@ -132,21 +36,230 @@ class PostManagement {
             return;
         }
 
-        // Hide admin-only tabs if not admin
         if (!this.isAdmin) {
             const pendingTab = document.querySelector('[data-tab="pending"]');
             const approvedTab = document.querySelector('[data-tab="approved"]');
             const rejectedTab = document.querySelector('[data-tab="rejected"]');
             const allTab = document.querySelector('[data-tab="all"]');
             
-            if (pendingTab) pendingTab.style.display = 'none';
+            if (pendingTab) pendingTab.style.display = 'block';
             if (approvedTab) approvedTab.style.display = 'none';
-            if (rejectedTab) rejectedTab.style.display = 'none';
+            if (rejectedTab) rejectedTab.style.display = 'block';
             if (allTab) allTab.style.display = 'none';
 
-            // Switch to "my-posts" tab for regular users
             this.switchTab('my-posts');
         }
+    }
+
+    async fetchPosts() {
+        try {
+            if (!this.currentUser || !this.currentUser.token) {
+                console.log('No user logged in');
+                this.allPosts = [];
+                this.myPosts = [];
+                this.posts = [];
+                return;
+            }
+
+            this.showLoading();
+
+            if (this.isAdmin) {
+                await this.fetchAllPosts();
+            }
+            
+            await this.fetchMyPosts();
+
+            this.posts = this.isAdmin ? this.allPosts : this.myPosts;
+
+            console.log('Loaded posts:', {
+                allPosts: this.allPosts.length,
+                myPosts: this.myPosts.length,
+                isAdmin: this.isAdmin
+            });
+            this.hideLoading();
+
+        } catch (error) {
+            console.error('Lỗi khi tải danh sách bài đăng:', error);
+            this.hideLoading();
+            
+            if (window.Utils && typeof Utils.showNotification === 'function') {
+                Utils.showNotification('Không thể tải danh sách bài đăng. Vui lòng thử lại sau.', 'error');
+            }
+            
+            // Đặt mảng rỗng nếu lỗi
+            this.allPosts = [];
+            this.myPosts = [];
+            this.posts = [];
+        }
+    }
+
+    // Fetch all posts (Admin only)
+    async fetchAllPosts() {
+        try {
+            // Use authManager with auto-refresh token
+            const response = await authManager.makeAuthenticatedRequest('/room/list', {
+                method: 'GET'
+            });
+
+            if (!response.ok) {
+                throw new Error(`Lỗi tải danh sách tất cả bài đăng (${response.status})`);
+            }
+
+            const data = await response.json();
+
+            // Xử lý response data
+            let roomsArray = [];
+            if (data && data.status === 200 && data.data && Array.isArray(data.data.rooms)) {
+                roomsArray = data.data.rooms;
+            } else if (data && Array.isArray(data.rooms)) {
+                roomsArray = data.rooms;
+            } else if (data && Array.isArray(data.data)) {
+                roomsArray = data.data;
+            } else if (Array.isArray(data)) {
+                roomsArray = data;
+            }
+
+            // Chuyển đổi định dạng room từ API sang format hiện tại
+            this.allPosts = await this.convertRoomsToPostsFormat(roomsArray);
+        } catch (error) {
+            console.error('Lỗi khi tải tất cả bài đăng:', error);
+            this.allPosts = [];
+        }
+    }
+
+    // Fetch my posts
+    async fetchMyPosts() {
+        try {
+            // Use authManager with auto-refresh token
+            const response = await authManager.makeAuthenticatedRequest('/room/me', {
+                method: 'GET'
+            });
+
+            if (!response.ok) {
+                throw new Error(`Lỗi tải danh sách bài đăng của tôi (${response.status})`);
+            }
+
+            const data = await response.json();
+
+            // Xử lý response data
+            let roomsArray = [];
+            if (data && data.status === 200 && data.data && Array.isArray(data.data.rooms)) {
+                roomsArray = data.data.rooms;
+            } else if (data && Array.isArray(data.rooms)) {
+                roomsArray = data.rooms;
+            } else if (data && Array.isArray(data.data)) {
+                roomsArray = data.data;
+            } else if (Array.isArray(data)) {
+                roomsArray = data;
+            }
+
+            // Chuyển đổi định dạng room từ API sang format hiện tại
+            this.myPosts = await this.convertRoomsToPostsFormat(roomsArray);
+        } catch (error) {
+            console.error('Lỗi khi tải bài đăng của tôi:', error);
+            this.myPosts = [];
+        }
+    }
+
+    // Convert rooms from API to posts format
+    async convertRoomsToPostsFormat(roomsArray) {
+        return await Promise.all(roomsArray.map(async room => {
+            const ownerInfo = await this.getUserInfo(room.ownerId);
+            
+            // Xử lý date an toàn
+            let createdDate = new Date();
+            let updatedDate = new Date();
+            
+            try {
+                if (room.createdAt) {
+                    const tempCreated = new Date(room.createdAt);
+                    if (!isNaN(tempCreated.getTime())) {
+                        createdDate = tempCreated;
+                    }
+                }
+                
+                if (room.updatedAt) {
+                    const tempUpdated = new Date(room.updatedAt);
+                    if (!isNaN(tempUpdated.getTime())) {
+                        updatedDate = tempUpdated;
+                    } else {
+                        updatedDate = createdDate;
+                    }
+                } else {
+                    updatedDate = createdDate;
+                }
+            } catch (error) {
+                console.error('Error parsing dates for room:', room.id, error);
+            }
+            
+            return {
+                id: room.id,
+                title: room.title || 'Không có tiêu đề',
+                description: room.description || '',
+                price: room.price || 0,
+                location: room.address || `${room.ward || ''}, ${room.district || ''}, ${room.province || ''}`.trim() || 'Không rõ',
+                area: room.area || 0,
+                images: room.imageUrls ? room.imageUrls.map(url => ({ url })) : [],
+                userId: room.ownerId,
+                userName: ownerInfo ? `${ownerInfo.firstName || ''} ${ownerInfo.lastName || ''}`.trim() : 'Người dùng',
+                userAvatar: ownerInfo?.avatarUrl || 'https://i.pravatar.cc/40',
+                status: room.status?.toLowerCase() || 'pending',
+                createdAt: createdDate,
+                updatedAt: updatedDate,
+                views: room.views || 0,
+                rejectionReason: room.rejectionReason || null
+            };
+        }));
+    }
+
+    // Get user info with caching
+    async getUserInfo(userId) {
+        if (this.usersCache[userId]) {
+            return this.usersCache[userId];
+        }
+
+        try {
+            let response;
+            
+            if (window.Utils && typeof Utils.makeAuthenticatedRequest === 'function') {
+                response = await Utils.makeAuthenticatedRequest(`/user/${userId}`, {
+                    method: 'GET'
+                });
+            } else {
+                // Fallback method
+                // Use authManager with auto-refresh token
+                response = await authManager.makeAuthenticatedRequest(`/user/${userId}`, {
+                    method: 'GET'
+                });
+            }
+
+            if (response.ok) {
+                const data = await response.json();
+                const userInfo = data.data || data;
+                this.usersCache[userId] = userInfo;
+                return userInfo;
+            }
+        } catch (error) {
+            console.warn(`Không lấy được thông tin user ID ${userId}`, error);
+        }
+
+        return null;
+    }
+
+    showLoading() {
+        const allTables = ['allPostsTableBody', 'pendingPostsTableBody', 'approvedPostsTableBody', 
+                          'rejectedPostsTableBody', 'myPostsTableBody'];
+        
+        allTables.forEach(tableId => {
+            const table = document.getElementById(tableId);
+            if (table) {
+                table.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px;"><i class="fas fa-spinner fa-spin"></i> Đang tải...</td></tr>';
+            }
+        });
+    }
+
+    hideLoading() {
+        // Loading will be replaced by actual content in renderPosts
     }
 
     setupEventListeners() {
@@ -204,11 +317,14 @@ class PostManagement {
     }
 
     updateStatistics() {
+        // Sử dụng allPosts cho admin, myPosts cho user
+        const sourceData = this.isAdmin ? this.allPosts : this.myPosts;
+        
         const stats = {
-            pending: this.posts.filter(post => post.status === 'pending').length,
-            approved: this.posts.filter(post => post.status === 'approved').length,
-            rejected: this.posts.filter(post => post.status === 'rejected').length,
-            total: this.posts.length
+            pending: sourceData.filter(post => post.status === 'pending').length,
+            approved: sourceData.filter(post => post.status === 'approved' || post.status === 'available').length,
+            rejected: sourceData.filter(post => post.status === 'rejected' || post.status === 'unavailable').length,
+            total: sourceData.length
         };
 
         document.getElementById('pendingCount').textContent = stats.pending;
@@ -219,22 +335,26 @@ class PostManagement {
 
     loadPosts() {
         let filteredPosts = [];
+        
+        // Chọn source data dựa trên tab
+        let sourceData = this.currentTab === 'my-posts' ? this.myPosts : 
+                        (this.isAdmin ? this.allPosts : this.myPosts);
 
         switch (this.currentTab) {
             case 'all':
-                filteredPosts = this.posts;
+                filteredPosts = sourceData;
                 break;
             case 'pending':
-                filteredPosts = this.posts.filter(post => post.status === 'pending');
+                filteredPosts = sourceData.filter(post => post.status === 'pending');
                 break;
             case 'approved':
-                filteredPosts = this.posts.filter(post => post.status === 'approved');
+                filteredPosts = sourceData.filter(post => post.status === 'approved' || post.status === 'available');
                 break;
             case 'rejected':
-                filteredPosts = this.posts.filter(post => post.status === 'rejected');
+                filteredPosts = sourceData.filter(post => post.status === 'rejected' || post.status === 'unavailable');
                 break;
             case 'my-posts':
-                filteredPosts = this.posts.filter(post => post.userId === this.currentUser.id);
+                filteredPosts = this.myPosts;
                 break;
         }
 
@@ -436,22 +556,26 @@ class PostManagement {
 
     filterPosts(tabType, searchTerm) {
         let posts = [];
+        
+        // Chọn source data dựa trên tab
+        let sourceData = tabType === 'my-posts' ? this.myPosts : 
+                        (this.isAdmin ? this.allPosts : this.myPosts);
 
         switch (tabType) {
             case 'all':
-                posts = this.posts;
+                posts = sourceData;
                 break;
             case 'pending':
-                posts = this.posts.filter(post => post.status === 'pending');
+                posts = sourceData.filter(post => post.status === 'pending');
                 break;
             case 'approved':
-                posts = this.posts.filter(post => post.status === 'approved');
+                posts = sourceData.filter(post => post.status === 'approved' || post.status === 'available');
                 break;
             case 'rejected':
-                posts = this.posts.filter(post => post.status === 'rejected');
+                posts = sourceData.filter(post => post.status === 'rejected' || post.status === 'unavailable');
                 break;
             case 'my-posts':
-                posts = this.posts.filter(post => post.userId === this.currentUser.id);
+                posts = this.myPosts;
                 break;
         }
 
@@ -543,19 +667,63 @@ class PostManagement {
         document.getElementById('postDetailModal').style.display = 'none';
     }
 
-    approvePost(postId) {
+    async approvePost(postId) {
         const post = this.posts.find(p => p.id === postId);
         if (!post || !this.isAdmin) return;
 
         if (confirm('Bạn có chắc chắn muốn duyệt tin đăng này?')) {
-            post.status = 'approved';
-            post.updatedAt = new Date();
-            
-            this.updateStatistics();
-            this.loadPosts();
-            this.closePostDetailModal();
-            
-            alert('Đã duyệt tin đăng thành công!');
+            try {
+                // Tạo update request
+                const updateRequest = {
+                    id: post.id,
+                    title: post.title,
+                    description: post.description,
+                    price: post.price,
+                    area: post.area,
+                    address: post.location,
+                    status: 'AVAILABLE', // Approved -> AVAILABLE
+                    imageUrls: post.images.map(img => img.url)
+                };
+                
+                // Use authManager with auto-refresh token
+                const response = await authManager.makeAuthenticatedRequest('/room/update', {
+                    method: 'PUT',
+                    body: JSON.stringify(updateRequest)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Không thể duyệt tin đăng');
+                }
+
+                // Cập nhật local trong cả 2 lists
+                const updatePostStatus = (postsList) => {
+                    const foundPost = postsList.find(p => p.id === postId);
+                    if (foundPost) {
+                        foundPost.status = 'approved';
+                        foundPost.updatedAt = new Date();
+                    }
+                };
+                
+                updatePostStatus(this.allPosts);
+                updatePostStatus(this.myPosts);
+                
+                this.updateStatistics();
+                this.loadPosts();
+                this.closePostDetailModal();
+                
+                if (window.Utils && typeof Utils.showNotification === 'function') {
+                    Utils.showNotification('Đã duyệt tin đăng thành công!', 'success');
+                } else {
+                    alert('Đã duyệt tin đăng thành công!');
+                }
+            } catch (error) {
+                console.error('Lỗi khi duyệt tin đăng:', error);
+                if (window.Utils && typeof Utils.showNotification === 'function') {
+                    Utils.showNotification('Không thể duyệt tin đăng. Vui lòng thử lại!', 'error');
+                } else {
+                    alert('Không thể duyệt tin đăng. Vui lòng thử lại!');
+                }
+            }
         }
     }
 
@@ -587,51 +755,128 @@ class PostManagement {
         document.getElementById('postDetailContent').innerHTML = rejectFormHtml;
     }
 
-    confirmRejectPost(postId) {
+    async confirmRejectPost(postId) {
         const post = this.posts.find(p => p.id === postId);
         if (!post || !this.isAdmin) return;
 
         const reason = document.getElementById('rejectionReason').value.trim();
         if (!reason) {
-            alert('Vui lòng nhập lý do từ chối');
+            if (window.Utils && typeof Utils.showNotification === 'function') {
+                Utils.showNotification('Vui lòng nhập lý do từ chối', 'warning');
+            } else {
+                alert('Vui lòng nhập lý do từ chối');
+            }
             return;
         }
 
         if (confirm('Bạn có chắc chắn muốn từ chối tin đăng này?')) {
-            post.status = 'rejected';
-            post.rejectionReason = reason;
-            post.updatedAt = new Date();
-            
-            this.updateStatistics();
-            this.loadPosts();
-            this.closePostDetailModal();
-            
-            alert('Đã từ chối tin đăng thành công!');
+            try {
+                // Tạo update request
+                const updateRequest = {
+                    id: post.id,
+                    title: post.title,
+                    description: post.description,
+                    price: post.price,
+                    area: post.area,
+                    address: post.location,
+                    status: 'UNAVAILABLE', // Rejected -> UNAVAILABLE
+                    imageUrls: post.images.map(img => img.url),
+                    rejectionReason: reason
+                };
+                
+                // Use authManager with auto-refresh token
+                const response = await authManager.makeAuthenticatedRequest('/room/update', {
+                    method: 'PUT',
+                    body: JSON.stringify(updateRequest)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Không thể từ chối tin đăng');
+                }
+
+                // Cập nhật local trong cả 2 lists
+                const updatePostStatus = (postsList) => {
+                    const foundPost = postsList.find(p => p.id === postId);
+                    if (foundPost) {
+                        foundPost.status = 'rejected';
+                        foundPost.rejectionReason = reason;
+                        foundPost.updatedAt = new Date();
+                    }
+                };
+                
+                updatePostStatus(this.allPosts);
+                updatePostStatus(this.myPosts);
+                
+                this.updateStatistics();
+                this.loadPosts();
+                this.closePostDetailModal();
+                
+                if (window.Utils && typeof Utils.showNotification === 'function') {
+                    Utils.showNotification('Đã từ chối tin đăng thành công!', 'success');
+                } else {
+                    alert('Đã từ chối tin đăng thành công!');
+                }
+            } catch (error) {
+                console.error('Lỗi khi từ chối tin đăng:', error);
+                if (window.Utils && typeof Utils.showNotification === 'function') {
+                    Utils.showNotification('Không thể từ chối tin đăng. Vui lòng thử lại!', 'error');
+                } else {
+                    alert('Không thể từ chối tin đăng. Vui lòng thử lại!');
+                }
+            }
         }
     }
 
     editPost(postId) {
-        // For now, just show an alert. In a real app, this would navigate to an edit form
-        alert('Chức năng chỉnh sửa tin đăng sẽ được phát triển trong phiên bản tiếp theo');
+        // Redirect to roomForm.html with room ID
+        window.location.href = `roomForm.html?id=${postId}`;
     }
 
-    deletePost(postId) {
+    async deletePost(postId) {
         const post = this.posts.find(p => p.id === postId);
         if (!post) return;
 
         // Check permissions
         if (!this.isAdmin && post.userId !== this.currentUser.id) {
-            alert('Bạn không có quyền xóa tin đăng này');
+            if (window.Utils && typeof Utils.showNotification === 'function') {
+                Utils.showNotification('Bạn không có quyền xóa tin đăng này', 'error');
+            } else {
+                alert('Bạn không có quyền xóa tin đăng này');
+            }
             return;
         }
 
         if (confirm('Bạn có chắc chắn muốn xóa tin đăng này? Hành động này không thể hoàn tác.')) {
-            this.posts = this.posts.filter(p => p.id !== postId);
-            
-            this.updateStatistics();
-            this.loadPosts();
-            
-            alert('Đã xóa tin đăng thành công!');
+            try {
+                // Use authManager with auto-refresh token
+                const response = await authManager.makeAuthenticatedRequest(`/room/delete/${postId}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Không thể xóa tin đăng');
+                }
+
+                // Xóa khỏi cả 2 mảng local
+                this.allPosts = this.allPosts.filter(p => p.id !== postId);
+                this.myPosts = this.myPosts.filter(p => p.id !== postId);
+                
+                this.updateStatistics();
+                this.loadPosts();
+                
+                if (window.Utils && typeof Utils.showNotification === 'function') {
+                    Utils.showNotification('Đã xóa tin đăng thành công!', 'success');
+                } else {
+                    alert('Đã xóa tin đăng thành công!');
+                }
+            } catch (error) {
+                console.error('Lỗi khi xóa tin đăng:', error);
+                if (window.Utils && typeof Utils.showNotification === 'function') {
+                    Utils.showNotification('Không thể xóa tin đăng. Vui lòng thử lại!', 'error');
+                } else {
+                    alert('Không thể xóa tin đăng. Vui lòng thử lại!');
+                }
+            }
         }
     }
 
@@ -643,13 +888,27 @@ class PostManagement {
     }
 
     formatDate(date) {
-        return new Intl.DateTimeFormat('vi-VN', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit'
-        }).format(new Date(date));
+        if (!date) return 'N/A';
+        
+        try {
+            const dateObj = date instanceof Date ? date : new Date(date);
+            
+            // Kiểm tra xem date có hợp lệ không
+            if (isNaN(dateObj.getTime())) {
+                return 'N/A';
+            }
+            
+            return new Intl.DateTimeFormat('vi-VN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            }).format(dateObj);
+        } catch (error) {
+            console.error('Error formatting date:', date, error);
+            return 'N/A';
+        }
     }
 }
 

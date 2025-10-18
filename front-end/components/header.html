@@ -8,20 +8,34 @@
         <div class="logo">ROOM GO</div>
         <div class="location-selector">
             <span class="location-icon"><i class="fa-solid fa-location-dot"></i></span>
-            <select id="provinceSelect" style="border:none;background:transparent;font-size:16px;color:#ff6b35;outline:none;">
-                <option value="">Đang tải tỉnh thành...</option>
-            </select>
+            <div class="location-select-wrapper">
+                <div class="custom-select" id="provinceCustomSelect" tabindex="0" aria-haspopup="listbox" aria-expanded="false" aria-controls="provinceCustomDropdown" data-placeholder="Chọn khu vực">
+                    <span class="custom-select-value">Đang tải tỉnh thành...</span>
+                </div>
+                <div class="custom-select-dropdown" id="provinceCustomDropdown" role="listbox" aria-label="Chọn khu vực" aria-hidden="true"></div>
+                <select id="provinceSelect" aria-label="Chọn khu vực">
+                    <option value="">Đang tải tỉnh thành...</option>
+                </select>
+            </div>
+            <span class="location-caret"><i class="fa-solid fa-chevron-down"></i></span>
         </div>
     </div>
     
     <div class="search-container">
-        <input type="text" class="search-box" placeholder="Tìm phòng trọ...">
+        <div class="search-wrapper">
+            <span class="search-icon"><i class="fa-solid fa-magnifying-glass"></i></span>
+            <input type="text" class="search-box" placeholder="Tìm phòng trọ..." aria-label="Tìm phòng trọ">
+            <button type="button" class="search-action">
+                <span>Tìm kiếm</span>
+                <i class="fa-solid fa-arrow-right"></i>
+            </button>
+        </div>
     </div>
     
     <div class="header-right">
-        <div class="header-btn chat-btn mobile-hide" id="chat-btn"><i class="fa-regular fa-message"></i></div>
+    <div class="header-btn header-icon-btn chat-btn mobile-hide" id="chat-btn"><i class="fa-regular fa-message"></i></div>
 
-        <div class="header-btn favourite-btn mobile-hide" id="favourite-btn"><i class="fa-regular fa-heart"></i></div>
+    <div class="header-btn header-icon-btn favourite-btn mobile-hide" id="favourite-btn"><i class="fa-regular fa-heart"></i></div>
         <div class="favourite-room">
             <div class="favourite-header">
                 Tin đăng đã lưu
@@ -32,7 +46,7 @@
             </div>
         </div>
         
-        <div class="header-btn notification-btn mobile-show" id="notification-btn">
+        <div class="header-btn header-icon-btn notification-btn mobile-show" id="notification-btn">
             <i class="fa-regular fa-bell"></i>
             <span class="notification-badge" id="notification-badge">3</span>
         </div>

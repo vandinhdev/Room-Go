@@ -39,6 +39,9 @@ public class UserEntity implements UserDetails, Serializable {
     @Column(name = "id")
     private Long id;
 
+    @Column(name = "avatar_url", columnDefinition = "TEXT")
+    private String avatarUrl;
+
     @Column(name = "first_name")
     private String firstName;
 
@@ -57,14 +60,19 @@ public class UserEntity implements UserDetails, Serializable {
     @Column(name = "phone")
     private String phone;
 
+    @Column(name = "date_of_birth")
+    @Temporal(TemporalType.DATE)
+    private Date dateOfBirth;
 
     @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(name = "gender")
     private Gender gender;
 
-    @Column(name = "date_of_birth")
-    @Temporal(TemporalType.DATE)
-    private Date dateOfBirth;
+    @Column(name = "address", columnDefinition = "TEXT")
+    private String address;
+
+    @Column(name = "bio", columnDefinition = "TEXT")
+    private String bio;
 
     @ManyToOne
     @JoinColumn(name = "role_id", nullable = false)

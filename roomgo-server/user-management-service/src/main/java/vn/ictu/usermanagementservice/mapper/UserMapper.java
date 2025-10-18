@@ -16,6 +16,7 @@ public class UserMapper {
 
         return UserResponse.builder()
                 .id(entity.getId())
+                .avatarUrl(entity.getAvatarUrl())
                 .firstName(entity.getFirstName())
                 .lastName(entity.getLastName())
                 .gender(entity.getGender())
@@ -23,8 +24,11 @@ public class UserMapper {
                 .userName(entity.getUserName())
                 .phone(entity.getPhone())
                 .email(entity.getEmail())
+                .address(entity.getAddress())
+                .bio(entity.getBio())
                 .role(entity.getRole().getRoleName())
                 .status(entity.getStatus().name())
+                .createdAt(entity.getCreatedAt())
                 .build();
     }
 

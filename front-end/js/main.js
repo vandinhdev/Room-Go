@@ -1,56 +1,6 @@
-// ================== CONFIG ==================
 import { API_BASE_URL } from './config.js';
+import { authManager } from './auth.js';
 
-// ================== FALLBACK GUEST TOKEN ==================
-async function fallbackGetGuestToken() {
-  try {
-    const response = await fetch(`${API_BASE_URL}/auth/guest-token`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Lỗi lấy guest token (${response.status})`);
-    }
-
-    const data = await response.json();
-    console.log('Guest token response (fallback):', data);
-    
-    if (data && data.accessToken) {
-      return data.accessToken;
-    } else if (data && data.status === 200 && data.data && data.data.token) {
-      return data.data.token;
-    } else if (data && data.status === 200 && data.data && data.data.accessToken) {
-      return data.data.accessToken;
-    }
-    
-    throw new Error('Invalid guest token response');
-  } catch (error) {
-    console.error('Lỗi lấy guest token (fallback):', error);
-    throw error;
-  }
-}
-
-async function fallbackGetAuthToken() {
-  const userToken = JSON.parse(localStorage.getItem('userInfo'))?.token;
-  if (userToken) {
-    console.log('Sử dụng user token (fallback)');
-    return userToken;
-  }
-
-  try {
-    const guestToken = await fallbackGetGuestToken();
-    console.log('Sử dụng guest token (fallback)');
-    return guestToken;
-  } catch (error) {
-    console.error('Không thể lấy token (fallback):', error);
-    throw new Error('Không thể kết nối tới server. Vui lòng thử lại sau.');
-  }
-}
-
-// ================== STATE & UTILITIES ==================
 let rooms = [];
 
 const state = {
@@ -75,6 +25,126 @@ function saveRoom(room) {
 function removeRoom(id) {
   let favourite = getFavouriteRooms().filter(p => p.id !== id);
   localStorage.setItem("favouriteRooms", JSON.stringify(favourite));
+}
+
+// Thêm phòng vào yêu thích qua API
+async function addFavoriteRoomAPI(roomId) {
+  try {
+    const userInfo = authManager.getCurrentUser();
+    if (!userInfo || !userInfo.token) {
+      if (window.Utils && typeof Utils.showNotification === 'function') {
+        Utils.showNotification('Vui lòng đăng nhập để thêm vào yêu thích!', 'warning');
+      } else {
+        alert('Vui lòng đăng nhập để thêm vào yêu thích!');
+      }
+      return false;
+    }
+
+    // Use authManager with auto-refresh token
+    const response = await authManager.makeAuthenticatedRequest(`/favorite-rooms/${roomId}`, {
+      method: 'POST'
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      if (errorData.message && errorData.message.includes('already exists')) {
+        if (window.Utils && typeof Utils.showNotification === 'function') {
+          Utils.showNotification('Phòng này đã có trong danh sách yêu thích!', 'info');
+        }
+      } else {
+        throw new Error(errorData.message || 'Không thể thêm vào yêu thích');
+      }
+      return false;
+    }
+
+    if (window.Utils && typeof Utils.showNotification === 'function') {
+      Utils.showNotification('Đã thêm vào danh sách yêu thích!', 'success');
+    }
+    return true;
+  } catch (error) {
+    console.error('Lỗi khi thêm yêu thích:', error);
+    if (window.Utils && typeof Utils.showNotification === 'function') {
+      Utils.showNotification('Không thể thêm vào yêu thích. Vui lòng thử lại!', 'error');
+    } else {
+      alert('Không thể thêm vào yêu thích. Vui lòng thử lại!');
+    }
+    return false;
+  }
+}
+
+// Xóa phòng khỏi yêu thích qua API
+async function removeFavoriteRoomAPI(roomId) {
+  try {
+    const userInfo = authManager.getCurrentUser();
+    if (!userInfo || !userInfo.token) {
+      if (window.Utils && typeof Utils.showNotification === 'function') {
+        Utils.showNotification('Vui lòng đăng nhập!', 'warning');
+      } else {
+        alert('Vui lòng đăng nhập!');
+      }
+      return false;
+    }
+
+    // Use authManager with auto-refresh token
+    const response = await authManager.makeAuthenticatedRequest(`/favorite-rooms/remove/${roomId}`, {
+      method: 'DELETE'
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Không thể xóa khỏi yêu thích');
+    }
+
+    if (window.Utils && typeof Utils.showNotification === 'function') {
+      Utils.showNotification('Đã xóa khỏi danh sách yêu thích!', 'success');
+    }
+    return true;
+  } catch (error) {
+    console.error('Lỗi khi xóa yêu thích:', error);
+    if (window.Utils && typeof Utils.showNotification === 'function') {
+      Utils.showNotification('Không thể xóa khỏi yêu thích. Vui lòng thử lại!', 'error');
+    } else {
+      alert('Không thể xóa khỏi yêu thích. Vui lòng thử lại!');
+    }
+    return false;
+  }
+}
+
+// Đồng bộ danh sách yêu thích từ API
+async function syncFavoriteRooms() {
+  try {
+    const userInfo = authManager.getCurrentUser();
+    if (!userInfo || !userInfo.token) {
+      // Nếu chưa đăng nhập, chỉ dùng localStorage
+      return;
+    }
+
+    // Use authManager with auto-refresh token
+    const response = await authManager.makeAuthenticatedRequest('/favorite-rooms/me', {
+      method: 'GET'
+    });
+
+    if (!response.ok) {
+      throw new Error('Không thể tải danh sách yêu thích');
+    }
+
+    const data = await response.json();
+    
+    // Xử lý response data
+    let favoriteRooms = [];
+    if (data && data.data && Array.isArray(data.data)) {
+      favoriteRooms = data.data.map(fav => fav.room).filter(room => room != null);
+    } else if (Array.isArray(data)) {
+      favoriteRooms = data;
+    }
+
+    // Cập nhật localStorage với dữ liệu từ server
+    localStorage.setItem('favouriteRooms', JSON.stringify(favoriteRooms));
+    console.log('Đã đồng bộ danh sách yêu thích từ server:', favoriteRooms.length);
+  } catch (error) {
+    console.error('Lỗi khi đồng bộ danh sách yêu thích:', error);
+    // Không hiển thị lỗi cho user, vì đây là chức năng nền
+  }
 }
 
 // ----------------- Format Price -----------------
@@ -137,28 +207,17 @@ window.app = {
 // ================== FETCH API ROOMS ==================
 async function fetchRooms() {
   try {
-    // Use Utils if available, otherwise use fallback
-    let token;
-    if (window.Utils && typeof Utils.getAuthToken === 'function') {
-      token = await Utils.getAuthToken();
-    } else {
-      console.warn('Utils not available, using fallback');
-      token = await fallbackGetAuthToken();
-    }
-    console.log('🔑 Using token:', token ? token.substring(0, 20) + '...' : 'No token');
-
-    const response = await fetch(`${API_BASE_URL}/room/list`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
+    // Đồng bộ danh sách yêu thích trước khi load phòng
+    await syncFavoriteRooms();
+    
+    // Use authManager with auto-refresh token
+    const response = await authManager.makeAuthenticatedRequest('/room/list', {
+      method: 'GET'
     });
 
     if (!response.ok) throw new Error(`Lỗi tải phòng (${response.status})`);
 
     const data = await response.json();
-    console.log('API Response:', data);
 
     // Handle different response formats
     let roomsArray = [];
@@ -171,7 +230,6 @@ async function fetchRooms() {
     } else if (Array.isArray(data)) {
       roomsArray = data;
     } else {
-      console.warn('Unexpected API response format:', data);
       roomsArray = [];
     }
 
@@ -183,15 +241,13 @@ async function fetchRooms() {
       const ownerMap = {};
       await Promise.all(uniqueOwnerIds.map(async (userId) => {
         try {
-          const ownerRes = await fetch(`${API_BASE_URL}/user/${userId}`, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            },
+          // Use authManager with auto-refresh token
+          const ownerRes = await authManager.makeAuthenticatedRequest(`/user/${userId}`, {
+            method: 'GET'
           });
+          
           if (ownerRes.ok) {
             const ownerData = await ownerRes.json();
-            console.log('🔹 Profile fetch body:', ownerData);
             ownerMap[userId] = ownerData.data || ownerData;
           }
         } catch (e) {
@@ -202,6 +258,7 @@ async function fetchRooms() {
       // Gắn tên chủ nhà vào từng phòng
       rooms = rooms.map(room => {
         const owner = ownerMap[room.ownerId];
+        const ownerAvatar = owner ? owner.avatarUrl || null : null;
         const ownerName = owner ? 
           `${owner.firstName || ''} ${owner.lastName || ''}`.trim() : 
           `Chủ phòng #${room.ownerId}`;
@@ -209,9 +266,11 @@ async function fetchRooms() {
         return {
           ...room,
           ownerName: ownerName,
-          ownerAvatar: owner?.avatar || null
+          ownerAvatar: ownerAvatar
         };
+        
       });
+      
 
       // =========================
 
@@ -278,7 +337,11 @@ function renderRooms(roomList) {
     
     // Owner info is now fetched and attached in fetchRooms()
     const ownerName = room.ownerName || 'Chủ phòng';
-    const ownerAvatar = room.ownerAvatar || ownerName.charAt(0).toUpperCase();
+    const ownerAvatarUrl = room.ownerAvatar;
+    const ownerInitial = ownerName.charAt(0).toUpperCase();
+    const ownerAvatarMarkup = ownerAvatarUrl
+      ? `<img src="${ownerAvatarUrl}" alt="${ownerName}" onerror="this.onerror=null;this.src='https://cdn-icons-png.freepik.com/128/3135/3135715.png';">`
+      : ownerInitial;
 
     
     // Handle both imageUrls (from API) and images (legacy format)
@@ -310,7 +373,7 @@ function renderRooms(roomList) {
         </div>
         <div class="listing-footer">
           <div class="user-info">
-            <div class="user-avatar">${ownerAvatar}</div>
+            <div class="user-avatar">${ownerAvatarMarkup}</div>
             <span>${ownerName}</span>
           </div>
         </div>
@@ -323,17 +386,27 @@ function renderRooms(roomList) {
     });
 
     // Click trái tim để lưu
-    card.querySelector('.heart-icon').addEventListener('click', (e) => {
+    card.querySelector('.heart-icon').addEventListener('click', async (e) => {
       e.stopPropagation();
       const icon = e.currentTarget.querySelector('i');
-      if (icon.classList.contains('heart-filled')) {
-        icon.classList.remove('fa-solid', 'heart-filled');
-        icon.classList.add('fa-regular', 'heart-empty');
-        removeRoom(room.id);
+      const isFilled = icon.classList.contains('heart-filled');
+      
+      if (isFilled) {
+        // Xóa khỏi yêu thích
+        const success = await removeFavoriteRoomAPI(room.id);
+        if (success) {
+          icon.classList.remove('fa-solid', 'heart-filled');
+          icon.classList.add('fa-regular', 'heart-empty');
+          removeRoom(room.id); // Cập nhật localStorage
+        }
       } else {
-        icon.classList.remove('fa-regular', 'heart-empty');
-        icon.classList.add('fa-solid', 'heart-filled');
-        saveRoom(room);
+        // Thêm vào yêu thích
+        const success = await addFavoriteRoomAPI(room.id);
+        if (success) {
+          icon.classList.remove('fa-regular', 'heart-empty');
+          icon.classList.add('fa-solid', 'heart-filled');
+          saveRoom(room); // Cập nhật localStorage
+        }
       }
     });
 
@@ -376,33 +449,8 @@ function updateRooms() {
   renderRooms(getFilteredRooms());
 }
 
-// ================== AUTH UI ==================
-function updateAuthUI() {
-  const authButtons = document.getElementById('authButtons');
-  const userMenu = document.querySelector('.user-menu');
-  const userNameLarge = document.querySelector('.user-name-large');
-  const userEmail = document.querySelector('.user-email');
-  if (!authButtons || !userMenu) return;
-
-  const currentUser = JSON.parse(localStorage.getItem('userInfo'));
-  if (currentUser?.token) {
-    authButtons.style.display = 'none';
-    userMenu.classList.remove('d-none');
-    if (userNameLarge) userNameLarge.textContent = currentUser.fullName || currentUser.email;
-    if (userEmail) userEmail.textContent = currentUser.email;
-  } else {
-    authButtons.style.display = 'block';
-    userMenu.classList.add('d-none');
-  }
-}
-
-function waitForHeaderAndUpdateAuth() {
-  document.addEventListener('headerLoaded', updateAuthUI);
-}
-
 // ================== INIT ==================
 document.addEventListener('DOMContentLoaded', () => {
-  waitForHeaderAndUpdateAuth();
   initializeFiltersAndTabs();
   document.addEventListener('headerLoaded', initializeHeaderDependentElements);
   fetchRooms();
@@ -511,14 +559,21 @@ function initializeHeaderDependentElements() {
 
     const searchBox = document.querySelector('.search-box');
     if (searchBox) {
-        searchBox.addEventListener('input', function (e) {
-            const keyword = e.target.value.toLowerCase();
+        const runSearch = () => {
+            const keyword = searchBox.value.trim().toLowerCase();
             const filtered = getFilteredRooms().filter(room =>
                 room.title.toLowerCase().includes(keyword) ||
                 room.address.toLowerCase().includes(keyword)
             );
             renderRooms(filtered);
-        });
+        };
+
+        searchBox.addEventListener('input', runSearch);
+
+        const searchAction = document.querySelector('.search-action');
+        if (searchAction) {
+            searchAction.addEventListener('click', runSearch);
+        }
     }
 }
 

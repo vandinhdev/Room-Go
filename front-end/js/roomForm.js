@@ -1,5 +1,6 @@
 // roomForm.js
 import { API_BASE_URL } from './config.js';
+import { authManager } from './auth.js';
 
 // Initialize the uploaded images array
 window.uploadedImages = [];
@@ -481,13 +482,9 @@ async function loadRoomData(roomId) {
             return;
         }
 
-        // Fetch room data from API
-        const response = await fetch(`${API_BASE_URL}/room/${roomId}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${userInfo.token}`
-            }
+        // Fetch room data from API with auto-refresh token
+        const response = await authManager.makeAuthenticatedRequest(`/room/${roomId}`, {
+            method: 'GET'
         });
 
         if (!response.ok) {

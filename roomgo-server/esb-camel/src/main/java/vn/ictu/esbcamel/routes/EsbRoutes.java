@@ -72,6 +72,7 @@ public class EsbRoutes extends RouteBuilder {
                 .get("/profile").to("direct:getUserProfile")
                 .put("/update-status/{id}").to("direct:updateUserStatus")
                 .put("/update-profile").to("direct:updateUserProfile")
+                .post("/upload-avatar").to("direct:uploadUserAvatar")
                 .delete("/{id}").to("direct:deleteUser")
                 .patch("/change-password").to("direct:changePassword")
                 .post("/forgot-password").to("direct:forgotPassword")
@@ -129,6 +130,18 @@ public class EsbRoutes extends RouteBuilder {
                 .marshal().json(JsonLibrary.Jackson)
                 .to("http://user-management-service:8080/api/user/update-profile?bridgeEndpoint=true&httpMethod=PUT")
                 .unmarshal().json(JsonLibrary.Jackson);
+        from("direct:uploadUserAvatar")
+                .routeId("upload-user-avatar-route")
+                .log("👉 [ESB] Forwarding upload user avatar request")
+                .process(jwtProcessor)
+                // ❌ KHÔNG xóa header Content-Type (vì chứa boundary)
+                // ❌ KHÔNG tự set Content-Type bằng tay
+                .setHeader(Exchange.HTTP_METHOD, constant("POST"))
+                .removeHeader("CamelHttpUri")             // optional - tránh conflict khi forward
+                .removeHeader("CamelHttpPath")            // optional
+                .to("http://user-management-service:8080/api/user/upload-avatar?bridgeEndpoint=true&throwExceptionOnFailure=false")
+                .log("✅ [ESB] Upload avatar forwarded successfully");
+
 
         from("direct:deleteUser")
                 .routeId("delete-user-route")
@@ -144,7 +157,7 @@ public class EsbRoutes extends RouteBuilder {
                 .process(jwtProcessor)
                 .setHeader(Exchange.CONTENT_TYPE, constant("application/json"))
                 .marshal().json(JsonLibrary.Jackson)
-                .to("http://user-management-service:8080/api/user/change-password?bridgeEndpoint=true&httpMethod=PATCH")
+                .to("http://user-management-service:8080/api/user/password/change-password?bridgeEndpoint=true&httpMethod=PATCH")
                 .unmarshal().json(JsonLibrary.Jackson);
 
         from("direct:forgotPassword")

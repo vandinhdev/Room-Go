@@ -1,4 +1,40 @@
 import { API_BASE_URL } from './config.js';
+import { authManager } from './auth.js';
+
+const DEFAULT_AVATAR_URL = 'https://cdn-icons-png.freepik.com/128/3135/3135715.png';
+
+function buildAvatarMarkup(avatarUrl, displayName = 'User avatar') {
+    if (avatarUrl) {
+        return `<img src="${avatarUrl}" alt="${displayName}" onerror="this.onerror=null;this.src='${DEFAULT_AVATAR_URL}';">`;
+    }
+
+    if (displayName && displayName.trim()) {
+        return displayName.trim().charAt(0).toUpperCase();
+    }
+
+    return `<img src="${DEFAULT_AVATAR_URL}" alt="${displayName}">`;
+}
+
+// Utility function to ensure Utils is ready
+function waitForUtils(timeout = 5000) {
+    return new Promise((resolve, reject) => {
+        const startTime = Date.now();
+        
+        function check() {
+            if (window.Utils && typeof Utils.makeAuthenticatedRequest === 'function') {
+                console.log('✅ Utils is ready');
+                resolve();
+            } else if (Date.now() - startTime > timeout) {
+                console.warn('⚠️ Utils timeout, using fallback');
+                resolve(); // Still resolve to allow fallback
+            } else {
+                setTimeout(check, 50);
+            }
+        }
+        
+        check();
+    });
+}
 
 // Quản lý tin đã lưu
 function getFavouriteRooms() {
@@ -24,15 +60,28 @@ function removeRoom(id) {
 // Fetch room detail from API
 async function fetchRoomDetail(roomId) {
     try {
-        const token = await Utils.getAuthToken();
+        let response;
         
-        const response = await fetch(`${API_BASE_URL}/room/${roomId}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
-        });
+        // Kiểm tra xem Utils.makeAuthenticatedRequest có sẵn không
+        if (window.Utils && typeof Utils.makeAuthenticatedRequest === 'function') {
+            console.log('🔑 Using Utils.makeAuthenticatedRequest');
+            response = await Utils.makeAuthenticatedRequest(`/room/${roomId}`, {
+                method: 'GET'
+            });
+        } else if (authManagerFallback) {
+            // Sử dụng authManager đã load
+            console.log('🔑 Using authManagerFallback');
+            response = await authManagerFallback.makeAuthenticatedRequest(`/room/${roomId}`, {
+                method: 'GET'
+            });
+        } else {
+            // Fallback method - load authManager dynamically
+            console.log('🔑 Loading authManager dynamically');
+            const { authManager } = await import('./auth.js');
+            response = await authManager.makeAuthenticatedRequest(`/room/${roomId}`, {
+                method: 'GET'
+            });
+        }
 
         if (!response.ok) {
             throw new Error(`Lỗi tải chi tiết phòng (${response.status})`);
@@ -57,13 +106,19 @@ async function fetchRoomDetail(roomId) {
             // Fetch owner information if ownerId exists
             if (room.ownerId) {
                 try {
-                    const ownerResponse = await fetch(`${API_BASE_URL}/user/${room.ownerId}`, {
-                        method: 'GET',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`,
-                        },
-                    });
+                    let ownerResponse;
+                    
+                    if (window.Utils && typeof Utils.makeAuthenticatedRequest === 'function') {
+                        ownerResponse = await Utils.makeAuthenticatedRequest(`/user/${room.ownerId}`, {
+                            method: 'GET'
+                        });
+                    } else {
+                        // Fallback method
+                        const { authManager } = await import('./auth.js');
+                        ownerResponse = await authManager.makeAuthenticatedRequest(`/user/${room.ownerId}`, {
+                            method: 'GET'
+                        });
+                    }
                     
                     if (ownerResponse.ok) {
                         const ownerData = await ownerResponse.json();
@@ -73,7 +128,7 @@ async function fetchRoomDetail(roomId) {
                         room.ownerName = `${owner.firstName || ''} ${owner.lastName || ''}`.trim();
                         room.ownerUserName = owner.userName;
                         room.ownerEmail = owner.email;
-                        room.ownerAvatar = owner.avatar;
+                        room.ownerAvatar = owner.avatarUrl || owner.avatar || null;
                     }
                 } catch (ownerError) {
                     console.warn('Không thể tải thông tin chủ phòng:', ownerError);
@@ -95,15 +150,20 @@ async function fetchRoomDetail(roomId) {
 // Fetch similar rooms from API
 async function fetchSimilarRooms(currentRoom) {
     try {
-        const token = await Utils.getAuthToken();
+        let response;
         
-        const response = await fetch(`${API_BASE_URL}/room/list`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
-        });
+        if (window.Utils && typeof Utils.makeAuthenticatedRequest === 'function') {
+            response = await Utils.makeAuthenticatedRequest('/room/list', {
+                method: 'GET'
+            });
+        } else {
+            // Fallback method
+            console.warn('Utils.makeAuthenticatedRequest không có sẵn, sử dụng fallback');
+            const { authManager } = await import('./auth.js');
+            response = await authManager.makeAuthenticatedRequest('/room/list', {
+                method: 'GET'
+            });
+        }
 
         if (!response.ok) {
             throw new Error(`Lỗi tải danh sách phòng (${response.status})`);
@@ -118,16 +178,24 @@ async function fetchSimilarRooms(currentRoom) {
             // Fetch owner information for all rooms
             const uniqueOwnerIds = [...new Set(rooms.map(r => r.ownerId).filter(Boolean))];
             
-            if (uniqueOwnerIds.length > 0 && token) {
+            if (uniqueOwnerIds.length > 0) {
                 const ownerMap = {};
                 await Promise.all(uniqueOwnerIds.map(async (userId) => {
                     try {
-                        const ownerRes = await fetch(`${API_BASE_URL}/user/${userId}`, {
-                            headers: {
-                                'Authorization': `Bearer ${token}`,
-                                'Content-Type': 'application/json',
-                            },
-                        });
+                        let ownerRes;
+                        
+                        if (window.Utils && typeof Utils.makeAuthenticatedRequest === 'function') {
+                            ownerRes = await Utils.makeAuthenticatedRequest(`/user/${userId}`, {
+                                method: 'GET'
+                            });
+                        } else {
+                            // Fallback method
+                            const { authManager } = await import('./auth.js');
+                            ownerRes = await authManager.makeAuthenticatedRequest(`/user/${userId}`, {
+                                method: 'GET'
+                            });
+                        }
+                        
                         if (ownerRes.ok) {
                             const ownerData = await ownerRes.json();
                             ownerMap[userId] = ownerData.data || ownerData;
@@ -147,7 +215,7 @@ async function fetchSimilarRooms(currentRoom) {
                     return {
                         ...room,
                         ownerName: ownerName,
-                        ownerAvatar: owner?.avatar || null
+                        ownerAvatar: owner?.avatarUrl || owner?.avatar || null
                     };
                 });
             }
@@ -166,6 +234,9 @@ async function fetchSimilarRooms(currentRoom) {
 
 // Load room detail and similar rooms
 window.loadRoomDetail = async function loadRoomDetail(roomId) {
+    // Đợi Utils sẵn sàng
+    await waitForUtils();
+    
     // Sử dụng loading utility với cấu hình cho trang detail
     await loadingWrapper(async () => {
         // Fetch room detail
@@ -552,8 +623,8 @@ function showImage(idx) {
     document.querySelectorAll('.room-thumb').forEach((thumb, i) => {
         thumb.style.border = `2px solid ${i === idx ? '#ff6b35' : '#eee'}`;
     });
-    document.querySelectorAll('.img-dot').forEach((dot, i) => {
-        dot.style.background = i === idx ? '#ff6b35' : '#fff';
+    document.querySelectorAll('.gallery-dot').forEach((dot, i) => {
+        dot.classList.toggle('active', i === idx);
     });
 }
 
@@ -604,7 +675,7 @@ function renderRoomDetail(room) {
     // Handle owner info - use fetched owner data or fallback
     const ownerId = room.ownerId || room.owner_id;
     const ownerName = room.ownerName || `Chủ phòng #${ownerId}`;
-    const ownerAvatar = ownerName.charAt(0).toUpperCase();
+    const ownerAvatarMarkup = buildAvatarMarkup(room.ownerAvatar, ownerName);
 
     container.innerHTML = `
         <div class="room-detail">
@@ -657,7 +728,7 @@ function renderRoomDetail(room) {
                     </div>
                 </div>
                 <div class="user-section">
-                    <div class="user-avatar" style="transition: all 0.3s ease;">${ownerAvatar}</div>
+                    <div class="user-avatar" style="transition: all 0.3s ease;">${ownerAvatarMarkup}</div>
                     <div class="user-info">
                         <div class="user-name" style="transition: all 0.3s ease;">${ownerName}</div>
                         <div class="user-status">Đang hoạt động</div>
@@ -686,7 +757,7 @@ function renderRoomDetail(room) {
             <div id="chatPopup" class="chat-popup">
                 <div class="chat-popup-header">
                     <div class="chat-owner-info">
-                        <div class="chat-owner-avatar">${String(ownerId).slice(-1)}</div>
+                        <div class="chat-owner-avatar">${buildAvatarMarkup(room.ownerAvatar, ownerName)}</div>
                         <div class="chat-owner-details">
                             <h4>${ownerName}</h4>
                             <div class="chat-owner-status">
@@ -742,7 +813,7 @@ function renderRoomDetail(room) {
     setTimeout(()=>{
         let currentIdx = 0;
         const imgs = container.querySelectorAll('.room-img');
-        const dots = container.querySelectorAll('.img-dot');
+            const dots = container.querySelectorAll('.gallery-dot');
         const thumbs = container.querySelectorAll('.room-thumb');
         const prevBtn = container.querySelector('#prevImg');
         const nextBtn = container.querySelector('#nextImg');
@@ -751,7 +822,7 @@ function renderRoomDetail(room) {
                 img.style.display = i===idx?'block':'none';
             });
             dots.forEach((dot,i)=>{
-                dot.style.background = i===idx?'#ff6b35':'#fff';
+                dot.classList.toggle('active', i===idx);
             });
             thumbs.forEach((thumb,i)=>{
                 thumb.style.borderColor = i===idx?'#ff6b35':'#eee';
@@ -834,7 +905,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const roomDetailContainer = document.getElementById('roomDetail');
         if (roomDetailContainer) {
             roomDetailContainer.addEventListener('click', function(e) {
-                if (e.target.matches('.room-thumb') || e.target.matches('.img-dot')) {
+                if (e.target.matches('.room-thumb') || e.target.matches('.gallery-dot')) {
                     const idx = parseInt(e.target.dataset.idx);
                     showImage(idx);
                 } else if (e.target.id === 'prevImg') {
@@ -915,9 +986,9 @@ function renderSimilarRoom(rooms) {
                          (room.images?.[0]?.url) || 
                          'https://via.placeholder.com/240x180?text=No+Image';
 
-        const ownerId = room.ownerId || room.owner_id;
-        const ownerName = room.ownerName || `Chủ phòng #${ownerId}`;
-        const ownerAvatar = ownerName.charAt(0).toUpperCase();
+    const ownerId = room.ownerId || room.owner_id;
+    const ownerName = room.ownerName || `Chủ phòng #${ownerId}`;
+    const ownerAvatarMarkup = buildAvatarMarkup(room.ownerAvatar, ownerName);
 
         const card = document.createElement('div');
         card.className = 'similar-card';
@@ -940,7 +1011,7 @@ function renderSimilarRoom(rooms) {
                 </div>
                 <div class="similar-footer">
                     <div class="user-info">
-                        <div class="user-avatar">${ownerAvatar}</div>
+                        <div class="user-avatar">${ownerAvatarMarkup}</div>
                         <span>${ownerName}</span>
                     </div>
                 </div>

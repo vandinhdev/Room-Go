@@ -151,57 +151,31 @@ window.Utils = {
 
     // Get authentication token (user token or guest token)
     async getAuthToken() {
-        // Ưu tiên token của user đã đăng nhập
-        const userToken = JSON.parse(localStorage.getItem('userInfo'))?.token;
-        if (userToken) {
-            console.log('Sử dụng user token');
-            return userToken;
-        }
-
-        // Nếu không có user token, sử dụng guest token
         try {
-            const guestToken = await this.getGuestToken();
-            console.log('Sử dụng guest token');
-            return guestToken;
+            const { authManager } = await import('./auth.js');
+            return await authManager.getValidToken();
         } catch (error) {
             console.error('Không thể lấy token:', error);
             throw new Error('Không thể kết nối tới server. Vui lòng thử lại sau.');
         }
     },
 
-    // Get guest token from API
+    // Make API request with automatic token refresh
+    async makeAuthenticatedRequest(url, options = {}) {
+        try {
+            const { authManager } = await import('./auth.js');
+            return await authManager.makeAuthenticatedRequest(url, options);
+        } catch (error) {
+            console.error('Lỗi authenticated request:', error);
+            throw error;
+        }
+    },
+
+    // Get guest token from API (deprecated - use authManager.getGuestToken)
     async getGuestToken() {
         try {
-            const { API_BASE_URL } = await import('./config.js');
-            
-            const response = await fetch(`${API_BASE_URL}/auth/guest-token`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            if (!response.ok) {
-                throw new Error(`Lỗi lấy guest token (${response.status})`);
-            }
-
-            const data = await response.json();
-            console.log('Guest token response:', data);
-            
-            // Handle different response formats
-            if (data && data.accessToken) {
-                console.log('✅ Lấy guest token thành công từ data.accessToken');
-                return data.accessToken;
-            } else if (data && data.status === 200 && data.data && data.data.token) {
-                console.log('✅ Lấy guest token thành công từ data.data.token');
-                return data.data.token;
-            } else if (data && data.status === 200 && data.data && data.data.accessToken) {
-                console.log('✅ Lấy guest token thành công từ data.data.accessToken');
-                return data.data.accessToken;
-            }
-            
-            console.error('❌ Không tìm thấy token trong response:', data);
-            throw new Error('Invalid guest token response');
+            const { authManager } = await import('./auth.js');
+            return await authManager.getGuestToken();
         } catch (error) {
             console.error('Lỗi lấy guest token:', error);
             throw error;
@@ -210,6 +184,8 @@ window.Utils = {
 };
 
 // Make Utils available globally
+window.Utils = Utils;
+
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = Utils;
 }

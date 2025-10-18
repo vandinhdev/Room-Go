@@ -22,6 +22,15 @@ spring:
     hibernate:
       ddl-auto: none
 
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+      max-request-size: 10MB
+    compression:
+      enabled: true
+      mime-types: application/json,application/xml,text/html,text/xml,text/plain,multipart/form-data
+
 services:
   email:
     base-url: http:/esb-camel:8080/api/esb/comm
@@ -44,3 +53,8 @@ jwt:
   expiryDay: ${JWT_EXPIRY_DAY:14}
   accessKey: ${JWT_ACCESS_KEY:IIwLeRIVsznVTPFEYmA6HiVVBrlKkKqC36OpWzqw8mk=}
   refreshKey: ${JWT_REFRESH_KEY:tvszknimPZQEdy3c9TCERBLAkOyoCc2ZvOmGcHsRJgg=}
+
+cloudinary:
+  cloud-name:
+  api-key:
+  api-secret:

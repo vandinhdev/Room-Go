@@ -7,14 +7,20 @@ import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import vn.ictu.usermanagementservice.common.response.ApiResponse;
+import vn.ictu.usermanagementservice.dto.request.UpdateInfoRequest;
 import vn.ictu.usermanagementservice.dto.request.UpdateProfileRequest;
 import vn.ictu.usermanagementservice.dto.request.UserPasswordRequest;
 import vn.ictu.usermanagementservice.service.UserService;
+
+import java.io.IOException;
+import java.util.Map;
 
 @RestController
 @RequestMapping("api/user")
@@ -79,6 +85,24 @@ public class UserController {
                 .build();
     }
 
+
+
+
+
+    @PostMapping("/upload-avatar")
+    public ApiResponse uploadAvatar(
+            @RequestPart("avatar") MultipartFile avatar,
+            @RequestParam("email") String email) throws IOException {
+
+        userService.uploadAvatar(avatar, email);
+        return ApiResponse.builder()
+                .status(HttpStatus.OK.value())
+                .message("Avatar uploaded successfully")
+                .data(Map.of("avatarUrl", userService.getUserByEmail(email).getAvatarUrl()))
+                .build();
+    }
+
+
     @Operation(summary = "Update User Status", description = "API update user status to database")
     @PatchMapping("/update-status/{id}")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')" )
@@ -108,6 +132,22 @@ public class UserController {
                 .data("")
                 .build();
     }
+
+    @PutMapping("/update-info")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')" )
+    public ApiResponse updateInfo(@RequestBody @Valid UpdateInfoRequest request, Authentication authentication) {
+        String email = authentication.getName();
+        log.info("Update user info: {}", email);
+        userService.updateInfo(request, email);
+
+        return ApiResponse.builder()
+                .status(HttpStatus.ACCEPTED.value())
+                .message("User updated successfully")
+                .data("")
+                .build();
+    }
+
+
 
     @Operation(summary = "Delete User", description = "API delete user from database")
     @DeleteMapping("/delete/{userId}")

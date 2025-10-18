@@ -68,16 +68,9 @@ document.getElementById('loginForm').addEventListener('submit', async function (
             })
         });
 
-        // ✅ Đọc body response 1 lần
         const data = await response.json();
-
-        console.log('🔹 Response status:', response.status);
-        console.log('🔹 Response body:', data);
-
-        // Handle API response structure - check both data property and direct response
         const loginData = data.data || data;
         
-        // ✅ Nếu HTTP code 401 hoặc không có token → lỗi đăng nhập
         if (!response.ok || !loginData.accessToken) {
             const msg =
                 data.message ||
@@ -89,7 +82,6 @@ document.getElementById('loginForm').addEventListener('submit', async function (
             return;
         }
 
-        // ✅ Nếu có token → lưu user info
         let userInfo = null;
         try {
             const profileRes = await fetch(`${API_BASE_URL}/user/profile`, {
@@ -106,37 +98,41 @@ document.getElementById('loginForm').addEventListener('submit', async function (
                 const response = await profileRes.json();
                 console.log('🔹 Profile fetch body:', response);
                 
-                // Handle API response structure with data property
                 const userData = response.data || response;
-                const fullName = userData.firstName + ' ' + userData.lastName;
+                const fullName = `${userData.lastName || ''} ${userData.firstName || ''}`.trim();
+                const avatarUrl = userData.avatarUrl || userData.avatar || null;
                 userInfo = {
                     id: userData.id,
                     token: loginData.accessToken,
                     refreshToken: loginData.refreshToken,
+                    avatar: avatarUrl,
+                    avatarUrl: avatarUrl,
                     fullName: fullName || 'Người dùng',
                     userName: userData.userName,
                     email: userData.email,
                     role: userData.role || 'user',
-                    avatar: userData.avatar || null
+                    createdAt: userData.createdAt || null
                 };
             } else {
-                // Nếu API /user/me lỗi, fallback dữ liệu cơ bản
                 userInfo = {
                     token: loginData.accessToken,
                     refreshToken: loginData.refreshToken,
                     fullName: 'Người dùng',
                     email,
-                    role: 'user'
+                    role: 'user',
+                    avatar: null,
+                    avatarUrl: null
                 };
             }
         } catch (e) {
-            console.warn('⚠️ Không lấy được thông tin người dùng:', e);
             userInfo = {
                 token: loginData.accessToken,
                 refreshToken: loginData.refreshToken,
                 fullName: 'Người dùng',
                 email,
-                role: 'user'
+                role: 'user',
+                avatar: null,
+                avatarUrl: null
             };
         }
 

@@ -217,8 +217,8 @@ class StatisticsManager {
 
     loadDetailStats() {
         // User details
-        const adminCount = this.users.filter(user => user.role === 'admin').length;
-        const regularUserCount = this.users.filter(user => user.role === 'user').length;
+        const adminCount = this.users.filter(user => user.role === 'ADMIN').length;
+        const regularUserCount = this.users.filter(user => user.role === 'USER').length;
         const todayUsers = this.getUsersRegisteredToday();
         const weekUsers = this.getUsersRegisteredThisWeek();
         const activeUsers = this.users.filter(user => user.isActive).length;
