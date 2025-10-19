@@ -2,11 +2,6 @@ function getFavouriteRooms() {
     return JSON.parse(localStorage.getItem("favouriteRooms")) || [];
 }
 
-function removeRoom(id) {
-    let favourite = getFavouriteRooms().filter(p => p.id !== id);
-    localStorage.setItem("favouriteRooms", JSON.stringify(favourite));
-}
-
 function formatPrice(price) {
     if (!price) return '';
     if (price >= 1000000) {
@@ -52,8 +47,8 @@ document.addEventListener("DOMContentLoaded", () => {
                         <i class="fa-solid fa-heart heart-filled"></i>
                 </div>
             </div>
-        `}).join('')}
-            `;
+            `}).join('')}
+        `;
     }
 });
 
