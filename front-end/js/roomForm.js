@@ -1,34 +1,34 @@
 // roomForm.js
 import { rooms } from './mockRooms.js';
 
-// Initialize the uploaded images array
+// Khởi tạo mảng chứa các ảnh đã tải lên
 window.uploadedImages = [];
 
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('roomForm');
     const imageContainer = document.getElementById('imageContainer');
     
-    // Load provinces data
+    // Tải danh sách các tỉnh
     loadProvinces();
     
-    // Set up province/district/ward cascading selects
+    // Thiết lập các select tỉnh / quận / phường liên kết nhau
     document.getElementById('province').addEventListener('change', loadDistricts);
     document.getElementById('district').addEventListener('change', loadWards);
     document.getElementById('ward').addEventListener('change', updateAddressSuggestion);
     
-    // Set up address search with Vietmap
+    // Thiết lập chức năng tìm kiếm địa chỉ với Vietmap
     setupAddressSearch();
     
-    // Set up map functionality
+    // Thiết lập bản đồ
     setupMapFunctionality();
     
-    // Handle form submission
+    // Xử lý khi gửi form
     form.addEventListener('submit', handleSubmit);
     
-    // Setup image upload zone
+    // Thiết lập khu vực tải ảnh
     setupImageUpload();
     
-    // Check if editing existing room
+    // Kiểm tra nếu đang chỉnh sửa phòng đã có
     const urlParams = new URLSearchParams(window.location.search);
     const roomId = urlParams.get('id');
     if (roomId) {
@@ -141,7 +141,7 @@ async function fetchAddressFromCoordinates(latitude, longitude) {
     }
 }
 
-// Setup image upload functionality
+// Thiết lập chức năng tải ảnh lên
 function setupImageUpload() {
     const uploadZone = document.getElementById('uploadZone');
     const smallUploadZone = document.getElementById('smallUploadZone');
@@ -150,10 +150,10 @@ function setupImageUpload() {
     
     if (!uploadZone || !fileInput) return;
     
-    // Check initial state
+    // Kiểm tra trạng thái ban đầu (ẩn/hiện khu vực tải ảnh)
     toggleUploadZoneDisplay();
     
-    // Click on the upload zone to trigger file input
+    // Khi click vào vùng tải ảnh lớn thì mở hộp chọn file
     uploadZone.addEventListener('click', function(e) {
         // Ngăn chặn việc click vào input sẽ gọi lại sự kiện click
         if (e.target !== fileInput) {
@@ -161,7 +161,7 @@ function setupImageUpload() {
         }
     });
     
-    // Click on small upload zone
+    // Khi click vào vùng tải ảnh nhỏ thì mở hộp chọn file
     if (smallUploadZone) {
         smallUploadZone.addEventListener('click', function(e) {
             if (e.target !== smallFileInput) {
@@ -169,7 +169,7 @@ function setupImageUpload() {
             }
         });
         
-        // Handle file selection for small upload
+        // Xử lý khi người dùng chọn ảnh trong vùng tải nhỏ
         smallFileInput.addEventListener('change', function(e) {
             if (e.target.files.length > 0) {
                 handleFiles(e.target.files);
@@ -177,14 +177,14 @@ function setupImageUpload() {
         });
     }
     
-    // Handle file selection for main upload
+    // Xử lý khi người dùng chọn ảnh trong vùng tải lớn
     fileInput.addEventListener('change', function(e) {
         if (e.target.files.length > 0) {
             handleFiles(e.target.files);
         }
     });
     
-    // Handle drag and drop for main upload zone
+    // Xử lý kéo/thả file vào vùng tải ảnh lớn
     uploadZone.addEventListener('dragover', function(e) {
         e.preventDefault();
         uploadZone.classList.add('dragover');
@@ -203,7 +203,7 @@ function setupImageUpload() {
         }
     });
     
-    // Handle drag and drop for small upload zone
+    // Xử lý kéo/thả file vào vùng tải ảnh nhỏ
     if (smallUploadZone) {
         smallUploadZone.addEventListener('dragover', function(e) {
             e.preventDefault();
@@ -225,7 +225,7 @@ function setupImageUpload() {
     }
 }
 
-// Function to toggle between large and small upload zones
+// Hàm ẩn/hiện vùng tải ảnh lớn và nhỏ
 function toggleUploadZoneDisplay() {
     const uploadZone = document.getElementById('uploadZone');
     const smallUploadZone = document.getElementById('smallUploadZone');
@@ -234,19 +234,19 @@ function toggleUploadZoneDisplay() {
     if (!uploadZone || !smallUploadZone) return;
     
     if (imageCount > 0) {
-        // Hide large upload zone, show small one
+        // Ẩn vùng tải lớn, hiện vùng tải nhỏ
         uploadZone.style.display = 'none';
         smallUploadZone.style.display = 'flex';
     } else {
-        // Show large upload zone, hide small one
+        // Hiện vùng tải lớn, ẩn vùng tải nhỏ
         uploadZone.style.display = 'flex';
         smallUploadZone.style.display = 'none';
     }
 }
 
-// Handle the selected files
+// Xử lý danh sách ảnh được chọn
 function handleFiles(files) {
-    const MAX_IMAGES = 12;
+    const MAX_IMAGES = 12; // Giới hạn ảnh tối đa
     const currentCount = document.querySelectorAll('.image-upload').length;
     const remainingSlots = MAX_IMAGES - currentCount;
     
@@ -260,6 +260,7 @@ function handleFiles(files) {
     const fileInput = document.getElementById('fileUpload');
     
     for (let i = 0; i < filesToProcess; i++) {
+        // Bỏ qua nếu không phải file ảnh
         if (!files[i].type.match('image.*')) {
             continue;
         }
@@ -268,11 +269,11 @@ function handleFiles(files) {
         
         reader.onload = (function(file) {
             return function(e) {
-                // Create image preview element
+                // Tạo phần tử xem trước ảnh
                 const imgDiv = document.createElement('div');
                 imgDiv.className = 'image-upload';
                 
-                // Generate a unique ID for this image
+                // Tạo ID duy nhất cho ảnh này
                 const imgId = 'img_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
                 
                 imgDiv.innerHTML = `
@@ -285,21 +286,21 @@ function handleFiles(files) {
                     </div>
                 `;
                 
-                // Add the new image element to container
+                // Thêm ảnh mới vào container
                 imageContainer.appendChild(imgDiv);
                 
-                // Store image data
+                // Lưu dữ liệu ảnh vào mảng toàn cục
                 window.uploadedImages.push({
                     id: imgId,
                     file: file,
                     dataUrl: e.target.result
                 });
                 
-                // Add event listener for delete button
+                // Xử lý khi người dùng xóa ảnh
                 imgDiv.querySelector('.delete-image').addEventListener('click', function() {
                     const imageId = this.getAttribute('data-id');
                     
-                    // Check minimum number of images (3) - only prevent deletion if we would go below 3
+                    // Kiểm tra số lượng ảnh tối thiểu (3 ảnh)
                     const currentImageCount = document.querySelectorAll('.image-upload').length;
                     if (currentImageCount <= 3) {
                         alert('Phải có ít nhất 3 hình ảnh cho phòng trọ!');
@@ -309,7 +310,7 @@ function handleFiles(files) {
                     removeImage(imageId, imgDiv);
                 });
                 
-                // Toggle upload zone display after adding image
+                // Cập nhật trạng thái vùng tải ảnh
                 toggleUploadZoneDisplay();
             };
         })(files[i]);
@@ -317,71 +318,65 @@ function handleFiles(files) {
         reader.readAsDataURL(files[i]);
     }
     
-    // Reset file input to allow selecting the same file again
+    // Reset input để có thể chọn lại cùng 1 ảnh nếu muốn
     fileInput.value = '';
 }
 
+// Xóa ảnh khỏi giao diện và mảng dữ liệu
 function removeImage(imageId, element) {
-    // Remove element from DOM
     element.remove();
-    
-    // Remove from our array
     const index = window.uploadedImages.findIndex(img => img.id === imageId);
     if (index !== -1) {
         window.uploadedImages.splice(index, 1);
     }
-    
-    // Update numbering
     updateImageCaptions();
-    
-    // Toggle upload zone display after removing image
     toggleUploadZoneDisplay();
 }
 
+// Cập nhật số thứ tự hiển thị trên ảnh
 function updateImageCaptions() {
     document.querySelectorAll('.image-upload').forEach((div, index) => {
         div.querySelector('.image-caption').textContent = `Ảnh ${index + 1}`;
     });
 }
 
+// Tải danh sách tỉnh/thành phố
 async function loadProvinces() {
     try {
         const response = await fetch('https://provinces.open-api.vn/api/p/');
         const provinces = await response.json();
         const select = document.getElementById('province');
         
-        // Clear existing options except the first placeholder
+        // Xóa tất cả option cũ ngoại trừ option mặc định
         select.innerHTML = '<option value="">Chọn tỉnh/thành phố</option>';
         
         provinces.forEach(province => {
             const option = document.createElement('option');
             option.value = province.name;
             option.textContent = province.name;
-            option.dataset.code = province.code; // Store the code as a data attribute
+            option.dataset.code = province.code; // Lưu mã tỉnh vào data attribute
             select.appendChild(option);
         });
     } catch (error) {
-        console.error('Error loading provinces:', error);
+        console.error('Lỗi khi tải danh sách tỉnh:', error);
     }
 }
 
+// Tải danh sách quận/huyện theo tỉnh
 async function loadDistricts() {
     const provinceSelect = document.getElementById('province');
     const districtSelect = document.getElementById('district');
     const wardSelect = document.getElementById('ward');
     
-    // Clear existing options
     districtSelect.innerHTML = '<option value="">Chọn quận/huyện</option>';
     wardSelect.innerHTML = '<option value="">Chọn phường/xã</option>';
     
     if (!provinceSelect.value) return;
     
     try {
-        // Use the more reliable direct API for all provinces
         const allProvincesResponse = await fetch('https://provinces.open-api.vn/api/p/');
         const allProvinces = await allProvincesResponse.json();
         
-        // Find the selected province by name
         const selectedProvince = allProvinces.find(p => p.name === provinceSelect.value);
         
         if (selectedProvince) {
@@ -394,36 +389,33 @@ async function loadDistricts() {
                     const option = document.createElement('option');
                     option.value = district.name;
                     option.textContent = district.name;
-                    option.dataset.code = district.code; // Store the code as a data attribute
+                    option.dataset.code = district.code;
                     districtSelect.appendChild(option);
                 });
             } else {
-                console.error('No districts found for province:', provinceSelect.value);
+                console.error('Không tìm thấy quận/huyện cho tỉnh:', provinceSelect.value);
             }
         } else {
-            console.error('Province not found:', provinceSelect.value);
+            console.error('Không tìm thấy tỉnh:', provinceSelect.value);
         }
     } catch (error) {
-        console.error('Error loading districts:', error);
+        console.error('Lỗi khi tải quận/huyện:', error);
     }
 }
 
+// Tải danh sách phường/xã theo quận/huyện
 async function loadWards() {
-    const provinceSelect = document.getElementById('province');
     const districtSelect = document.getElementById('district');
     const wardSelect = document.getElementById('ward');
     
-    // Clear existing options
     wardSelect.innerHTML = '<option value="">Chọn phường/xã</option>';
     
     if (!districtSelect.value) return;
     
     try {
-        // Get the district code from the selected option's data attribute
         const selectedOption = districtSelect.options[districtSelect.selectedIndex];
         const districtCode = selectedOption.dataset.code;
         
-        // If we have the code from the data attribute, use it directly
         if (districtCode) {
             const wardsResponse = await fetch(`https://provinces.open-api.vn/api/d/${districtCode}?depth=2`);
             const districtData = await wardsResponse.json();
@@ -436,10 +428,10 @@ async function loadWards() {
                     wardSelect.appendChild(option);
                 });
             } else {
-                console.error('No wards found for district:', districtSelect.value);
+                console.error('Không tìm thấy phường/xã cho quận/huyện:', districtSelect.value);
             }
         } else {
-            // Fallback to search API if code is not available
+            // Trường hợp dự phòng nếu không có mã quận/huyện
             const response = await fetch('https://provinces.open-api.vn/api/d/search/?q=' + encodeURIComponent(districtSelect.value));
             const districts = await response.json();
             
@@ -457,19 +449,20 @@ async function loadWards() {
                     });
                 }
             } else {
-                console.error('District not found:', districtSelect.value);
+                console.error('Không tìm thấy quận/huyện:', districtSelect.value);
             }
         }
     } catch (error) {
-        console.error('Error loading wards:', error);
+        console.error('Lỗi khi tải phường/xã:', error);
     }
 }
 
-// This function is deprecated with the new UI but kept for compatibility
+// Hàm cũ (không còn dùng) nhưng giữ lại để tương thích
 function addImageField() {
-    // Use the new upload flow instead
+    // Sử dụng luồng tải ảnh mới
     document.getElementById('fileUpload').click();
 }
+
 
 function loadRoomData(roomId) {
     const room = rooms.find(r => r.id === roomId);
@@ -482,17 +475,16 @@ function loadRoomData(roomId) {
     document.getElementById('area').value = room.area;
     document.getElementById('address').value = room.address;
     
-    
     // Lưu tọa độ nếu có
     if (room.latitude) document.getElementById('latitude').value = room.latitude;
     if (room.longitude) document.getElementById('longitude').value = room.longitude;
     
-    // Load location data
+    // Tải dữ liệu vị trí (tỉnh/thành phố)
     document.getElementById('province').value = room.province;
     
-    // Wait for districts to load before setting district value
+    // Đợi danh sách quận/huyện tải xong rồi mới chọn giá trị
     loadDistricts().then(async () => {
-        // Find and select the correct district option
+        // Tìm và chọn đúng quận/huyện
         const districtSelect = document.getElementById('district');
         for (let i = 0; i < districtSelect.options.length; i++) {
             if (districtSelect.options[i].value === room.district) {
@@ -501,10 +493,10 @@ function loadRoomData(roomId) {
             }
         }
         
-        // Wait for wards to load before setting ward value
+        // Đợi danh sách phường/xã tải xong rồi mới chọn giá trị
         await loadWards();
         
-        // Find and select the correct ward option
+        // Tìm và chọn đúng phường/xã
         const wardSelect = document.getElementById('ward');
         for (let i = 0; i < wardSelect.options.length; i++) {
             if (wardSelect.options[i].value === room.ward) {
@@ -514,22 +506,22 @@ function loadRoomData(roomId) {
         }
     });
     
-    // Initialize the uploadedImages array if it doesn't exist
+    // Khởi tạo mảng uploadedImages nếu chưa tồn tại
     if (typeof uploadedImages === 'undefined') {
         window.uploadedImages = [];
     } else {
-        // Clear existing uploadedImages
+        // Nếu có rồi thì xóa dữ liệu cũ
         uploadedImages.length = 0;
     }
     
-    // Load images
+    // Tải ảnh đã có nếu có dữ liệu
     if (room.images && room.images.length > 0) {
-        imageContainer.innerHTML = ''; // Clear default image field
+        imageContainer.innerHTML = ''; // Xóa vùng chứa ảnh mặc định
         
         room.images.forEach((image, index) => {
             const imgId = 'img_' + Date.now() + '_' + Math.floor(Math.random() * 1000) + '_' + index;
             
-            // Create image preview element
+            // Tạo phần tử xem trước ảnh
             const imgDiv = document.createElement('div');
             imgDiv.className = 'image-upload';
             
@@ -543,21 +535,21 @@ function loadRoomData(roomId) {
                 </div>
             `;
             
-            // Add the image element to container
+            // Thêm phần tử ảnh vào vùng hiển thị
             imageContainer.appendChild(imgDiv);
             
-            // Store image data in uploadedImages array
+            // Lưu thông tin ảnh vào mảng uploadedImages
             uploadedImages.push({
                 id: imgId,
                 dataUrl: image.url,
                 description: image.description || ''
             });
             
-            // Add event listener for delete button
+            // Thêm sự kiện xóa ảnh khi nhấn nút “x”
             imgDiv.querySelector('.delete-image').addEventListener('click', function() {
                 const imageId = this.getAttribute('data-id');
                 
-                // Only allow deletion if there will be at least 3 images left
+                // Chỉ cho phép xóa nếu còn lại ít nhất 3 ảnh
                 if (document.querySelectorAll('.image-upload').length <= 3) {
                     alert('Phải có ít nhất 3 hình ảnh cho phòng trọ!');
                     return;
@@ -567,30 +559,31 @@ function loadRoomData(roomId) {
             });
         });
         
-        // Function to remove image (defined here to access variables in this scope)
+        // Hàm xóa ảnh (được định nghĩa bên trong để sử dụng biến trong scope này)
         function removeImage(imageId, element) {
-            // Remove element from DOM
+            // Xóa phần tử ảnh khỏi giao diện
             element.remove();
             
-            // Remove from uploadedImages array
+            // Xóa ảnh khỏi mảng uploadedImages
             const index = uploadedImages.findIndex(img => img.id === imageId);
             if (index !== -1) {
                 uploadedImages.splice(index, 1);
             }
             
-            // Update numbering
+            // Cập nhật lại số thứ tự trên từng ảnh
             document.querySelectorAll('.image-upload').forEach((div, index) => {
                 div.querySelector('.image-caption').textContent = `Ảnh ${index + 1}`;
             });
             
-            // Toggle upload zone display after removing image
+            // Cập nhật hiển thị vùng tải ảnh sau khi xóa
             toggleUploadZoneDisplay();
         }
         
-        // Toggle upload zone display after loading images
+        // Cập nhật trạng thái vùng tải ảnh sau khi tải dữ liệu ảnh xong
         toggleUploadZoneDisplay();
     }
 }
+
 
 // Thiết lập tìm kiếm địa chỉ với Vietmap API
 function setupAddressSearch() {
