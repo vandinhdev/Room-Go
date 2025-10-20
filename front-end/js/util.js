@@ -1,12 +1,12 @@
 const Utils = {
     showNotification(message, type = 'info', duration = 3000) {
-        // Remove existing notifications
+        // Xóa thông báo hiện có (nếu có) trước khi tạo cái mới
         const existing = document.querySelector('.notification');
         if (existing) {
             existing.remove();
         }
 
-        // Create notification element
+        // Tạo phần tử thông báo
         const notification = document.createElement('div');
         notification.className = `notification notification-${type}`;
         notification.innerHTML = `
@@ -16,7 +16,7 @@ const Utils = {
             </div>
         `;
 
-        // Add styles
+        // Thêm CSS cơ bản cho phần tử thông báo
         notification.style.cssText = `
             position: fixed;
             top: 20px;
@@ -29,13 +29,15 @@ const Utils = {
             animation: slideInRight 0.3s ease;
         `;
 
+        // Màu nền theo loại thông báo
         const bgColors = {
-            success: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-            error: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-            warning: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-            info: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'
+            success: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', // Thành công
+            error: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',   // Lỗi
+            warning: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)', // Cảnh báo
+            info: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'     // Thông tin
         };
 
+        // Thêm style cho nội dung thông báo
         notification.querySelector('.notification-content').style.cssText = `
             display: flex;
             align-items: center;
@@ -47,6 +49,7 @@ const Utils = {
             font-weight: 600;
         `;
 
+        // Thêm style cho nút đóng (×)
         notification.querySelector('.notification-close').style.cssText = `
             background: none;
             border: none;
@@ -64,7 +67,7 @@ const Utils = {
             transition: background 0.3s ease;
         `;
 
-        // Add animation styles
+        // Thêm hiệu ứng trượt vào / ra
         const style = document.createElement('style');
         style.textContent = `
             @keyframes slideInRight {
@@ -90,9 +93,10 @@ const Utils = {
         `;
         document.head.appendChild(style);
 
+        // Thêm phần tử thông báo vào trang
         document.body.appendChild(notification);
 
-        // Auto remove after duration
+        // Tự động xóa thông báo sau thời gian đã định
         setTimeout(() => {
             if (notification.parentElement) {
                 notification.style.animation = 'slideOutRight 0.3s ease';
