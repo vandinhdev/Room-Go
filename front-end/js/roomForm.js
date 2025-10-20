@@ -733,27 +733,27 @@ function updateAddressSuggestion() {
 async function handleSubmit(event) {
     event.preventDefault();
     
-    // Show loading state
+    // Hiển thị trạng thái đang tải
     const submitBtn = document.querySelector('button[type="submit"]');
     const originalText = submitBtn.innerHTML;
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Đang lưu...';
     submitBtn.disabled = true;
     
     try {
-        // Basic form validation
+        // Kiểm tra hợp lệ cơ bản của form
         if (!event.target.checkValidity()) {
             event.stopPropagation();
             event.target.classList.add('was-validated');
             throw new Error('Vui lòng điền đầy đủ thông tin bắt buộc');
         }
         
-        // Check if we have enough images
+        // Kiểm tra số lượng ảnh có đủ không
         const imageCount = document.querySelectorAll('.image-upload').length;
         if (imageCount < 3) {
             throw new Error('Vui lòng tải lên ít nhất 3 hình ảnh cho phòng trọ.');
         }
         
-        // Validate required location fields
+        // Kiểm tra các trường địa điểm bắt buộc
         const province = document.getElementById('province').value;
         const district = document.getElementById('district').value;
         const ward = document.getElementById('ward').value;
@@ -763,7 +763,7 @@ async function handleSubmit(event) {
             throw new Error('Vui lòng điền đầy đủ thông tin địa chỉ (tỉnh/thành phố, quận/huyện, phường/xã và địa chỉ cụ thể)');
         }
         
-        // Validate price and area are positive numbers
+        // Kiểm tra price và area là số dương
         const price = parseInt(document.getElementById('price').value);
         const area = parseFloat(document.getElementById('area').value);
         
@@ -777,7 +777,7 @@ async function handleSubmit(event) {
         
         const formData = {
             id: document.getElementById('roomId').value || Date.now(),
-            owner_id: 101, // Hardcoded for now, should come from authenticated user
+            owner_id: 101, // Tạm cứng mã, nên lấy từ người dùng đã xác thực
             title: document.getElementById('title').value,
             description: document.getElementById('description').value,
             price: parseInt(document.getElementById('price').value),
@@ -793,12 +793,12 @@ async function handleSubmit(event) {
             updated_at: new Date().toISOString()
         };
         
-        // Get images
+        // Lấy danh sách ảnh
         const images = [];
         
-        // Get images from uploadedImages array (now global)
+        // Lấy ảnh từ mảng uploadedImages (toàn cục)
         if (window.uploadedImages && window.uploadedImages.length > 0) {
-            // New UI: get images from uploadedImages array
+            // Giao diện mới: lấy ảnh từ uploadedImages
             window.uploadedImages.forEach((img, index) => {
                 images.push({
                     id: Date.now() + index,
@@ -809,7 +809,7 @@ async function handleSubmit(event) {
                 });
             });
         } else {
-            // Fallback: get images from DOM (for backward compatibility)
+            // Dự phòng: lấy ảnh từ DOM (tương thích ngược)
             const imageUploads = document.querySelectorAll('.image-upload');
             
             for (let i = 0; i < imageUploads.length; i++) {
@@ -829,7 +829,7 @@ async function handleSubmit(event) {
         
         formData.images = images;
         
-        // Update or add to rooms array
+        // Cập nhật hoặc thêm vào mảng rooms
         const index = rooms.findIndex(r => r.id === parseInt(formData.id));
         if (index !== -1) {
             rooms[index] = { ...rooms[index], ...formData };
@@ -837,18 +837,19 @@ async function handleSubmit(event) {
             rooms.push(formData);
         }
         
-        // Show success message
+        // Hiển thị thông báo thành công
         alert('Đăng tin thành công! Tin của bạn đã được lưu.');
         
-        // Redirect back to listing page
+        // Chuyển hướng về trang danh sách
         window.location.href = 'index.html';
         
     } catch (error) {
         console.error('Error submitting form:', error);
         alert(error.message || 'Có lỗi xảy ra khi đăng tin. Vui lòng thử lại.');
     } finally {
-        // Restore button state
+        // Khôi phục trạng thái nút
         submitBtn.innerHTML = originalText;
         submitBtn.disabled = false;
     }
 }
+

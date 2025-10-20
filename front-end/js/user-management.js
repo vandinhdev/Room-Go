@@ -198,35 +198,39 @@ function toggleUserStatus(userId) {
     const user = testUsers.find(u => u.id === userId);
     if (!user) return;
     
+    // Đổi trạng thái người dùng giữa "active" và "inactive"
     user.status = user.status === 'active' ? 'inactive' : 'active';
     currentUsers = [...testUsers];
     loadUsers();
     
+    // Hiển thị thông báo khi đổi trạng thái
     const status = user.status === 'active' ? 'kích hoạt' : 'tắt';
     showNotification(`Đã ${status} tài khoản thành công!`, 'success');
 }
 
 function saveUser() {
     console.log('Saving user');
-    // Implementation for save user
+    // Xử lý lưu thông tin người dùng (chưa được triển khai)
     closeUserModal();
 }
 
 function closeUserModal() {
+    // Đóng cửa sổ modal người dùng
     document.getElementById('userModal').style.display = 'none';
     editingUserId = null;
 }
 
 function showNotification(message, type = 'success') {
     console.log('Notification:', message);
-    alert(message); // Simple alert for now
+    // Hiển thị thông báo đơn giản bằng alert (có thể thay bằng UI sau)
+    alert(message);
 }
 
-// Expose functions to global scope for onclick handlers
+// Gắn các hàm vào phạm vi toàn cục để gọi từ HTML (onclick)
 window.openAddUserModal = openAddUserModal;
 window.editUser = editUser;
 window.deleteUser = deleteUser;
 window.toggleUserStatus = toggleUserStatus;
 window.closeUserModal = closeUserModal;
 
-console.log('user-management-simple.js fully loaded');
+console.log('user-management-simple.js đã tải hoàn tất');
