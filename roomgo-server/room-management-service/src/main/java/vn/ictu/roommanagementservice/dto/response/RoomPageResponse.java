@@ -1,9 +1,9 @@
 package vn.ictu.roommanagementservice.dto.response;
 
 
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
-import vn.ictu.roommanagementservice.common.response.PageResponseAbstract;
 
 
 import java.io.Serializable;
@@ -11,7 +11,12 @@ import java.util.List;
 
 @Getter
 @Setter
-public class RoomPageResponse extends PageResponseAbstract implements Serializable {
+@Builder
+public class RoomPageResponse implements Serializable {
+    private int pageNumber;
+    private int pageSize;
+    private long totalPages;
+    private long totalElements;
     private List<RoomResponse> rooms;
 
 }

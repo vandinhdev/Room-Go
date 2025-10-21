@@ -13,6 +13,7 @@ import java.util.Date;
 @NoArgsConstructor
 public class UserResponse implements Serializable {
     private long id;
+    private String avatarUrl;
     private String firstName;
     private String lastName;
     private String userName;
@@ -20,6 +21,9 @@ public class UserResponse implements Serializable {
     private String phone;
     private Gender gender;
     private Date dateOfBirth;
+    private String address;
+    private String bio;
     private String role;
     private String status;
+    private Date createdAt;
 }

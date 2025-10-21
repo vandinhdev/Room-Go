@@ -34,5 +34,6 @@ public class SearchHistory implements Serializable {
 
     private String keyword;
 
+    @Column(name = "search_at")
     private LocalDateTime searchedAt;
 }

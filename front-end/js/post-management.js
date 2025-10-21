@@ -1,125 +1,32 @@
-// Mock data for posts
-const mockPosts = [
-    {
-        id: 1,
-        title: "Phòng trọ cao cấp quận 1",
-        description: "Phòng trọ đầy đủ tiện nghi, gần trung tâm",
-        price: 8000000,
-        location: "Quận 1, TP.HCM",
-        area: 25,
-        images: [
-            { url: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=400" },
-            { url: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=400" }
-        ],
-        userId: 2,
-        userName: "Nguyễn Văn A",
-        userAvatar: "https://i.pravatar.cc/40?img=1",
-        status: "pending",
-        createdAt: new Date("2024-10-01T10:00:00"),
-        updatedAt: new Date("2024-10-01T10:00:00"),
-        views: 45,
-        rejectionReason: null
-    },
-    {
-        id: 2,
-        title: "Căn hộ mini quận 7",
-        description: "Căn hộ mini đẹp, view đẹp, giá tốt",
-        price: 6500000,
-        location: "Quận 7, TP.HCM",
-        area: 20,
-        images: [
-            { url: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400" }
-        ],
-        userId: 3,
-        userName: "Trần Thị B",
-        userAvatar: "https://i.pravatar.cc/40?img=2",
-        status: "approved",
-        createdAt: new Date("2024-09-28T14:30:00"),
-        updatedAt: new Date("2024-09-29T09:15:00"),
-        views: 123,
-        rejectionReason: null
-    },
-    {
-        id: 3,
-        title: "Phòng trọ sinh viên quận Thủ Đức",
-        description: "Phòng trọ dành cho sinh viên, giá rẻ",
-        price: 2500000,
-        location: "Thủ Đức, TP.HCM",
-        area: 15,
-        images: [
-            { url: "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=400" }
-        ],
-        userId: 2,
-        userName: "Nguyễn Văn A",
-        userAvatar: "https://i.pravatar.cc/40?img=1",
-        status: "rejected",
-        createdAt: new Date("2024-09-25T16:45:00"),
-        updatedAt: new Date("2024-09-26T11:20:00"),
-        views: 78,
-        rejectionReason: "Hình ảnh không rõ ràng, thông tin chưa đầy đủ"
-    },
-    {
-        id: 4,
-        title: "Nhà nguyên căn quận 2",
-        description: "Nhà nguyên căn 3 phòng ngủ, có sân vườn",
-        price: 15000000,
-        location: "Quận 2, TP.HCM",
-        area: 80,
-        images: [
-            { url: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400" }
-        ],
-        userId: 4,
-        userName: "Lê Văn C",
-        userAvatar: "https://i.pravatar.cc/40?img=3",
-        status: "pending",
-        createdAt: new Date("2024-10-02T08:20:00"),
-        updatedAt: new Date("2024-10-02T08:20:00"),
-        views: 12,
-        rejectionReason: null
-    },
-    {
-        id: 5,
-        title: "Phòng trọ quận Bình Thạnh",
-        description: "Phòng trọ sạch sẽ, an ninh tốt",
-        price: 4500000,
-        location: "Bình Thạnh, TP.HCM",
-        area: 18,
-        images: [
-            { url: "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=400" }
-        ],
-        userId: 1,
-        userName: "Admin User",
-        userAvatar: "https://i.pravatar.cc/40?img=4",
-        status: "approved",
-        createdAt: new Date("2024-09-30T12:00:00"),
-        updatedAt: new Date("2024-10-01T16:30:00"),
-        views: 89,
-        rejectionReason: null
-    }
-];
+import { API_BASE_URL } from './config.js';
+import { authManager } from './auth.js';
 
 class PostManagement {
+    // Khởi tạo đối tượng quản lý bài đăng
     constructor() {
-        this.posts = [...mockPosts];
-        // Try both currentUser and userInfo from localStorage
-        this.currentUser = JSON.parse(localStorage.getItem('currentUser')) || 
-                          JSON.parse(localStorage.getItem('userInfo')) || null;
-        this.isAdmin = this.currentUser && this.currentUser.role === 'admin';
+        this.allPosts = [];
+        this.myPosts = []; 
+        this.posts = [];
+        this.currentUser = authManager.getCurrentUser() || null;
+        this.isAdmin = this.currentUser && this.currentUser.role === 'ADMIN';
         this.currentTab = 'all';
+        this.usersCache = {}; 
         
         this.init();
     }
 
-    init() {
+    // Khởi tạo trang và tải dữ liệu
+    async init() {
         this.setupEventListeners();
+        this.checkUserPermissions();
+        await this.fetchPosts();
         this.updateStatistics();
         this.loadPosts();
-        this.checkUserPermissions();
     }
 
+    // Kiểm tra quyền truy cập và ẩn/hiện tab
     checkUserPermissions() {
         if (!this.currentUser) {
-            // Show login message instead of redirecting immediately
             const container = document.querySelector('.admin-container');
             if (container) {
                 container.innerHTML = `
@@ -132,32 +39,213 @@ class PostManagement {
             return;
         }
 
-        // Hide admin-only tabs if not admin
         if (!this.isAdmin) {
             const pendingTab = document.querySelector('[data-tab="pending"]');
             const approvedTab = document.querySelector('[data-tab="approved"]');
             const rejectedTab = document.querySelector('[data-tab="rejected"]');
             const allTab = document.querySelector('[data-tab="all"]');
             
-            if (pendingTab) pendingTab.style.display = 'none';
+            if (pendingTab) pendingTab.style.display = 'block';
             if (approvedTab) approvedTab.style.display = 'none';
-            if (rejectedTab) rejectedTab.style.display = 'none';
+            if (rejectedTab) rejectedTab.style.display = 'block';
             if (allTab) allTab.style.display = 'none';
 
-            // Switch to "my-posts" tab for regular users
             this.switchTab('my-posts');
         }
     }
 
+    // Lấy danh sách bài đăng (admin/người dùng)
+    async fetchPosts() {
+        try {
+            if (!this.currentUser || !this.currentUser.token) {
+                this.allPosts = [];
+                this.myPosts = [];
+                this.posts = [];
+                return;
+            }
+
+            this.showLoading();
+
+            if (this.isAdmin) {
+                await this.fetchAllPosts();
+            }
+            
+            await this.fetchMyPosts();
+
+            this.posts = this.isAdmin ? this.allPosts : this.myPosts;
+            this.hideLoading();
+
+        } catch (error) {
+            this.hideLoading();
+            
+            if (window.Utils && typeof Utils.showNotification === 'function') {
+                Utils.showNotification('Không thể tải danh sách bài đăng. Vui lòng thử lại sau.', 'error');
+            }
+            
+            this.allPosts = [];
+            this.myPosts = [];
+            this.posts = [];
+        }
+    }
+
+    // Lấy tất cả bài đăng (Admin)
+    async fetchAllPosts() {
+        try {
+            const response = await authManager.makeAuthenticatedRequest('/room/list', {
+                method: 'GET'
+            });
+
+            if (!response.ok) {
+                throw new Error(`Lỗi tải danh sách tất cả bài đăng (${response.status})`);
+            }
+
+            const data = await response.json();
+
+            let roomsArray = [];
+            if (data && data.status === 200 && data.data && Array.isArray(data.data.rooms)) {
+                roomsArray = data.data.rooms;
+            } else if (data && Array.isArray(data.rooms)) {
+                roomsArray = data.rooms;
+            } else if (data && Array.isArray(data.data)) {
+                roomsArray = data.data;
+            } else if (Array.isArray(data)) {
+                roomsArray = data;
+            }
+
+            this.allPosts = await this.convertRoomsToPostsFormat(roomsArray);
+        } catch (error) {
+            this.allPosts = [];
+        }
+    }
+
+    // Lấy bài đăng của tôi
+    async fetchMyPosts() {
+        try {
+            const response = await authManager.makeAuthenticatedRequest('/room/me', {
+                method: 'GET'
+            });
+
+            if (!response.ok) {
+                throw new Error(`Lỗi tải danh sách bài đăng của tôi (${response.status})`);
+            }
+
+            const data = await response.json();
+
+            let roomsArray = [];
+            if (data && data.status === 200 && data.data && Array.isArray(data.data.rooms)) {
+                roomsArray = data.data.rooms;
+            } else if (data && Array.isArray(data.rooms)) {
+                roomsArray = data.rooms;
+            } else if (data && Array.isArray(data.data)) {
+                roomsArray = data.data;
+            } else if (Array.isArray(data)) {
+                roomsArray = data;
+            }
+
+            this.myPosts = await this.convertRoomsToPostsFormat(roomsArray);
+        } catch (error) {
+            this.myPosts = [];
+        }
+    }
+
+    // Chuyển đổi dữ liệu phòng sang bài đăng
+    async convertRoomsToPostsFormat(roomsArray) {
+        return await Promise.all(roomsArray.map(async room => {
+            const ownerInfo = await this.getUserInfo(room.ownerId);
+            
+            let createdDate = new Date();
+            let updatedDate = new Date();
+            
+            try {
+                if (room.createdAt) {
+                    const tempCreated = new Date(room.createdAt);
+                    if (!isNaN(tempCreated.getTime())) {
+                        createdDate = tempCreated;
+                    }
+                }
+                
+                if (room.updatedAt) {
+                    const tempUpdated = new Date(room.updatedAt);
+                    if (!isNaN(tempUpdated.getTime())) {
+                        updatedDate = tempUpdated;
+                    } else {
+                        updatedDate = createdDate;
+                    }
+                } else {
+                    updatedDate = createdDate;
+                }
+            } catch (error) {
+            }
+            
+            return {
+                id: room.id,
+                title: room.title || 'Không có tiêu đề',
+                description: room.description || '',
+                price: room.price || 0,
+                location: room.address || `${room.ward || ''}, ${room.district || ''}, ${room.province || ''}`.trim() || 'Không rõ',
+                area: room.area || 0,
+                images: room.imageUrls ? room.imageUrls.map(url => ({ url })) : [],
+                userId: room.ownerId,
+                userName: ownerInfo ? `${ownerInfo.lastName || ''} ${ownerInfo.firstName || ''}`.trim() : 'Người dùng',
+                userAvatar: ownerInfo?.avatarUrl || 'https://i.pravatar.cc/40',
+                status: room.status || 'PENDING',
+                createdAt: createdDate,
+                updatedAt: updatedDate,
+                views: room.views || 0,
+                rejectionReason: room.rejectionReason || null
+            };
+        }));
+    }
+
+    // Lấy thông tin người dùng và cache
+    async getUserInfo(userId) {
+        if (this.usersCache[userId]) {
+            return this.usersCache[userId];
+        }
+
+        try {
+            let response;
+            
+            if (window.Utils && typeof Utils.makeAuthenticatedRequest === 'function') {
+                response = await Utils.makeAuthenticatedRequest(`/user/${userId}`, {
+                    method: 'GET'
+                });
+            } else {
+                response = await authManager.makeAuthenticatedRequest(`/user/${userId}`, {
+                    method: 'GET'
+                });
+            }
+
+            if (response.ok) {
+                const data = await response.json();
+                const userInfo = data.data || data;
+                this.usersCache[userId] = userInfo;
+                return userInfo;
+            }
+        } catch (error) {
+        }
+
+        return null;
+    }
+
+    // Hiển thị trạng thái đang tải
+    showLoading() {
+    }
+
+    // Ẩn trạng thái đang tải
+    hideLoading() {
+        document.body.classList.remove('loading');
+        document.body.classList.add('loaded');
+    }
+
+    // Gắn sự kiện cho giao diện
     setupEventListeners() {
-        // Tab switching
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 this.switchTab(e.target.dataset.tab);
             });
         });
 
-        // Search inputs
         document.getElementById('searchAllInput').addEventListener('input', (e) => {
             this.filterPosts('all', e.target.value);
         });
@@ -178,7 +266,6 @@ class PostManagement {
             this.filterPosts('my-posts', e.target.value);
         });
 
-        // Modal close on outside click
         document.getElementById('postDetailModal').addEventListener('click', (e) => {
             if (e.target === document.getElementById('postDetailModal')) {
                 this.closePostDetailModal();
@@ -186,14 +273,13 @@ class PostManagement {
         });
     }
 
+    // Chuyển tab hiển thị
     switchTab(tabName) {
-        // Update active tab button
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.classList.remove('active');
         });
         document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
 
-        // Update active tab content
         document.querySelectorAll('.tab-content').forEach(content => {
             content.classList.remove('active');
         });
@@ -203,12 +289,21 @@ class PostManagement {
         this.loadPosts();
     }
 
+    // Cập nhật số liệu thống kê
     updateStatistics() {
+        const sourceData = this.isAdmin ? this.allPosts : this.myPosts;
+        
         const stats = {
-            pending: this.posts.filter(post => post.status === 'pending').length,
-            approved: this.posts.filter(post => post.status === 'approved').length,
-            rejected: this.posts.filter(post => post.status === 'rejected').length,
-            total: this.posts.length
+            pending: sourceData.filter(post => post.status?.toUpperCase() === 'PENDING').length,
+            approved: sourceData.filter(post => {
+                const upperStatus = post.status?.toUpperCase();
+                return upperStatus === 'APPROVED' || upperStatus === 'AVAILABLE' || upperStatus === 'ACTIVE';
+            }).length,
+            rejected: sourceData.filter(post => {
+                const upperStatus = post.status?.toUpperCase();
+                return upperStatus === 'REJECTED' || upperStatus === 'UNAVAILABLE';
+            }).length,
+            total: sourceData.length
         };
 
         document.getElementById('pendingCount').textContent = stats.pending;
@@ -217,30 +312,41 @@ class PostManagement {
         document.getElementById('totalCount').textContent = stats.total;
     }
 
+    // Tải danh sách theo tab hiện tại
     loadPosts() {
         let filteredPosts = [];
+        
+        let sourceData = this.currentTab === 'my-posts' ? this.myPosts : 
+                        (this.isAdmin ? this.allPosts : this.myPosts);
 
         switch (this.currentTab) {
             case 'all':
-                filteredPosts = this.posts;
+                filteredPosts = sourceData;
                 break;
             case 'pending':
-                filteredPosts = this.posts.filter(post => post.status === 'pending');
+                filteredPosts = sourceData.filter(post => post.status?.toUpperCase() === 'PENDING');
                 break;
             case 'approved':
-                filteredPosts = this.posts.filter(post => post.status === 'approved');
+                filteredPosts = sourceData.filter(post => {
+                    const upperStatus = post.status?.toUpperCase();
+                    return upperStatus === 'APPROVED' || upperStatus === 'AVAILABLE' || upperStatus === 'ACTIVE';
+                });
                 break;
             case 'rejected':
-                filteredPosts = this.posts.filter(post => post.status === 'rejected');
+                filteredPosts = sourceData.filter(post => {
+                    const upperStatus = post.status?.toUpperCase();
+                    return upperStatus === 'REJECTED' || upperStatus === 'UNAVAILABLE';
+                });
                 break;
             case 'my-posts':
-                filteredPosts = this.posts.filter(post => post.userId === this.currentUser.id);
+                filteredPosts = this.myPosts;
                 break;
         }
 
         this.renderPosts(filteredPosts, this.currentTab);
     }
 
+    // Render bảng bài đăng
     renderPosts(posts, tabType) {
         const tableBodyId = `${tabType === 'all' ? 'allPosts' : 
                           tabType === 'pending' ? 'pendingPosts' :
@@ -259,10 +365,12 @@ class PostManagement {
 
         tableBody.innerHTML = posts.map(post => {
             const imageUrl = post.images && post.images.length > 0 ? post.images[0].url : 'https://via.placeholder.com/60x45';
-            const statusClass = `status-${post.status}`;
-            const statusText = post.status === 'pending' ? 'Chờ duyệt' :
-                             post.status === 'approved' ? 'Đã duyệt' :
-                             'Đã từ chối';
+            const upperStatus = post.status?.toUpperCase();
+            const statusClass = `status-${upperStatus?.toLowerCase() || 'pending'}`;
+            const statusText = upperStatus === 'PENDING' ? 'Chờ duyệt' :
+                             (upperStatus === 'APPROVED' || upperStatus === 'AVAILABLE' || upperStatus === 'ACTIVE') ? 'Đã duyệt' :
+                             (upperStatus === 'REJECTED' || upperStatus === 'UNAVAILABLE') ? 'Đã từ chối' :
+                             'Chờ duyệt';
 
             let actionsHtml = '';
 
@@ -434,24 +542,34 @@ class PostManagement {
         }).join('');
     }
 
+    // Lọc bài đăng theo từ khóa
     filterPosts(tabType, searchTerm) {
         let posts = [];
+        
+        let sourceData = tabType === 'my-posts' ? this.myPosts : 
+                        (this.isAdmin ? this.allPosts : this.myPosts);
 
         switch (tabType) {
             case 'all':
-                posts = this.posts;
+                posts = sourceData;
                 break;
             case 'pending':
-                posts = this.posts.filter(post => post.status === 'pending');
+                posts = sourceData.filter(post => post.status?.toUpperCase() === 'PENDING');
                 break;
             case 'approved':
-                posts = this.posts.filter(post => post.status === 'approved');
+                posts = sourceData.filter(post => {
+                    const upperStatus = post.status?.toUpperCase();
+                    return upperStatus === 'APPROVED' || upperStatus === 'AVAILABLE' || upperStatus === 'ACTIVE';
+                });
                 break;
             case 'rejected':
-                posts = this.posts.filter(post => post.status === 'rejected');
+                posts = sourceData.filter(post => {
+                    const upperStatus = post.status?.toUpperCase();
+                    return upperStatus === 'REJECTED' || upperStatus === 'UNAVAILABLE';
+                });
                 break;
             case 'my-posts':
-                posts = this.posts.filter(post => post.userId === this.currentUser.id);
+                posts = this.myPosts;
                 break;
         }
 
@@ -467,15 +585,18 @@ class PostManagement {
         this.renderPosts(posts, tabType);
     }
 
+    // Hiển thị chi tiết bài đăng
     viewPost(postId) {
         const post = this.posts.find(p => p.id === postId);
         if (!post) return;
 
         const imageUrl = post.images && post.images.length > 0 ? post.images[0].url : 'https://via.placeholder.com/400x200';
-        const statusClass = `status-${post.status}`;
-        const statusText = post.status === 'pending' ? 'Chờ duyệt' :
-                         post.status === 'approved' ? 'Đã duyệt' :
-                         'Đã từ chối';
+        const upperStatus = post.status?.toUpperCase();
+        const statusClass = `status-${upperStatus?.toLowerCase() || 'pending'}`;
+        const statusText = upperStatus === 'PENDING' ? 'Chờ duyệt' :
+                         (upperStatus === 'APPROVED' || upperStatus === 'AVAILABLE' || upperStatus === 'ACTIVE') ? 'Đã duyệt' :
+                         (upperStatus === 'REJECTED' || upperStatus === 'UNAVAILABLE') ? 'Đã từ chối' :
+                         'Chờ duyệt';
 
         const modalContent = `
             <img src="${imageUrl}" alt="${post.title}" class="post-detail-image">
@@ -493,7 +614,7 @@ class PostManagement {
                     <span class="info-value">${this.formatPrice(post.price)}</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Vị trí:</span>
+                    <span class="info-label">Địa chỉ:</span>
                     <span class="info-value">${post.location}</span>
                 </div>
                 <div class="info-row">
@@ -502,10 +623,7 @@ class PostManagement {
                 </div>
                 <div class="info-row">
                     <span class="info-label">Người đăng:</span>
-                    <span class="info-value">
-                        <img src="${post.userAvatar}" alt="${post.userName}" style="width: 20px; height: 20px; border-radius: 50%; margin-right: 8px;">
-                        ${post.userName}
-                    </span>
+                    <span class="info-value">${post.userName}</span>
                 </div>
                 <div class="info-row">
                     <span class="info-label">Trạng thái:</span>
@@ -515,10 +633,6 @@ class PostManagement {
                     <span class="info-label">Ngày đăng:</span>
                     <span class="info-value">${this.formatDate(post.createdAt)}</span>
                 </div>
-                <div class="info-row">
-                    <span class="info-label">Lượt xem:</span>
-                    <span class="info-value">${post.views}</span>
-                </div>
                 ${post.rejectionReason ? `
                 <div class="info-row">
                     <span class="info-label">Lý do từ chối:</span>
@@ -526,7 +640,7 @@ class PostManagement {
                 </div>
                 ` : ''}
             </div>
-            ${this.isAdmin && post.status === 'pending' ? `
+            ${this.isAdmin && upperStatus === 'PENDING' ? `
             <div class="approval-actions">
                 <button class="btn-cancel" onclick="postManager.closePostDetailModal()">Đóng</button>
                 <button class="btn-reject-modal" onclick="postManager.showRejectForm(${post.id})">Từ Chối</button>
@@ -539,26 +653,57 @@ class PostManagement {
         document.getElementById('postDetailModal').style.display = 'block';
     }
 
+    // Đóng modal chi tiết bài đăng
     closePostDetailModal() {
         document.getElementById('postDetailModal').style.display = 'none';
     }
 
-    approvePost(postId) {
+    // Duyệt bài đăng
+    async approvePost(postId) {
         const post = this.posts.find(p => p.id === postId);
         if (!post || !this.isAdmin) return;
-
         if (confirm('Bạn có chắc chắn muốn duyệt tin đăng này?')) {
-            post.status = 'approved';
-            post.updatedAt = new Date();
-            
-            this.updateStatistics();
-            this.loadPosts();
-            this.closePostDetailModal();
-            
-            alert('Đã duyệt tin đăng thành công!');
+            try {
+                const response = await authManager.makeAuthenticatedRequest(`/room/approve/${postId}?approved=true`, {
+                    method: 'PUT'
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.message || 'Không thể duyệt tin đăng');
+                }
+                
+                const updatePostStatus = (postsList) => {
+                    const foundPost = postsList.find(p => p.id === postId);
+                    if (foundPost) {
+                        foundPost.status = 'ACTIVE';
+                        foundPost.updatedAt = new Date();
+                    }
+                };
+
+                updatePostStatus(this.allPosts);
+                updatePostStatus(this.myPosts);
+                
+                this.updateStatistics();
+                this.loadPosts();
+                this.closePostDetailModal();
+                
+                if (window.Utils && typeof Utils.showNotification === 'function') {
+                    Utils.showNotification('Đã duyệt tin đăng thành công!', 'success');
+                } else {
+                    alert('Đã duyệt tin đăng thành công!');
+                }
+            } catch (error) {
+                if (window.Utils && typeof Utils.showNotification === 'function') {
+                    Utils.showNotification(error.message || 'Không thể duyệt tin đăng. Vui lòng thử lại!', 'error');
+                } else {
+                    alert(error.message || 'Không thể duyệt tin đăng. Vui lòng thử lại!');
+                }
+            }
         }
     }
 
+    // Hiển thị form từ chối bài đăng
     rejectPost(postId) {
         const post = this.posts.find(p => p.id === postId);
         if (!post || !this.isAdmin) return;
@@ -566,6 +711,7 @@ class PostManagement {
         this.showRejectForm(postId);
     }
 
+    // Render form nhập lý do từ chối
     showRejectForm(postId) {
         const post = this.posts.find(p => p.id === postId);
         if (!post) return;
@@ -587,54 +733,114 @@ class PostManagement {
         document.getElementById('postDetailContent').innerHTML = rejectFormHtml;
     }
 
-    confirmRejectPost(postId) {
+    // Xác nhận từ chối bài đăng
+    async confirmRejectPost(postId) {
         const post = this.posts.find(p => p.id === postId);
         if (!post || !this.isAdmin) return;
 
         const reason = document.getElementById('rejectionReason').value.trim();
         if (!reason) {
-            alert('Vui lòng nhập lý do từ chối');
+            if (window.Utils && typeof Utils.showNotification === 'function') {
+                Utils.showNotification('Vui lòng nhập lý do từ chối', 'warning');
+            } else {
+                alert('Vui lòng nhập lý do từ chối');
+            }
             return;
         }
 
         if (confirm('Bạn có chắc chắn muốn từ chối tin đăng này?')) {
-            post.status = 'rejected';
-            post.rejectionReason = reason;
-            post.updatedAt = new Date();
-            
-            this.updateStatistics();
-            this.loadPosts();
-            this.closePostDetailModal();
-            
-            alert('Đã từ chối tin đăng thành công!');
+            try {
+                const response = await authManager.makeAuthenticatedRequest(`/room/approve/${postId}?approved=false`, {
+                    method: 'PUT'
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.message || 'Không thể từ chối tin đăng');
+                }
+
+                const updatePostStatus = (postsList) => {
+                    const foundPost = postsList.find(p => p.id === postId);
+                    if (foundPost) {
+                        foundPost.status = 'REJECTED';
+                        foundPost.rejectionReason = reason;
+                        foundPost.updatedAt = new Date();
+                    }
+                };
+                
+                updatePostStatus(this.allPosts);
+                updatePostStatus(this.myPosts);
+                
+                this.updateStatistics();
+                this.loadPosts();
+                this.closePostDetailModal();
+                
+                if (window.Utils && typeof Utils.showNotification === 'function') {
+                    Utils.showNotification('Đã từ chối tin đăng thành công!', 'success');
+                } else {
+                    alert('Đã từ chối tin đăng thành công!');
+                }
+            } catch (error) {
+                if (window.Utils && typeof Utils.showNotification === 'function') {
+                    Utils.showNotification(error.message || 'Không thể từ chối tin đăng. Vui lòng thử lại!', 'error');
+                } else {
+                    alert(error.message || 'Không thể từ chối tin đăng. Vui lòng thử lại!');
+                }
+            }
         }
     }
 
+    // Chuyển đến trang chỉnh sửa bài đăng
     editPost(postId) {
-        // For now, just show an alert. In a real app, this would navigate to an edit form
-        alert('Chức năng chỉnh sửa tin đăng sẽ được phát triển trong phiên bản tiếp theo');
+        window.location.href = `roomForm.html?id=${postId}`;
     }
 
-    deletePost(postId) {
+    // Xoá bài đăng
+    async deletePost(postId) {
         const post = this.posts.find(p => p.id === postId);
         if (!post) return;
 
-        // Check permissions
         if (!this.isAdmin && post.userId !== this.currentUser.id) {
-            alert('Bạn không có quyền xóa tin đăng này');
+            if (window.Utils && typeof Utils.showNotification === 'function') {
+                Utils.showNotification('Bạn không có quyền xóa tin đăng này', 'error');
+            } else {
+                alert('Bạn không có quyền xóa tin đăng này');
+            }
             return;
         }
 
         if (confirm('Bạn có chắc chắn muốn xóa tin đăng này? Hành động này không thể hoàn tác.')) {
-            this.posts = this.posts.filter(p => p.id !== postId);
-            
-            this.updateStatistics();
-            this.loadPosts();
-            
-            alert('Đã xóa tin đăng thành công!');
+            try {
+                const response = await authManager.makeAuthenticatedRequest(`/room/delete/${postId}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Không thể xóa tin đăng');
+                }
+
+                this.allPosts = this.allPosts.filter(p => p.id !== postId);
+                this.myPosts = this.myPosts.filter(p => p.id !== postId);
+                
+                this.updateStatistics();
+                this.loadPosts();
+                
+                if (window.Utils && typeof Utils.showNotification === 'function') {
+                    Utils.showNotification('Đã xóa tin đăng thành công!', 'success');
+                } else {
+                    alert('Đã xóa tin đăng thành công!');
+                }
+            } catch (error) {
+                if (window.Utils && typeof Utils.showNotification === 'function') {
+                    Utils.showNotification('Không thể xóa tin đăng. Vui lòng thử lại!', 'error');
+                } else {
+                    alert('Không thể xóa tin đăng. Vui lòng thử lại!');
+                }
+            }
         }
     }
 
+    // Định dạng giá tiền
     formatPrice(price) {
         return new Intl.NumberFormat('vi-VN', {
             style: 'currency',
@@ -642,23 +848,35 @@ class PostManagement {
         }).format(price);
     }
 
+    // Định dạng ngày giờ
     formatDate(date) {
-        return new Intl.DateTimeFormat('vi-VN', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit'
-        }).format(new Date(date));
+        if (!date) return 'N/A';
+        
+        try {
+            const dateObj = date instanceof Date ? date : new Date(date);
+            
+            if (isNaN(dateObj.getTime())) {
+                return 'N/A';
+            }
+            
+            return new Intl.DateTimeFormat('vi-VN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            }).format(dateObj);
+        } catch (error) {
+            return 'N/A';
+        }
     }
 }
 
-// Global functions for onclick handlers
+// Hàm global đóng modal chi tiết bài đăng
 window.closePostDetailModal = function() {
     postManager.closePostDetailModal();
 };
 
-// Initialize post management when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     window.postManager = new PostManagement();
 });

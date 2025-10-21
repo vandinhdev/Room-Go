@@ -44,7 +44,8 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
             "/swagger-ui/**",
             "/v3/**",
             "/webjars/**",
-            "/favicon.ico"
+            "/favicon.ico",
+            "/actuator/**"
     };
 
     @Override
@@ -53,11 +54,11 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
 
         String path = request.getServletPath();
-        String method = request.getMethod();
 
-        log.info("[USER-SERVICE] Incoming request: {} {}", method, path);
 
-        // Nếu path nằm trong whitelist → bỏ qua luôn
+        //log.info("[USER-SERVICE] Incoming request: {} {}", method, path);
+
+        // Check whitelist first - including refresh-token
         for (String pattern : AUTH_WHITELIST) {
             if (pathMatcher.match(pattern, path)) {
                 filterChain.doFilter(request, response);

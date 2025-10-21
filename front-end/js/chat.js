@@ -1,204 +1,25 @@
-// Mock data for chat system
-const mockUsers = [
-    {
-        id: 1,
-        name: "Admin User",
-        avatar: "https://i.pravatar.cc/40?img=4",
-        status: "online",
-        lastSeen: new Date()
-    },
-    {
-        id: 2,
-        name: "Nguyễn Văn A",
-        avatar: "https://i.pravatar.cc/40?img=1",
-        status: "online",
-        lastSeen: new Date(Date.now() - 5 * 60 * 1000) // 5 minutes ago
-    },
-    {
-        id: 3,
-        name: "Trần Thị B",
-        avatar: "https://i.pravatar.cc/40?img=2",
-        status: "offline",
-        lastSeen: new Date(Date.now() - 2 * 60 * 60 * 1000) // 2 hours ago
-    },
-    {
-        id: 4,
-        name: "Lê Văn C",
-        avatar: "https://i.pravatar.cc/40?img=3",
-        status: "online",
-        lastSeen: new Date(Date.now() - 30 * 1000) // 30 seconds ago
-    },
-    {
-        id: 5,
-        name: "Phạm Thị D",
-        avatar: "https://i.pravatar.cc/40?img=5",
-        status: "away",
-        lastSeen: new Date(Date.now() - 15 * 60 * 1000) // 15 minutes ago
-    }
-];
+// Import API configuration
+import { API_BASE_URL } from './config.js';
 
-// Mock data for 1-on-1 chats between users
-// Each chat has exactly 2 participants and displays the other user's name as chat title
-const mockChats = [
-    {
-        id: 1,
-        participants: [1, 2], // Current user (1) and Nguyễn Văn A (2) - Always 2 people only
-        lastMessage: {
-            id: 3,
-            senderId: 2,
-            content: "Phòng còn trống không bạn?",
-            timestamp: new Date(Date.now() - 5 * 60 * 1000),
-            type: "text",
-            read: false
-        },
-        unreadCount: 2,
-        messages: [
-            {
-                id: 1,
-                senderId: 1,
-                content: "Chào bạn! Phòng trọ này vẫn còn trống nhé",
-                timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-                type: "text",
-                read: true
-            },
-            {
-                id: 2,
-                senderId: 2,
-                content: "Cảm ơn bạn! Cho mình hỏi giá thuê thế nào?",
-                timestamp: new Date(Date.now() - 90 * 60 * 1000),
-                type: "text", 
-                read: true
-            },
-            {
-                id: 3,
-                senderId: 2,
-                content: "Phòng còn trống không bạn?",
-                timestamp: new Date(Date.now() - 5 * 60 * 1000),
-                type: "text",
-                read: false
-            }
-        ]
-    },
-    {
-        id: 2,
-        participants: [1, 3], // Current user (1) and Trần Thị B (3)
-        lastMessage: {
-            id: 6,
-            senderId: 1,
-            content: "Được rồi, hẹn gặp bạn lúc 2h chiều nhé!",
-            timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000),
-            type: "text",
-            read: true
-        },
-        unreadCount: 0,
-        messages: [
-            {
-                id: 4,
-                senderId: 3,
-                content: "Chào anh! Em muốn xem phòng trọ",
-                timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000),
-                type: "text",
-                read: true
-            },
-            {
-                id: 5,
-                senderId: 1,
-                content: "Chào em! Anh có thể hẹn em xem phòng vào chiều nay được không?",
-                timestamp: new Date(Date.now() - 3.5 * 60 * 60 * 1000),
-                type: "text",
-                read: true
-            },
-            {
-                id: 6,
-                senderId: 1,
-                content: "Được rồi, hẹn gặp bạn lúc 2h chiều nhé!",
-                timestamp: new Date(Date.now() - 3 * 60 * 60 * 1000),
-                type: "text",
-                read: true
-            }
-        ]
-    },
-    {
-        id: 3,
-        participants: [1, 4], // Current user (1) and Lê Văn C (4)
-        lastMessage: {
-            id: 9,
-            senderId: 4,
-            content: "Cảm ơn anh nhiều! 👍",
-            timestamp: new Date(Date.now() - 30 * 1000),
-            type: "text",
-            read: false
-        },
-        unreadCount: 1,
-        messages: [
-            {
-                id: 7,
-                senderId: 4,
-                content: "Anh ơi, cho em hỏi về hợp đồng thuê phòng",
-                timestamp: new Date(Date.now() - 10 * 60 * 1000),
-                type: "text",
-                read: true
-            },
-            {
-                id: 8,
-                senderId: 1,
-                content: "Được em, anh sẽ gửi file hợp đồng mẫu cho em xem",
-                timestamp: new Date(Date.now() - 5 * 60 * 1000),
-                type: "text",
-                read: true
-            },
-            {
-                id: 9,
-                senderId: 4,
-                content: "Cảm ơn anh nhiều! 👍",
-                timestamp: new Date(Date.now() - 30 * 1000),
-                type: "text",
-                read: false
-            }
-        ]
-    },
-    {
-        id: 4,
-        participants: [1, 5], // Current user (1) and Phạm Thị D (5)
-        lastMessage: {
-            id: 11,
-            senderId: 5,
-            content: "Chào anh, em muốn thuê phòng dài hạn",
-            timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1 day ago
-            type: "text",
-            read: true
-        },
-        unreadCount: 0,
-        messages: [
-            {
-                id: 10,
-                senderId: 5,
-                content: "Xin chào anh!",
-                timestamp: new Date(Date.now() - 25 * 60 * 60 * 1000),
-                type: "text",
-                read: true
-            },
-            {
-                id: 11,
-                senderId: 5,
-                content: "Chào anh, em muốn thuê phòng dài hạn",
-                timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
-                type: "text",
-                read: true
-            }
-        ]
-    }
-];
+// API endpoints
+const CHAT_API = {
+    GET_CONVERSATIONS: `${API_BASE_URL}/chat/get-all-user-conversations`,
+    GET_CONVERSATION_DETAIL: (conversationId) => `${API_BASE_URL}/chat/conversation/${conversationId}`,
+    SEARCH_BY_NAME: `${API_BASE_URL}/chat/search-by-conversation-name`,
+    CREATE_CONVERSATION: (roomId) => `${API_BASE_URL}/chat/add-conversations/${roomId}`,
+    SEND_MESSAGE: `${API_BASE_URL}/chat/send-message`,
+    DELETE_CONVERSATION: (conversationId) => `${API_BASE_URL}/chat/delete-conversation/${conversationId}`
+};
 
 class ChatSystem {
     constructor() {
         this.currentUser = this.getCurrentUser();
-        this.users = [...mockUsers];
-        this.chats = [...mockChats];
+        this.chats = [];
         this.activeChat = null;
         this.searchTerm = '';
         this.filter = 'all'; // 'all' or 'unread'
         this.selectedImages = []; // For storing selected images
+        this.conversationsData = []; // Store raw API data
         
         this.init();
     }
@@ -212,6 +33,7 @@ class ChatSystem {
             return {
                 id: userInfo.id || 1,
                 name: userInfo.fullName || userInfo.name || 'User',
+                email: userInfo.email || '',
                 avatar: userInfo.avatar || 'https://i.pravatar.cc/40?img=1'
             };
         }
@@ -219,20 +41,305 @@ class ChatSystem {
         return {
             id: 1,
             name: 'Current User',
+            email: '',
             avatar: 'https://i.pravatar.cc/40?img=1'
         };
     }
 
-    init() {
-        this.loadChatList();
+    async init() {
+        // Debug localStorage
+        console.log('=== Authentication Debug ===');
+        const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+        console.log('userInfo.token:', userInfo.token ? 'EXISTS' : 'MISSING');
+        console.log('userInfo.email:', userInfo.email || 'MISSING');
+        console.log('userInfo full:', userInfo);
+        console.log('Current user object:', this.currentUser);
+        console.log('===========================');
+
+        // Check authentication first
+        if (!this.isAuthenticated()) {
+            console.warn('User not authenticated. Redirecting to login...');
+            this.showNotification('Vui lòng đăng nhập để sử dụng chat', 'warning');
+            setTimeout(() => {
+                window.location.href = 'auth.html';
+            }, 1500);
+            return;
+        }
+
+        await this.loadConversationsFromAPI();
         this.setupEventListeners();
         this.setupImageUpload();
-        this.simulateRealTimeMessages();
         
-        // Auto-select first chat if available
-        if (this.chats.length > 0) {
-            this.selectChat(this.chats[0].id);
+        // Check if there's a conversation to auto-open from detail page
+        const openConversationId = sessionStorage.getItem('openConversationId');
+        if (openConversationId) {
+            console.log('📬 Auto-opening conversation from detail page:', openConversationId);
+            sessionStorage.removeItem('openConversationId'); // Clear after reading
+            
+            // Find the conversation
+            const convId = parseInt(openConversationId);
+            let conversation = this.chats.find(c => c.id === convId);
+            
+            if (conversation) {
+                await this.selectChat(convId);
+                this.showNotification('Đã mở cuộc trò chuyện', 'success');
+            } else {
+                console.warn('⚠️ Conversation not found in loaded chats:', convId);
+                console.log('🔄 Trying to load conversation directly from API...');
+                
+                // Try to load the conversation directly from API
+                try {
+                    const conversationDetail = await this.loadConversationDetails(convId);
+                    if (conversationDetail) {
+                        console.log('✅ Loaded conversation from API:', conversationDetail);
+                        
+                        // Add to chats list
+                        this.chats.unshift(conversationDetail);
+                        this.loadChatList();
+                        
+                        // Select it
+                        await this.selectChat(convId);
+                        this.showNotification('Đã mở cuộc trò chuyện', 'success');
+                    } else {
+                        throw new Error('Conversation detail is null');
+                    }
+                } catch (error) {
+                    console.error('❌ Failed to load conversation:', error);
+                    this.showNotification('Không tìm thấy cuộc trò chuyện', 'error');
+                    
+                    // Fallback to first chat
+                    if (this.chats.length > 0) {
+                        await this.selectChat(this.chats[0].id);
+                    }
+                }
+            }
+        } else {
+            // Auto-select first chat if available (default behavior)
+            if (this.chats.length > 0) {
+                await this.selectChat(this.chats[0].id);
+            }
         }
+    }
+
+    // Check if user is authenticated
+    isAuthenticated() {
+        // Đọc token từ userInfo (nơi login.js lưu trữ)
+        const userInfoRaw = localStorage.getItem('userInfo');
+        const userInfo = userInfoRaw ? JSON.parse(userInfoRaw) : {};
+        const token = userInfo.token;
+        const email = userInfo.email || this.currentUser.email;
+        
+        console.log('🔐 Auth check - Token:', token ? 'Present' : 'Missing');
+        console.log('🔐 Auth check - UserInfo raw:', userInfoRaw);
+        console.log('🔐 Auth check - Email:', email);
+        
+        if (!token) {
+            console.error('❌ No access token found in userInfo.token');
+            return false;
+        }
+        
+        if (!userInfoRaw) {
+            console.error('❌ No userInfo in localStorage');
+            return false;
+        }
+        
+        if (!email) {
+            console.error('❌ No user email found in userInfo');
+            console.error('UserInfo structure:', userInfo);
+            return false;
+        }
+        
+        // Optional: Check if token is expired (if JWT)
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            if (payload.exp && payload.exp * 1000 < Date.now()) {
+                console.error('❌ Token expired');
+                return false;
+            }
+        } catch (e) {
+            // Not a JWT or cannot parse, assume valid for now
+            console.warn('⚠️ Cannot validate token expiry');
+        }
+        
+        console.log('✅ Authentication successful');
+        return true;
+    }
+
+    // Get authentication headers
+    getAuthHeaders() {
+        // Đọc token từ userInfo (nơi login.js lưu trữ)
+        const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+        const token = userInfo.token;
+        const email = userInfo.email || this.currentUser.email;
+        
+        console.log('🔑 Getting auth headers - Token:', token ? 'Present' : 'Missing', 'Email:', email);
+        
+        return {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+            'X-User-Email': email
+        };
+    }
+
+    // Load conversations from API
+    async loadConversationsFromAPI() {
+        try {
+            console.log('✅ Loading conversations from API...');
+            console.log('📧 Email:', this.currentUser.email);
+            
+            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            const token = userInfo.token;
+            console.log('🔑 Token:', token ? (token.substring(0, 20) + '...') : 'MISSING');
+            
+            const response = await fetch(CHAT_API.GET_CONVERSATIONS, {
+                method: 'GET',
+                headers: this.getAuthHeaders()
+            });
+
+            console.log('Response status:', response.status);
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('API Error Response:', errorText);
+                
+                if (response.status === 401 || response.status === 403) {
+                    this.showNotification('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.', 'error');
+                    setTimeout(() => {
+                        window.location.href = 'auth.html';
+                    }, 2000);
+                    return;
+                } else if (response.status === 500) {
+                    this.showNotification('Lỗi server. Vui lòng thử lại sau.', 'error');
+                } else {
+                    this.showNotification(`Lỗi ${response.status}: Không thể tải danh sách hội thoại.`, 'error');
+                }
+                
+                this.chats = [];
+                this.loadChatList();
+                return;
+            }
+
+            const result = await response.json();
+            console.log('API Response:', result);
+            console.log('result.data type:', typeof result.data);
+            console.log('result.data:', result.data);
+            console.log('Array.isArray(result.data):', Array.isArray(result.data));
+            
+            // Check if data exists and is an array with items
+            if (result.status === 200 && result.data && Array.isArray(result.data) && result.data.length > 0) {
+                this.conversationsData = result.data;
+                this.transformConversationsData();
+                this.loadChatList();
+                console.log('✅ Loaded conversations:', this.chats.length);
+            } else {
+                console.warn('⚠️ No conversations found or empty data');
+                console.log('Setting empty chats array');
+                this.chats = [];
+                this.loadChatList();
+            }
+        } catch (error) {
+            console.error('Error loading conversations:', error);
+            console.error('Error stack:', error.stack);
+            
+            // Check if it's a network error
+            if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
+                this.showNotification('Không thể kết nối đến server. Vui lòng kiểm tra kết nối.', 'error');
+            } else {
+                this.showNotification('Không thể tải danh sách hội thoại. Vui lòng đăng nhập lại.', 'error');
+            }
+            
+            this.chats = [];
+            this.loadChatList();
+        }
+    }
+
+    // Transform API data to match internal format
+    transformConversationsData() {
+        console.log('🔄 Transforming conversations data:', this.conversationsData);
+        
+        this.chats = this.conversationsData.map(conv => {
+            return {
+                id: conv.id,
+                roomId: conv.roomId,
+                // Thông tin người chat kia
+                otherUserId: conv.otherUserId,
+                otherUserName: conv.otherUserName,
+                otherUserAvatar: conv.otherUserAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(conv.otherUserName)}&background=random`,
+                // Participants
+                participants: [this.currentUser.id, conv.otherUserId],
+                // Messages will be loaded when chat is selected
+                messages: [],
+                lastMessage: null,
+                unreadCount: 0
+            };
+        });
+        
+        console.log('✅ Transformed chats:', this.chats);
+    }
+
+    // Load conversation details with messages
+    async loadConversationDetails(conversationId) {
+        try {
+            const response = await fetch(CHAT_API.GET_CONVERSATION_DETAIL(conversationId), {
+                method: 'GET',
+                headers: this.getAuthHeaders()
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch conversation details');
+            }
+
+            const result = await response.json();
+            
+            if (result.status === 200 && result.data) {
+                return this.transformConversationDetail(result.data);
+            }
+        } catch (error) {
+            console.error('Error loading conversation details:', error);
+            throw error;
+        }
+    }
+
+    // Transform conversation detail from API
+    transformConversationDetail(detail) {
+        console.log('🔄 Transforming conversation detail:', detail);
+        
+        const messages = detail.messages ? detail.messages.map(msg => ({
+            id: msg.id,
+            senderId: msg.senderId,
+            senderName: msg.senderName,
+            content: msg.content,
+            timestamp: new Date(msg.createdAt),
+            type: msg.messageType === 'TEXT' ? 'text' : 'image',
+            read: msg.isRead
+        })) : [];
+
+        // Get other user info (the one who is not current user)
+        const otherUserId = detail.ownerId === this.currentUser.id ? detail.currentUserId : detail.ownerId;
+        
+        // Try to find other user's name from messages
+        let otherUserName = 'User';
+        if (messages.length > 0) {
+            const otherUserMessage = messages.find(m => m.senderId === otherUserId);
+            if (otherUserMessage) {
+                otherUserName = otherUserMessage.senderName;
+            }
+        }
+
+        // Get last message
+        const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
+
+        return {
+            id: detail.conversationId,
+            roomId: detail.roomId || null,
+            otherUserId: otherUserId,
+            otherUserName: otherUserName,
+            otherUserAvatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(otherUserName)}&background=random`,
+            participants: [this.currentUser.id, otherUserId],
+            messages: messages,
+            lastMessage: lastMessage,
+            unreadCount: 0
+        };
     }
 
     setupEventListeners() {
@@ -372,8 +479,8 @@ class ChatSystem {
         // Apply search filter
         if (this.searchTerm) {
             filteredChats = filteredChats.filter(chat => {
-                const otherUser = this.getOtherUser(chat);
-                return otherUser && otherUser.name.toLowerCase().includes(this.searchTerm);
+                const chatName = chat.otherUserName || '';
+                return chatName.toLowerCase().includes(this.searchTerm);
             });
         }
 
@@ -383,24 +490,28 @@ class ChatSystem {
         }
 
         // Sort by last message timestamp
-        filteredChats.sort((a, b) => new Date(b.lastMessage.timestamp) - new Date(a.lastMessage.timestamp));
+        filteredChats.sort((a, b) => {
+            const timeA = a.lastMessage ? new Date(a.lastMessage.timestamp) : new Date(0);
+            const timeB = b.lastMessage ? new Date(b.lastMessage.timestamp) : new Date(0);
+            return timeB - timeA;
+        });
 
         chatListContainer.innerHTML = filteredChats.map(chat => {
-            const otherUser = this.getOtherUser(chat);
-            if (!otherUser) return ''; // Skip if not a valid 1-on-1 chat
+            const chatName = chat.otherUserName || 'Cuộc trò chuyện';
+            const chatAvatar = chat.otherUserAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(chatName)}&background=random`;
 
             const isActive = this.activeChat && this.activeChat.id === chat.id;
-            const lastMessageTime = this.formatTime(chat.lastMessage.timestamp);
-            const preview = this.getMessagePreview(chat.lastMessage);
+            const lastMessageTime = chat.lastMessage ? this.formatTime(chat.lastMessage.timestamp) : '';
+            const preview = chat.lastMessage ? this.getMessagePreview(chat.lastMessage) : 'Chưa có tin nhắn';
 
             return `
                 <div class="chat-item ${isActive ? 'active' : ''}" data-chat-id="${chat.id}">
                     <div class="chat-avatar">
-                        <img src="${otherUser.avatar}" alt="${otherUser.name}">
-                        <div class="status-indicator ${otherUser.status}"></div>
+                        <img src="${chatAvatar}" alt="${chatName}">
+                        <div class="status-indicator online"></div>
                     </div>
                     <div class="chat-info">
-                        <div class="chat-name">${otherUser.name}</div>
+                        <div class="chat-name">${chatName}</div>
                         <div class="chat-preview">${preview}</div>
                     </div>
                     <div class="chat-meta">
@@ -465,48 +576,50 @@ class ChatSystem {
         });
     }
 
-    selectChat(chatId) {
+    async selectChat(chatId) {
         const chat = this.chats.find(c => c.id === chatId);
         if (!chat) return;
 
-        this.activeChat = chat;
-        
-        // Mark messages as read
-        this.markChatAsRead(chatId);
-        
-        this.loadChatHeader();
-        this.loadMessages();
-        this.loadChatList(); // Refresh to update unread counts
-    }
-
-    // Helper function to get the other user in a 1-on-1 chat
-    getOtherUser(chat) {
-        if (!chat || !chat.participants || chat.participants.length !== 2) {
-            return null; // Ensure this is a 1-on-1 chat
+        // Load conversation details from API
+        try {
+            const details = await this.loadConversationDetails(chatId);
+            
+            // Update chat with loaded messages
+            chat.messages = details.messages;
+            if (details.messages.length > 0) {
+                chat.lastMessage = details.messages[details.messages.length - 1];
+            }
+            
+            this.activeChat = chat;
+            
+            // Mark messages as read
+            this.markChatAsRead(chatId);
+            
+            this.loadChatHeader();
+            this.loadMessages();
+            this.loadChatList(); // Refresh to update unread counts
+        } catch (error) {
+            console.error('Error selecting chat:', error);
+            this.showNotification('Không thể tải tin nhắn', 'error');
         }
-        
-        const otherUserId = chat.participants.find(id => id !== this.currentUser.id);
-        return this.users.find(u => u.id === otherUserId);
     }
 
     loadChatHeader() {
         const chatHeader = document.getElementById('chat-header');
         if (!chatHeader || !this.activeChat) return;
 
-        const otherUser = this.getOtherUser(this.activeChat);
-        if (!otherUser) return;
-
-        const statusText = this.getStatusText(otherUser);
+        const chatName = this.activeChat.otherUserName || 'Cuộc trò chuyện';
+        const chatAvatar = this.activeChat.otherUserAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(chatName)}&background=random`;
 
         chatHeader.innerHTML = `
             <div class="chat-user-info">
                 <div class="chat-user-avatar">
-                    <img src="${otherUser.avatar}" alt="${otherUser.name}">
-                    <div class="status-indicator ${otherUser.status}"></div>
+                    <img src="${chatAvatar}" alt="${chatName}">
+                    <div class="status-indicator online"></div>
                 </div>
                 <div class="chat-user-details">
-                    <div class="chat-user-name">${otherUser.name}</div>
-                    <div class="chat-user-status">${statusText}</div>
+                    <div class="chat-user-name">${chatName}</div>
+                    <div class="chat-user-status">Đang hoạt động</div>
                 </div>
             </div>
         `;
@@ -519,9 +632,10 @@ class ChatSystem {
         const messages = this.activeChat.messages || [];
         
         messagesContainer.innerHTML = messages.map(message => {
-            const sender = this.users.find(u => u.id === message.senderId);
             const isOwn = message.senderId === this.currentUser.id;
             const messageTime = this.formatTime(message.timestamp);
+            const senderName = message.senderName || 'User';
+            const senderAvatar = 'https://i.pravatar.cc/40?img=' + (message.senderId % 10);
 
             let messageContent = '';
             if (message.type === 'image') {
@@ -537,7 +651,7 @@ class ChatSystem {
                 <div class="message ${isOwn ? 'own' : 'other'}">
                     ${!isOwn ? `
                         <div class="message-avatar">
-                            <img src="${sender.avatar}" alt="${sender.name}">
+                            <img src="${senderAvatar}" alt="${senderName}">
                         </div>
                     ` : ''}
                     <div class="message-content">
@@ -554,7 +668,7 @@ class ChatSystem {
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 
-    sendMessage() {
+    async sendMessage() {
         const messageInput = document.getElementById('message-input');
         if (!messageInput || !this.activeChat) return;
 
@@ -566,146 +680,74 @@ class ChatSystem {
 
         // Send text message if there's content
         if (content) {
-            const textMessage = {
-                id: Date.now(),
-                senderId: this.currentUser.id,
-                content: content,
-                timestamp: new Date(),
-                type: 'text',
-                read: true
-            };
-
-            this.activeChat.messages.push(textMessage);
-            this.activeChat.lastMessage = textMessage;
-        }
-
-        // Send image messages
-        if (hasImages) {
-            this.selectedImages.forEach((image, index) => {
-                const imageMessage = {
-                    id: Date.now() + index + 1,
-                    senderId: this.currentUser.id,
-                    content: image.url,
-                    timestamp: new Date(),
-                    type: 'image',
-                    read: true,
-                    fileName: image.name,
-                    fileSize: image.size
+            try {
+                const messageData = {
+                    conversationId: this.activeChat.id,
+                    content: content,
+                    messageType: 'TEXT'
                 };
 
-                this.activeChat.messages.push(imageMessage);
-                this.activeChat.lastMessage = imageMessage;
-            });
+                const response = await fetch(CHAT_API.SEND_MESSAGE, {
+                    method: 'POST',
+                    headers: this.getAuthHeaders(),
+                    body: JSON.stringify(messageData)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to send message');
+                }
+
+                const result = await response.json();
+                
+                if (result.status === 201) {
+                    // Add message to local state
+                    const textMessage = {
+                        id: result.data,
+                        senderId: this.currentUser.id,
+                        senderName: this.currentUser.name,
+                        content: content,
+                        timestamp: new Date(),
+                        type: 'text',
+                        read: true
+                    };
+
+                    this.activeChat.messages.push(textMessage);
+                    this.activeChat.lastMessage = textMessage;
+                    
+                    // Clear input
+                    messageInput.value = '';
+                    
+                    // Reload messages
+                    this.loadMessages();
+                    this.loadChatList();
+                } else {
+                    throw new Error(result.message || 'Failed to send message');
+                }
+            } catch (error) {
+                console.error('Error sending message:', error);
+                this.showNotification('Không thể gửi tin nhắn', 'error');
+            }
+        }
+
+        // Send image messages (TODO: Implement image upload)
+        if (hasImages) {
+            // TODO: Implement image upload to server
+            console.log('Image upload not yet implemented');
+            this.showNotification('Tính năng gửi ảnh đang được phát triển', 'info');
         }
 
         // Clear input and images
         messageInput.value = '';
         this.clearSelectedImages();
 
-        // Reload messages and chat list
-        this.loadMessages();
-        this.loadChatList();
-
-        // Simulate response after a delay
-        setTimeout(() => {
-            this.simulateResponse();
-        }, 1000 + Math.random() * 2000); // 1-3 seconds delay
+        // Clear selected images
+        this.clearSelectedImages();
     }
 
-    simulateResponse() {
-        if (!this.activeChat) return;
-
-        const otherUserId = this.activeChat.participants.find(id => id !== this.currentUser.id);
-        const responses = [
-            "Cảm ơn bạn!",
-            "Được rồi, mình hiểu rồi",
-            "Vâng, không có vấn đề gì",
-            "Mình sẽ xem xét và phản hồi lại bạn",
-            "Cảm ơn bạn đã quan tâm!",
-            "Thông tin này rất hữu ích",
-            "Bạn có thể gửi thêm thông tin được không?",
-            "Mình sẽ liên hệ lại với bạn sớm"
-        ];
-
-        const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-
-        const responseMessage = {
-            id: Date.now(),
-            senderId: otherUserId,
-            content: randomResponse,
-            timestamp: new Date(),
-            type: 'text',
-            read: false
-        };
-
-        this.activeChat.messages.push(responseMessage);
-        this.activeChat.lastMessage = responseMessage;
-        this.activeChat.unreadCount = 0; // Reset since we're viewing this chat
-
-        this.loadMessages();
-        this.loadChatList();
-
-        // Add notification
-        if (window.addNotification) {
-            const otherUser = this.users.find(u => u.id === otherUserId);
-            window.addNotification('info', 'Tin nhắn mới', `${otherUser.name}: ${randomResponse}`, 'fa-message');
-        }
-    }
-
-    simulateRealTimeMessages() {
-        // Simulate receiving random messages every 30-60 seconds
-        setInterval(() => {
-            if (Math.random() > 0.7) { // 30% chance
-                this.receiveRandomMessage();
-            }
-        }, 30000 + Math.random() * 30000);
-    }
-
-    receiveRandomMessage() {
-        const randomChat = this.chats[Math.floor(Math.random() * this.chats.length)];
-        const otherUserId = randomChat.participants.find(id => id !== this.currentUser.id);
-        
-        const randomMessages = [
-            "Bạn có rảnh không?",
-            "Mình có câu hỏi nhỏ",
-            "Cảm ơn bạn về thông tin hôm trước",
-            "Phòng vẫn còn trống chứ?",
-            "Khi nào bạn có thời gian gặp mặt?",
-            "Mình cần thêm thông tin về giá thuê"
-        ];
-
-        const randomContent = randomMessages[Math.floor(Math.random() * randomMessages.length)];
-
-        const newMessage = {
-            id: Date.now(),
-            senderId: otherUserId,
-            content: randomContent,
-            timestamp: new Date(),
-            type: 'text',
-            read: false
-        };
-
-        randomChat.messages.push(newMessage);
-        randomChat.lastMessage = newMessage;
-        
-        // Only increment unread count if not currently viewing this chat
-        if (!this.activeChat || this.activeChat.id !== randomChat.id) {
-            randomChat.unreadCount++;
-        }
-
-        this.loadChatList();
-        
-        // If this is the active chat, reload messages
-        if (this.activeChat && this.activeChat.id === randomChat.id) {
-            this.loadMessages();
-        }
-
-        // Add notification
-        if (window.addNotification) {
-            const otherUser = this.users.find(u => u.id === otherUserId);
-            window.addNotification('info', 'Tin nhắn mới', `${otherUser.name}: ${randomContent}`, 'fa-message');
-        }
-    }
+    // TODO: Implement WebSocket for real-time messages
+    // simulateRealTimeMessages() {
+    //     // This will be replaced with WebSocket implementation
+    // }
 
     markChatAsRead(chatId) {
         const chat = this.chats.find(c => c.id === chatId);
@@ -726,29 +768,6 @@ class ChatSystem {
                 message.content;
         }
         return 'Đã gửi một tệp';
-    }
-
-    getStatusText(user) {
-        switch (user.status) {
-            case 'online':
-                return 'Đang hoạt động';
-            case 'away':
-                return 'Vắng mặt';
-            case 'offline':
-                const timeDiff = Date.now() - new Date(user.lastSeen).getTime();
-                if (timeDiff < 60 * 60 * 1000) { // Less than 1 hour
-                    const minutes = Math.floor(timeDiff / (60 * 1000));
-                    return `Hoạt động ${minutes} phút trước`;
-                } else if (timeDiff < 24 * 60 * 60 * 1000) { // Less than 24 hours
-                    const hours = Math.floor(timeDiff / (60 * 60 * 1000));
-                    return `Hoạt động ${hours} giờ trước`;
-                } else {
-                    const days = Math.floor(timeDiff / (24 * 60 * 60 * 1000));
-                    return `Hoạt động ${days} ngày trước`;
-                }
-            default:
-                return 'Không xác định';
-        }
     }
 
     formatTime(timestamp) {
@@ -787,65 +806,108 @@ class ChatSystem {
         });
     }
 
-    deleteChat(chatId) {
+    async deleteChat(chatId) {
         // Hiển thị hộp thoại xác nhận
         if (confirm('Bạn có chắc chắn muốn xóa cuộc trò chuyện này không?')) {
-            const chatIndex = this.chats.findIndex(chat => chat.id === chatId);
-            if (chatIndex !== -1) {
-                this.chats.splice(chatIndex, 1);
-                
-                if (this.activeChat && this.activeChat.id === chatId) {
-                    this.activeChat = null;
+            try {
+                const response = await fetch(CHAT_API.DELETE_CONVERSATION(chatId), {
+                    method: 'DELETE',
+                    headers: this.getAuthHeaders()
+                });
 
-                    const chatHeader = document.getElementById('chat-header');
-                    const chatMessages = document.getElementById('chat-messages');
-                    
-                    if (chatHeader) chatHeader.innerHTML = '';
-                    if (chatMessages) chatMessages.innerHTML = '';
+                if (!response.ok) {
+                    throw new Error('Failed to delete conversation');
                 }
+
+                const result = await response.json();
                 
-                this.loadChatList();
-                
-                this.showNotification('Đã xóa cuộc trò chuyện', 'success');
+                if (result.status === 204 || result.status === 200) {
+                    const chatIndex = this.chats.findIndex(chat => chat.id === chatId);
+                    if (chatIndex !== -1) {
+                        this.chats.splice(chatIndex, 1);
+                        
+                        if (this.activeChat && this.activeChat.id === chatId) {
+                            this.activeChat = null;
+
+                            const chatHeader = document.getElementById('chat-header');
+                            const chatMessages = document.getElementById('chat-messages');
+                            
+                            if (chatHeader) chatHeader.innerHTML = '';
+                            if (chatMessages) chatMessages.innerHTML = '';
+                        }
+                        
+                        this.loadChatList();
+                        this.showNotification('Đã xóa cuộc trò chuyện', 'success');
+                    }
+                } else {
+                    throw new Error(result.message || 'Failed to delete conversation');
+                }
+            } catch (error) {
+                console.error('Error deleting conversation:', error);
+                this.showNotification('Không thể xóa cuộc trò chuyện', 'error');
             }
         }
     }
 
-    // Hàm tạo cuộc trò chuyện mới với người dùng
-    createChatWithUser(userId) {
-        const existingChat = this.chats.find(chat => {
-            const otherUser = this.getOtherUser(chat);
-            return otherUser && otherUser.id === userId;
-        });
-        
-        if (existingChat) {
-            this.selectChat(existingChat.id);
-            return existingChat;
+    // Hàm tạo cuộc trò chuyện mới với phòng
+    async createChatWithRoom(roomId) {
+        try {
+            const response = await fetch(CHAT_API.CREATE_CONVERSATION(roomId), {
+                method: 'POST',
+                headers: this.getAuthHeaders()
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to create conversation');
+            }
+
+            const result = await response.json();
+            
+            if (result.status === 201 && result.data) {
+                const conversationId = result.data;
+                
+                // Reload all conversations to get the new one
+                await this.loadConversationsFromAPI();
+                
+                // Select the new conversation
+                await this.selectChat(conversationId);
+                
+                this.showNotification('Đã tạo cuộc trò chuyện mới', 'success');
+                
+                return conversationId;
+            } else {
+                throw new Error(result.message || 'Failed to create conversation');
+            }
+        } catch (error) {
+            console.error('Error creating conversation:', error);
+            this.showNotification('Không thể tạo cuộc trò chuyện', 'error');
+            return null;
         }
-        
-        const targetUser = this.users.find(u => u.id === userId);
-        if (!targetUser) return null;
-        
-        const newChat = {
-            id: Date.now(),
-            participants: [this.currentUser.id, userId],
-            lastMessage: {
-                id: Date.now() + 1,
-                senderId: this.currentUser.id,
-                content: "Cuộc trò chuyện mới được tạo",
-                timestamp: new Date(),
-                type: "text",
-                read: true
-            },
-            unreadCount: 0,
-            messages: []
-        };
-        
-        this.chats.unshift(newChat);
-        this.loadChatList();
-        this.selectChat(newChat.id);
-        
-        return newChat;
+    }
+
+    // Hàm tìm cuộc trò chuyện theo tên
+    async searchConversationByName(conversationName) {
+        try {
+            const response = await fetch(`${CHAT_API.SEARCH_BY_NAME}?name=${encodeURIComponent(conversationName)}`, {
+                method: 'GET',
+                headers: this.getAuthHeaders()
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to search conversation');
+            }
+
+            const result = await response.json();
+            
+            if (result.status === 200 && result.data) {
+                return result.data;
+            }
+            
+            return null;
+        } catch (error) {
+            console.error('Error searching conversation:', error);
+            return null;
+        }
     }
 
     showNotification(message, type = 'info') {
@@ -879,6 +941,56 @@ class ChatSystem {
     }
 
     formatMessageContent(content) {
+        // Check if this is a room intro message (new format with image)
+        if (content.startsWith('ROOM_INTRO|')) {
+            const parts = content.split('|');
+            if (parts.length >= 7) {
+                const [, imageUrl, title, price, area, district, roomId] = parts;
+                
+                // Create clickable room card with image
+                return `
+                    <div class="room-intro-card" data-room-id="${roomId}" onclick="window.location.href='detail.html?id=${roomId}'" style="cursor: pointer;">
+                        <div class="room-intro-image">
+                            <img src="${imageUrl}" alt="${title}" onerror="this.src='https://via.placeholder.com/300x200?text=No+Image'">
+                        </div>
+                        <div class="room-intro-details">
+                            <div class="room-intro-title">${title}</div>
+                            <div class="room-intro-price">${price}</div>
+                            <div class="room-intro-info">
+                                <span><i class="fas fa-expand"></i> ${area} m²</span>
+                                <span><i class="fas fa-map-marker-alt"></i> ${district}</span>
+                            </div>
+                        </div>
+                        
+                    </div>
+                `;
+            }
+        }
+        
+        // Check for old format (backward compatibility)
+        const oldRoomIntroPattern = /^Xin chào! Tôi quan tâm đến phòng: "(.+?)" - (.+?) - (\d+)m² tại (.+)$/;
+        const oldMatch = content.match(oldRoomIntroPattern);
+        
+        if (oldMatch) {
+            const [, title, price, area, district] = oldMatch;
+            const roomId = this.activeChat?.roomId || '';
+            
+            // Create clickable room card (without image for old format)
+            return `
+                <div class="room-intro-card" data-room-id="${roomId}" onclick="window.location.href='detail.html?id=${roomId}'" style="cursor: pointer;">
+                    <div class="room-intro-details">
+                        <div class="room-intro-title">${title}</div>
+                        <div class="room-intro-price">${price}</div>
+                        <div class="room-intro-info">
+                            <span><i class="fas fa-expand"></i> ${area} m²</span>
+                            <span><i class="fas fa-map-marker-alt"></i> ${district}</span>
+                        </div>
+                    </div> 
+                </div>
+            `;
+        }
+        
+        // Regular message formatting
         return content
             .replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>')
             .replace(/:\)/g, '😊')

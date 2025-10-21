@@ -3,7 +3,9 @@ package vn.ictu.roommanagementservice.models;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.type.SqlTypes;
 import vn.ictu.roommanagementservice.common.enums.RoomStatus;
 
 
@@ -59,8 +61,9 @@ public class RoomEntity implements Serializable {
     private Double longitude;
 
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(length = 20)
-    private RoomStatus status = RoomStatus.AVAILABLE;
+    private RoomStatus status;
 
     @Column(name = "created_at")
     @CreationTimestamp

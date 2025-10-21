@@ -4,8 +4,10 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcType;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.dialect.PostgreSQLEnumJdbcType;
 import org.hibernate.type.SqlTypes;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -37,6 +39,9 @@ public class UserEntity implements UserDetails, Serializable {
     @Column(name = "id")
     private Long id;
 
+    @Column(name = "avatar_url", columnDefinition = "TEXT")
+    private String avatarUrl;
+
     @Column(name = "first_name")
     private String firstName;
 
@@ -54,20 +59,27 @@ public class UserEntity implements UserDetails, Serializable {
 
     @Column(name = "phone")
     private String phone;
-    @Enumerated(EnumType.STRING)
-    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
-    @Column(name = "gender")
-    private Gender gender;
 
     @Column(name = "date_of_birth")
     @Temporal(TemporalType.DATE)
     private Date dateOfBirth;
+
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "gender")
+    private Gender gender;
+
+    @Column(name = "address", columnDefinition = "TEXT")
+    private String address;
+
+    @Column(name = "bio", columnDefinition = "TEXT")
+    private String bio;
 
     @ManyToOne
     @JoinColumn(name = "role_id", nullable = false)
     private Role role;
 
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(name = "user_status", nullable = false)
     private UserStatus status;
 
@@ -86,14 +98,18 @@ public class UserEntity implements UserDetails, Serializable {
         return List.of((GrantedAuthority) () -> "ROLE_" + role.getRoleName());
     }
 
+    public String getUserName() {
+        return username;
+    }
+
     @Override
     public String getUsername() {
-        return email; // login bằng email
+        return email;
     }
 
     @Override
     public String getPassword() {
-        return password; // để rõ ràng (Spring Security dùng trường này để so khớp)
+        return password;
     }
 
     @Override

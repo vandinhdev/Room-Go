@@ -8,7 +8,9 @@ import vn.ictu.usermanagementservice.dto.request.SignUpRequest;
 public interface AuthService {
     TokenResponse login(SignInRequest request);
     TokenResponse getRefreshToken(String request);
+    TokenResponse createTokenGuest();
     void register(SignUpRequest request);
     void verifyEmail(String email);
+
 }
 

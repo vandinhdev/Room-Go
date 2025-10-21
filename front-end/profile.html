@@ -10,9 +10,24 @@
     <link rel="stylesheet" href="access/css/responsive.css">
     <link rel="stylesheet" href="access/css/profile.css">
     <link rel="stylesheet" href="access/css/favourite.css">
+    <link rel="stylesheet" href="access/css/loading.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    
+    <script>
+        document.documentElement.classList.add('loading');
+    </script>
 </head>
-<body>
+<body class="loading">
+    <div id="initialLoadingOverlay">
+        <div class="loading-content">
+            <div class="spinner-container">
+                <div class="spinner"></div>
+            </div>
+            <h3>Đang tải trang cá nhân</h3>
+            <p>Vui lòng đợi một chút...</p>
+        </div>
+    </div>
+    
     <div class="main-container">
         <div class="profile-container">
             <div class="profile-header">
@@ -34,14 +49,9 @@
             <div class="profile-content">
                 <div class="profile-tabs">
                     <button class="tab-btn active" data-tab="info">Thông tin cá nhân</button>
-                    <button class="tab-btn" data-tab="posts">Tin đăng của tôi</button>
-                    <button class="tab-btn" data-tab="favorites">Tin đã lưu</button>
                     <button class="tab-btn" data-tab="settings">Cài đặt</button>
                 </div>
-
-                <!-- Tab Thông tin cá nhân -->
                 <div class="tab-content active" id="info-tab">
-                    <!-- Thông tin cơ bản -->
                     <div class="info-section">
                         <div class="section-header">
                             <h3>Thông tin cơ bản</h3>
@@ -50,7 +60,6 @@
                             </button>
                         </div>
                         
-                        <!-- Display Mode -->
                         <div class="info-display" id="basicInfoDisplay">
                             <div class="info-item">
                                 <label>Họ và tên:</label>
@@ -70,7 +79,6 @@
                             </div>
                         </div>
 
-                        <!-- Edit Mode -->
                         <div class="info-edit" id="basicInfoEdit" style="display: none;">
                             <form class="profile-form" id="basicInfoForm">
                                 <div class="form-group">
@@ -97,13 +105,11 @@
                         </div>
                     </div>
 
-                    <!-- Thông tin liên hệ -->
                     <div class="info-section">
                         <div class="section-header ">
                             <h3>Thông tin liên hệ</h3>
                         </div>
 
-                        <!-- Email Section -->
                         <div class="contact-item">
                             <div class="contact-display" id="emailDisplay">
                                 <div class="contact-info">
@@ -123,7 +129,6 @@
                                 </button>
                             </div>
 
-                            <!-- Email Edit Form -->
                             <div class="contact-edit" id="emailEdit" style="display: none;">
                                 <form class="contact-form" id="emailForm">
                                     <div class="form-group">
@@ -139,7 +144,6 @@
                             </div>
                         </div>
 
-                        <!-- Phone Section -->
                         <div class="contact-item">
                             <div class="contact-display" id="phoneDisplay">
                                 <div class="contact-info">
@@ -159,7 +163,6 @@
                                 </button>
                             </div>
 
-                            <!-- Phone Edit Form -->
                             <div class="contact-edit" id="phoneEdit" style="display: none;">
                                 <form class="contact-form" id="phoneForm">
                                     <div class="form-group">
@@ -177,82 +180,43 @@
                     </div>
                 </div>
 
-                <!-- Tab Tin đăng của tôi -->
-                <div class="tab-content" id="posts-tab">
-                    <div class="posts-section">
-                        <div class="section-header">
-                            <h3>Tin đăng của tôi</h3>
-                            <a href="roomForm.html" class="btn-primary">
-                                <i class="fas fa-plus"></i> Đăng tin mới
-                            </a>
-                        </div>
-                        <div class="posts-list" id="userPosts">
-                            <div class="empty-state">
-                                <i class="fas fa-home"></i>
-                                <h4>Chưa có tin đăng nào</h4>
-                                <p>Bạn chưa đăng tin nào. Hãy đăng tin đầu tiên của bạn!</p>
-                                <a href="roomForm.html" class="btn-primary">Đăng tin ngay</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Tab Tin đã lưu -->
-                <div class="tab-content" id="favorites-tab">
-                    <div class="favorites-section">
-                        <div class="section-header">
-                            <h3>Tin đã lưu</h3>
-                            <span class="count" id="favoritesCount">0 tin</span>
-                        </div>
-                        <div class="favorites-list" id="favoritesList">
-                            <div class="empty-state">
-                                <i class="fas fa-heart"></i>
-                                <h4>Chưa có tin nào được lưu</h4>
-                                <p>Bạn chưa lưu tin nào. Hãy tìm và lưu những tin yêu thích!</p>
-                                <a href="index.html" class="btn-primary">Tìm phòng trọ</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Tab Cài đặt -->
                 <div class="tab-content" id="settings-tab">
                     <div class="settings-section">
-                        <h3>Cài đặt tài khoản</h3>
-                        
-                        <div class="setting-item">
-                            <h4>Đổi mật khẩu</h4>
+                        <h3 style="margin-bottom: 22px;">Đổi mật khẩu</h3>
+                        <div class="setting-item">               
                             <form class="password-form" id="changePasswordForm">
                                 <div class="form-group">
                                     <label for="currentPassword">Mật khẩu hiện tại</label>
                                     <input type="password" id="currentPassword" required>
+                                    <button type="button" class="password-toggle" id="toggleCurrentPassword">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                        </svg>
+                                     </button>
                                 </div>
                                 <div class="form-group">
                                     <label for="newPassword">Mật khẩu mới</label>
                                     <input type="password" id="newPassword" required>
+                                    <button type="button" class="password-toggle" id="toggleNewPassword">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                        </svg>
+                                     </button>
                                 </div>
                                 <div class="form-group">
                                     <label for="confirmPassword">Xác nhận mật khẩu mới</label>
                                     <input type="password" id="confirmPassword" required>
+                                    <button type="button" class="password-toggle" id="toggleConfirmPassword">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                        </svg>
+                                    </button>
                                 </div>
                                 <button type="submit" class="btn-primary">Đổi mật khẩu</button>
                             </form>
-                        </div>
-
-                        <div class="setting-item">
-                            <h4>Thông báo</h4>
-                            <div class="notification-settings">
-                                <label class="toggle-switch">
-                                    <input type="checkbox" id="emailNotifications" checked>
-                                    <span class="slider"></span>
-                                    Nhận thông báo qua email
-                                </label>
-                                <label class="toggle-switch">
-                                    <input type="checkbox" id="smsNotifications">
-                                    <span class="slider"></span>
-                                    Nhận thông báo qua SMS
-                                </label>
-                            </div>
                         </div>
 
                         <div class="setting-item danger-zone">
@@ -266,7 +230,6 @@
         </div>
     </div>
 
-    <!-- Modal xác nhận xóa tài khoản -->
     <div class="modal" id="deleteModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -284,6 +247,8 @@
         </div>
     </div>
 
+    <script src="js/utils.js"></script>
+    <script src="js/loading.js"></script>
     <script type="module" src="js/header.js"></script>
     <script type="module" src="js/profile.js"></script>
     <script src="js/footer.js"></script>

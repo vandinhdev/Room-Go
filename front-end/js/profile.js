@@ -1,5 +1,6 @@
-// Profile Page JavaScript
-import { getCurrentUser, users } from './mockUsers.js';
+import { API_BASE_URL, CLOUDINARY_CONFIG } from "./config.js";
+import { authManager } from './auth.js';
+
 
 document.addEventListener('DOMContentLoaded', function() {
     initializeProfile();
@@ -7,47 +8,64 @@ document.addEventListener('DOMContentLoaded', function() {
     setupForms();
     setupModals();
     loadUserData();
-    loadUserPosts();
-    loadFavorites();
 });
 
-function initializeProfile() {
-    const user = getCurrentUser();
-    
+// Lấy thông tin user hiện tại từ API
+async function getCurrentUser() {
+    const userInfo = authManager.getCurrentUser();
+    if (!userInfo || !userInfo.token) {
+        return null;
+    }
+
+    try {
+        const response = await authManager.makeAuthenticatedRequest('/user/profile', {
+            method: 'GET'
+        });
+
+        if (response.ok) {
+            const apiResponse = await response.json();
+            return apiResponse.data;
+        } else {
+            return null;
+        }
+    } catch (error) {
+        return null;
+    }
+}
+
+// Khởi tạo dữ liệu và điều hướng nếu chưa đăng nhập
+async function initializeProfile() {
+    const user = await getCurrentUser();
+
     if (!user) {
-        // User chưa đăng nhập, chuyển về trang login
         window.location.href = 'auth.html';
         return;
     }
-
-    // Cập nhật thông tin user trên header
     updateProfileHeader(user);
 }
 
+// Cập nhật phần header của hồ sơ
 function updateProfileHeader(user) {
     const profileAvatar = document.getElementById('profileAvatar');
     const profileName = document.getElementById('profileName');
     const profileEmail = document.getElementById('profileEmail');
     const profileRole = document.getElementById('profileRole');
 
-    // Cập nhật avatar
-    if (user.avatar) {
-        profileAvatar.innerHTML = `<img src="${user.avatar}" alt="Avatar">`;
+    if (user.avatarUrl) {
+        profileAvatar.innerHTML = `<img src="${user.avatarUrl}" alt="Avatar">`;
     } else {
         profileAvatar.innerHTML = user.fullName ? user.fullName[0].toUpperCase() : 'U';
     }
 
-    // Cập nhật thông tin
-    profileName.textContent = user.fullName || 'Tên người dùng';
+    profileName.textContent = user.lastName + " " + user.firstName || 'Tên người dùng';
     profileEmail.textContent = user.email || 'email@example.com';
-    
-    // Cập nhật role
-    profileRole.textContent = user.role === 'admin' ? 'Quản trị viên' : 'Người dùng';
-    if (user.role === 'admin') {
+    profileRole.textContent = user.role === 'ADMIN' ? 'Quản trị viên' : 'Người dùng';
+    if (user.role === 'ADMIN') {
         profileRole.classList.add('admin');
     }
 }
 
+// Thiết lập chuyển tab giao diện
 function setupTabs() {
     const tabButtons = document.querySelectorAll('.tab-btn');
     const tabContents = document.querySelectorAll('.tab-content');
@@ -55,20 +73,18 @@ function setupTabs() {
     tabButtons.forEach(button => {
         button.addEventListener('click', function() {
             const targetTab = this.getAttribute('data-tab');
-            
-            // Remove active class from all tabs and contents
+        
             tabButtons.forEach(btn => btn.classList.remove('active'));
             tabContents.forEach(content => content.classList.remove('active'));
             
-            // Add active class to clicked tab and corresponding content
             this.classList.add('active');
             document.getElementById(targetTab + '-tab').classList.add('active');
         });
     });
 }
 
+// Thiết lập các form và xử lý nút chức năng
 function setupForms() {
-    // Basic Info Form
     const basicInfoForm = document.getElementById('basicInfoForm');
     const editBasicInfoBtn = document.getElementById('editBasicInfoBtn');
     const cancelBasicInfoBtn = document.getElementById('cancelBasicInfoBtn');
@@ -82,7 +98,7 @@ function setupForms() {
     if (cancelBasicInfoBtn) {
         cancelBasicInfoBtn.addEventListener('click', function() {
             toggleBasicInfoEdit(false);
-            loadUserData(); // Reset form data
+            loadUserData();
         });
     }
 
@@ -175,6 +191,7 @@ function setupForms() {
     }
 }
 
+// Thiết lập các modal xác nhận/xử lý tài khoản
 function setupModals() {
     const deleteAccountBtn = document.getElementById('deleteAccountBtn');
     const deleteModal = document.getElementById('deleteModal');
@@ -206,7 +223,6 @@ function setupModals() {
         });
     }
 
-    // Close modal when clicking outside
     window.addEventListener('click', function(e) {
         if (e.target === deleteModal) {
             deleteModal.style.display = 'none';
@@ -214,48 +230,53 @@ function setupModals() {
     });
 }
 
-function loadUserData() {
-    const user = getCurrentUser();
-    if (!user) return;
+// Tải dữ liệu user và hiển thị lên giao diện
+async function loadUserData() {
+    try {
+        const user = await getCurrentUser();
+        if (!user) return;
 
-    // Load basic info display
-    document.getElementById('displayFullName').textContent = user.fullName || 'Chưa cập nhật';
-    document.getElementById('displayBirthDate').textContent = user.birthDate || 'Chưa cập nhật';
-    document.getElementById('displayAddress').textContent = user.address || 'Chưa cập nhật';
-    document.getElementById('displayBio').textContent = user.bio || 'Chưa cập nhật';
+        document.getElementById('displayFullName').textContent = user.lastName + " " + user.firstName || 'Chưa cập nhật';
+        document.getElementById('displayBirthDate').textContent = user.dateOfBirth || 'Chưa cập nhật';
+        document.getElementById('displayAddress').textContent = user.address || 'Chưa cập nhật';
+        document.getElementById('displayBio').textContent = user.bio || 'Chưa cập nhật';
+        document.getElementById('displayEmail').textContent = user.email || 'Chưa cập nhật';
+        document.getElementById('displayPhone').textContent = user.phone || 'Chưa cập nhật';
 
-    // Load contact info display
-    document.getElementById('displayEmail').textContent = user.email || 'Chưa cập nhật';
-    document.getElementById('displayPhone').textContent = user.phone || 'Chưa cập nhật';
+        if (user.dateOfBirth) {
+            const dob = new Date(user.dateOfBirth);
+            document.getElementById('displayBirthDate').textContent = dob.toLocaleDateString('vi-VN');
+        }
 
-    // Show verified badges if applicable
-    if (user.emailVerified) {
-        document.getElementById('emailVerified').style.display = 'inline-flex';
+        if (user.emailVerified) {
+            document.getElementById('emailVerified').style.display = 'inline-flex';
+        }
+        if (user.phoneVerified) {
+            document.getElementById('phoneVerified').style.display = 'inline-flex';
+        }
+
+        const fullNameInput = document.getElementById('fullName');
+        const birthDateInput = document.getElementById('birthDate');
+        const addressInput = document.getElementById('address');
+        const bioInput = document.getElementById('bio');
+        const newEmailInput = document.getElementById('newEmail');
+        const newPhoneInput = document.getElementById('newPhone');
+
+        if (fullNameInput) fullNameInput.value = user.lastName + " " + user.firstName || '';
+        if (birthDateInput) birthDateInput.value = user.dateOfBirth || '';
+        if (addressInput) addressInput.value = user.address || '';
+        if (bioInput) bioInput.value = user.bio || '';
+        if (newEmailInput) newEmailInput.value = user.email || '';
+        if (newPhoneInput) newPhoneInput.value = user.phone || '';
+
+        const settings = JSON.parse(localStorage.getItem('notificationSettings')) || {
+            email: true,
+            sms: false
+        };
+    } finally {
+        document.body.classList.remove('loading');
+        document.body.classList.add('loaded');
     }
-    if (user.phoneVerified) {
-        document.getElementById('phoneVerified').style.display = 'inline-flex';
-    }
-
-    // Fill form inputs
-    const fullNameInput = document.getElementById('fullName');
-    const birthDateInput = document.getElementById('birthDate');
-    const addressInput = document.getElementById('address');
-    const bioInput = document.getElementById('bio');
-    const newEmailInput = document.getElementById('newEmail');
-    const newPhoneInput = document.getElementById('newPhone');
-
-    if (fullNameInput) fullNameInput.value = user.fullName || '';
-    if (birthDateInput) birthDateInput.value = user.birthDate || '';
-    if (addressInput) addressInput.value = user.address || '';
-    if (bioInput) bioInput.value = user.bio || '';
-    if (newEmailInput) newEmailInput.value = user.email || '';
-    if (newPhoneInput) newPhoneInput.value = user.phone || '';
-
-    // Load notification settings
-    const settings = JSON.parse(localStorage.getItem('notificationSettings')) || {
-        email: true,
-        sms: false
-    };
     
     const emailNotifications = document.getElementById('emailNotifications');
     const smsNotifications = document.getElementById('smsNotifications');
@@ -264,7 +285,7 @@ function loadUserData() {
     if (smsNotifications) smsNotifications.checked = settings.sms;
 }
 
-// Toggle functions
+// Hiển thị/ẩn form chỉnh sửa thông tin cơ bản
 function toggleBasicInfoEdit(showEdit) {
     const display = document.getElementById('basicInfoDisplay');
     const edit = document.getElementById('basicInfoEdit');
@@ -304,207 +325,302 @@ function togglePhoneEdit(showEdit) {
     }
 }
 
-// Update functions
-function updateBasicInfo() {
-    const user = getCurrentUser();
-    if (!user) return;
-
-    // Lấy dữ liệu từ form
-    const formData = new FormData(document.getElementById('basicInfoForm'));
-    const fullName = formData.get('fullName');
-    const birthDate = formData.get('birthDate');
-    const address = formData.get('address');
-    const bio = formData.get('bio');
-
-    // Cập nhật thông tin user
-    const updatedUser = {
-        ...user,
-        fullName,
-        birthDate,
-        address,
-        bio
-    };
-
-    // Lưu vào localStorage
-    localStorage.setItem('currentUser', JSON.stringify(updatedUser));
-
-    // Cập nhật display
-    loadUserData();
-    toggleBasicInfoEdit(false);
-
-    // Cập nhật header
-    updateProfileHeader(updatedUser);
-
-    // Hiển thị thông báo thành công
-    showNotification('Cập nhật thông tin cơ bản thành công!', 'success');
-}
-
-function updateEmail() {
-    const user = getCurrentUser();
-    if (!user) return;
-
-    const newEmail = document.getElementById('newEmail').value;
+// Cập nhật thông tin cơ bản của người dùng
+async function updateBasicInfo() {
+    window.showFullScreenLoading('Đang cập nhật thông tin');
     
-    if (!newEmail) {
-        showNotification('Vui lòng nhập email!', 'error');
-        return;
-    }
+    try {
+        const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+        if (!userInfo || !userInfo.token) return;
 
-    // Simulate email verification process
-    const confirmChange = confirm(`Bạn sẽ nhận email xác thực tại: ${newEmail}\nTiếp tục?`);
-    
-    if (confirmChange) {
-        // Cập nhật email và đặt trạng thái chưa xác thực
-        const updatedUser = {
-            ...user,
-            email: newEmail,
-            emailVerified: false
+        const formData = new FormData(document.getElementById('basicInfoForm'));
+        const fullName = formData.get('fullName');
+        const dateOfBirth = formData.get('birthDate');
+        const address = formData.get('address');
+        const bio = formData.get('bio');
+
+
+        const updateData = {
+            fullName,
+            dateOfBirth,
+            address,
+            bio
         };
 
-        localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+        const response = await authManager.makeAuthenticatedRequest('/user/update-profile', {
+            method: 'PUT',
+            body: JSON.stringify(updateData)
+        });
+
+        if (response.ok) {
+            const apiResponse = await response.json();
+            await loadUserData();
+            toggleBasicInfoEdit(false);
+
+            Utils.showNotification('Cập nhật thông tin thành công!', 'success');
+        } else {
+            const errorResponse = await response.json();
+            Utils.showNotification(errorResponse.message || 'Có lỗi xảy ra khi cập nhật thông tin!', 'error');
+        }
+    } catch (error) {
+        Utils.showNotification('Có lỗi xảy ra khi cập nhật thông tin!', 'error');
+    } finally {
+        window.hideFullScreenLoading();
+    }
+}
+
+// Cập nhật email người dùng
+async function updateEmail() {
+    window.showFullScreenLoading('Đang cập nhật email');
+    
+    try {
+        const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+        if (!userInfo || !userInfo.token) return;
+
+        const newEmail = document.getElementById('newEmail').value;
         
-        // Simulate sending verification email
-        setTimeout(() => {
-            if (confirm('Mã xác thực đã được gửi đến email của bạn. Nhấn OK để mô phỏng xác thực thành công.')) {
-                const verifiedUser = {
-                    ...updatedUser,
-                    emailVerified: true
-                };
-                localStorage.setItem('currentUser', JSON.stringify(verifiedUser));
-                loadUserData();
-                showNotification('Email đã được cập nhật và xác thực thành công!', 'success');
-            }
-        }, 1000);
+        if (!newEmail) {
+            Utils.showNotification('Vui lòng nhập email!', 'error');
+            return;
+        }
 
-        loadUserData();
-        toggleEmailEdit(false);
-        updateProfileHeader(updatedUser);
-        showNotification('Email đang được xác thực...', 'success');
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(newEmail)) {
+            Utils.showNotification('Email không hợp lệ!', 'error');
+            return;
+        }
+
+        const updateData = {
+            newEmail: newEmail
+        };
+
+        const response = await authManager.makeAuthenticatedRequest('/user/update-email', {
+            method: 'PUT',
+            body: JSON.stringify(updateData)
+        });
+
+        if (response.ok) {
+            // Cập nhật thông tin userInfo trong localStorage với email mới
+            userInfo.email = newEmail;
+            localStorage.setItem('userInfo', JSON.stringify(userInfo));
+            
+            await loadUserData();
+            toggleEmailEdit(false);
+            Utils.showNotification('Cập nhật email thành công!', 'success');
+        } else {
+            const errorResponse = await response.json();
+            Utils.showNotification(errorResponse.message || 'Có lỗi xảy ra khi cập nhật email!', 'error');
+        }
+    } catch (error) {
+        Utils.showNotification('Có lỗi xảy ra khi cập nhật email!', 'error');
+    } finally {
+        window.hideFullScreenLoading();
     }
 }
 
-function updatePhone() {
-    const user = getCurrentUser();
-    if (!user) return;
-
-    const newPhone = document.getElementById('newPhone').value;
+// Cập nhật số điện thoại người dùng
+async function updatePhone() {
+    window.showFullScreenLoading('Đang cập nhật số điện thoại');
     
-    if (!newPhone) {
-        showNotification('Vui lòng nhập số điện thoại!', 'error');
-        return;
-    }
+    try {
+        const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+        if (!userInfo || !userInfo.token) return;
 
-    // Validate phone number format
-    const phoneRegex = /^[0-9]{10,11}$/;
-    if (!phoneRegex.test(newPhone)) {
-        showNotification('Số điện thoại không hợp lệ!', 'error');
-        return;
-    }
-
-    // Simulate SMS verification process
-    const confirmChange = confirm(`Bạn sẽ nhận mã xác thực qua SMS tại: ${newPhone}\nTiếp tục?`);
-    
-    if (confirmChange) {
-        // Cập nhật phone và đặt trạng thái chưa xác thực
-        const updatedUser = {
-            ...user,
-            phone: newPhone,
-            phoneVerified: false
-        };
-
-        localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+        const newPhone = document.getElementById('newPhone').value;
         
-        // Simulate sending SMS verification
-        setTimeout(() => {
-            const verificationCode = prompt('Nhập mã xác thực (nhập "123456" để mô phỏng):');
-            if (verificationCode === '123456') {
-                const verifiedUser = {
-                    ...updatedUser,
-                    phoneVerified: true
-                };
-                localStorage.setItem('currentUser', JSON.stringify(verifiedUser));
-                loadUserData();
-                showNotification('Số điện thoại đã được cập nhật và xác thực thành công!', 'success');
-            } else {
-                showNotification('Mã xác thực không đúng!', 'error');
-            }
-        }, 1000);
+        if (!newPhone) {
+            Utils.showNotification('Vui lòng nhập số điện thoại!', 'error');
+            return;
+        }
 
-        loadUserData();
-        togglePhoneEdit(false);
-        showNotification('Mã xác thực đang được gửi...', 'success');
-    }
-}
+        // Validate phone number format
+        const phoneRegex = /^[0-9]{10,11}$/;
+        if (!phoneRegex.test(newPhone)) {
+            Utils.showNotification('Số điện thoại không hợp lệ!', 'error');
+            return;
+        }
 
-function changePassword() {
-    const currentPassword = document.getElementById('currentPassword').value;
-    const newPassword = document.getElementById('newPassword').value;
-    const confirmPassword = document.getElementById('confirmPassword').value;
-
-    const user = getCurrentUser();
-    if (!user) return;
-
-    // Kiểm tra mật khẩu hiện tại
-    if (user.password !== currentPassword) {
-        showNotification('Mật khẩu hiện tại không đúng!', 'error');
-        return;
-    }
-
-    // Kiểm tra mật khẩu mới
-    if (newPassword.length < 6) {
-        showNotification('Mật khẩu mới phải có ít nhất 6 ký tự!', 'error');
-        return;
-    }
-
-    if (newPassword !== confirmPassword) {
-        showNotification('Mật khẩu xác nhận không khớp!', 'error');
-        return;
-    }
-
-    // Cập nhật mật khẩu
-    const updatedUser = {
-        ...user,
-        password: newPassword
-    };
-
-    localStorage.setItem('currentUser', JSON.stringify(updatedUser));
-
-    // Reset form
-    document.getElementById('changePasswordForm').reset();
-
-    showNotification('Đổi mật khẩu thành công!', 'success');
-}
-
-function handleAvatarChange(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    if (!file.type.startsWith('image/')) {
-        showNotification('Vui lòng chọn file ảnh!', 'error');
-        return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) { // 5MB
-        showNotification('File ảnh quá lớn! Vui lòng chọn file nhỏ hơn 5MB.', 'error');
-        return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const user = getCurrentUser();
-        const updatedUser = {
-            ...user,
-            avatar: e.target.result
+        const updateData = {
+            newPhone: newPhone
         };
 
-        localStorage.setItem('currentUser', JSON.stringify(updatedUser));
-        updateProfileHeader(updatedUser);
-        showNotification('Cập nhật ảnh đại diện thành công!', 'success');
-    };
+        const response = await authManager.makeAuthenticatedRequest('/user/update-phone', {
+            method: 'PUT',
+            body: JSON.stringify(updateData)
+        });
 
-    reader.readAsDataURL(file);
+        if (response.ok) {
+            await loadUserData();
+            togglePhoneEdit(false);
+            Utils.showNotification('Cập nhật số điện thoại thành công!', 'success');
+        } else {
+            const errorResponse = await response.json();
+            Utils.showNotification(errorResponse.message || 'Có lỗi xảy ra khi cập nhật số điện thoại!', 'error');
+        }
+    } catch (error) {
+        Utils.showNotification('Có lỗi xảy ra khi cập nhật số điện thoại!', 'error');
+    } finally {
+        window.hideFullScreenLoading();
+    }
 }
 
+// Đổi mật khẩu người dùng
+async function changePassword() {
+    window.showFullScreenLoading('Đang đổi mật khẩu');
+    
+    try {
+        const currentPassword = document.getElementById('currentPassword').value;
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+
+        const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+        if (!userInfo || !userInfo.token) return;
+
+        if (newPassword.length < 6) {
+            Utils.showNotification('Mật khẩu mới phải có ít nhất 6 ký tự!', 'error');
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            Utils.showNotification('Mật khẩu xác nhận không khớp!', 'error');
+            return;
+        }
+
+        const changePasswordData = {
+            oldPassword: currentPassword,
+            newPassword: newPassword,
+            confirmPassword: confirmPassword
+        };
+
+        const response = await authManager.makeAuthenticatedRequest('/user/change-password', {
+            method: 'PATCH',
+            body: JSON.stringify(changePasswordData)
+        });
+
+        if (response.ok) {
+            document.getElementById('changePasswordForm').reset();
+            Utils.showNotification('Đổi mật khẩu thành công!', 'success');
+        } else {
+            const errorResponse = await response.json();
+            Utils.showNotification(errorResponse.message || 'Có lỗi xảy ra khi đổi mật khẩu!', 'error');
+        }
+    } catch (error) {
+        Utils.showNotification('Có lỗi xảy ra khi đổi mật khẩu!', 'error');
+    } finally {
+        window.hideFullScreenLoading();
+    }
+}
+
+document.getElementById('toggleCurrentPassword')?.addEventListener('click', () => togglePassword('currentPassword'));
+document.getElementById('toggleNewPassword')?.addEventListener('click', () => togglePassword('newPassword'));
+document.getElementById('toggleConfirmPassword')?.addEventListener('click', () => togglePassword('confirmPassword'));
+
+function togglePassword(inputId) {
+    const input = document.getElementById(inputId);
+    const button = input.nextElementSibling;
+    
+    if (input.type === 'password') {
+        input.type = 'text';
+        button.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                <line x1="1" y1="1" x2="23" y2="23"></line>
+            </svg>
+        `;
+    } else {
+        input.type = 'password';
+        button.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+        `;
+    }
+}
+
+// Tải ảnh avatar lên Cloudinary
+async function uploadAvatarToCloudinary(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', CLOUDINARY_CONFIG.uploadPreset);
+    formData.append('folder', 'avatars');
+    
+    try {
+        const response = await fetch(
+            `https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.cloudName}/image/upload`,
+            {
+                method: 'POST',
+                body: formData
+            }
+        );
+        
+        if (!response.ok) {
+            throw new Error('Upload failed');
+        }
+        
+        const data = await response.json();
+        return data.secure_url;
+    } catch (error) {
+        throw error;
+    }
+}
+
+// Xử lý thay đổi avatar: upload trước rồi cập nhật profile
+async function handleAvatarChange(event) {
+    window.showFullScreenLoading('Đang tải ảnh lên');
+    
+    try {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        if (!file.type.match('image.*')) {
+            Utils.showNotification('Vui lòng chọn file ảnh!', 'error');
+            return;
+        }
+        
+        const maxSize = 5 * 1024 * 1024;
+        if (file.size > maxSize) {
+            Utils.showNotification('Kích thước ảnh tối đa 5MB!', 'error');
+            return;
+        }
+        
+        const userInfo = authManager.getCurrentUser();
+        if (!userInfo || !userInfo.token) return;
+        
+        const cloudinaryUrl = await uploadAvatarToCloudinary(file);
+    
+        const response = await authManager.makeAuthenticatedRequest('/user/update-avatar', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ avatarUrl: cloudinaryUrl })
+        });
+        
+        if (response.ok) {
+            Utils.showNotification('Cập nhật ảnh đại diện thành công!', 'success');
+            
+            const profileAvatar = document.getElementById('profileAvatar');
+            profileAvatar.innerHTML = `<img src="${cloudinaryUrl}" alt="Avatar">`;
+            
+            setTimeout(() => {
+                loadUserData();
+            }, 500);
+        } else {
+            Utils.showNotification('Có lỗi xảy ra khi cập nhật ảnh đại diện!', 'error');
+        }
+    } catch (error) {
+        const user = await getCurrentUser();
+        if (user) {
+            updateProfileHeader(user);
+        }
+        
+        Utils.showNotification('Không thể tải ảnh lên. Vui lòng thử lại!', 'error');
+    } finally {
+        window.hideFullScreenLoading();
+    }
+}
+
+// Lưu cài đặt thông báo vào localStorage
 function saveNotificationSettings() {
     const emailNotifications = document.getElementById('emailNotifications').checked;
     const smsNotifications = document.getElementById('smsNotifications').checked;
@@ -515,178 +631,26 @@ function saveNotificationSettings() {
     };
 
     localStorage.setItem('notificationSettings', JSON.stringify(settings));
-    showNotification('Lưu cài đặt thông báo thành công!', 'success');
+    Utils.showNotification('Lưu cài đặt thông báo thành công!', 'success');
 }
 
-function loadUserPosts() {
-    const user = getCurrentUser();
+// Xoá tài khoản và dữ liệu liên quan ở localStorage
+async function deleteAccount() {
+    const user = await getCurrentUser();
     if (!user) return;
 
-    // Giả lập dữ liệu tin đăng của user
-    const userPosts = JSON.parse(localStorage.getItem('userPosts')) || [];
-    const postsContainer = document.getElementById('userPosts');
-
-    if (userPosts.length === 0) {
-        return; // Hiển thị empty state
-    }
-
-    // Render tin đăng
-    const postsHTML = userPosts.map(post => `
-        <div class="post-item" data-id="${post.id}">
-            <div class="post-image">
-                <img src="${post.image || 'https://via.placeholder.com/120x90'}" alt="${post.title}">
-            </div>
-            <div class="post-info">
-                <h4 class="post-title">${post.title}</h4>
-                <div class="post-price">${formatPrice(post.price)}</div>
-                <div class="post-address">${post.address}</div>
-                <div class="post-actions">
-                    <button class="edit-btn" onclick="editPost(${post.id})">
-                        <i class="fas fa-edit"></i> Sửa
-                    </button>
-                    <button class="delete-btn" onclick="deletePost(${post.id})">
-                        <i class="fas fa-trash"></i> Xóa
-                    </button>
-                </div>
-            </div>
-        </div>
-    `).join('');
-
-    postsContainer.innerHTML = postsHTML;
-}
-
-function loadFavorites() {
-    const favoriteRooms = JSON.parse(localStorage.getItem('favouriteRooms')) || [];
-    const favoritesContainer = document.getElementById('favoritesList');
-    const favoritesCount = document.getElementById('favoritesCount');
-
-    favoritesCount.textContent = `${favoriteRooms.length} tin`;
-
-    if (favoriteRooms.length === 0) {
-        return; // Hiển thị empty state
-    }
-
-    // Render tin đã lưu
-    const favoritesHTML = favoriteRooms.map(room => {
-        const mainImage = room.images && room.images.length > 0 
-            ? room.images[0].url 
-            : 'https://via.placeholder.com/120x90';
-
-        return `
-                <div class="post-item" data-id="${room.id}">
-                    <div class="post-image">
-                        <img src="${mainImage}" alt="${room.title}">
-                    </div>
-                <div class="post-info">
-                    <h4 class="post-title">${room.title}</h4>
-                    <div class="post-price">${formatPrice(room.price)}</div>
-                    <div class="post-address">${room.address}</div>
-                    
-                </div>
-                <div class="favourite-remove" onclick="removeFavorite(${room.id})">
-                        <i class="fa-solid fa-heart heart-filled"></i>
-                </div>
-            </div>
-        `}).join('');
-
-    favoritesContainer.innerHTML = favoritesHTML;
-}
-
-function deleteAccount() {
-    const user = getCurrentUser();
-    if (!user) return;
-
-    // Xóa tất cả dữ liệu user
     localStorage.removeItem('currentUser');
     localStorage.removeItem('userPosts');
     localStorage.removeItem('favouriteRooms');
     localStorage.removeItem('notificationSettings');
 
-    // Hiển thị thông báo và chuyển về trang chủ
     alert('Tài khoản đã được xóa thành công!');
     window.location.href = 'index.html';
 }
-
-// Utility functions
-function showNotification(message, type = 'success') {
-    // Tạo notification element
-    const notification = document.createElement('div');
-    notification.className = `notification ${type}`;
-    notification.textContent = message;
-    
-    // Style notification
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        padding: 12px 20px;
-        border-radius: 8px;
-        color: white;
-        font-weight: 500;
-        z-index: 10000;
-        transition: all 0.3s ease;
-        ${type === 'success' ? 'background-color: #28a745;' : 'background-color: #dc3545;'}
-    `;
-
-    document.body.appendChild(notification);
-
-    // Auto remove after 3 seconds
-    setTimeout(() => {
-        notification.style.opacity = '0';
-        notification.style.transform = 'translateX(100%)';
-        setTimeout(() => {
-            document.body.removeChild(notification);
-        }, 300);
-    }, 3000);
-}
-
-function formatPrice(price) {
-    return new Intl.NumberFormat('vi-VN', {
-        style: 'currency',
-        currency: 'VND'
-    }).format(price);
-}
-
-// Global functions for post actions
+// Hàm toàn cục mở trang chỉnh sửa tin đăng
 window.editPost = function(postId) {
-    // Redirect to edit form
     window.location.href = `roomForm.html?edit=${postId}`;
 };
 
-window.deletePost = function(postId) {
-    if (confirm('Bạn có chắc chắn muốn xóa tin đăng này?')) {
-        let userPosts = JSON.parse(localStorage.getItem('userPosts')) || [];
-        userPosts = userPosts.filter(post => post.id !== postId);
-        localStorage.setItem('userPosts', JSON.stringify(userPosts));
-        loadUserPosts();
-        showNotification('Xóa tin đăng thành công!', 'success');
-    }
-};
 
-window.viewRoom = function(roomId) {
-    window.location.href = `detail.html?id=${roomId}`;
-};
 
-window.removeFavorite = function(roomId) {
-    let favoriteRooms = JSON.parse(localStorage.getItem('favouriteRooms')) || [];
-    favoriteRooms = favoriteRooms.filter(room => room.id !== roomId);
-    localStorage.setItem('favouriteRooms', JSON.stringify(favoriteRooms));
-    // Cập nhật sô lượng tin đã lưu
-
-    document.getElementById('favoritesCount').textContent = `${favoriteRooms.length} tin`;
-    document.querySelector(`.post-item[data-id="${roomId}"]`).remove(); // Xóa phần tử khỏi DOM
-    if (favoriteRooms.length === 0) {
-        document.getElementById('favoritesList').innerHTML = `
-            <div class="favorites-list" id="favoritesList">
-                <div class="empty-state">
-                    <i class="fas fa-heart"></i>
-                    <h4>Chưa có tin nào được lưu</h4>
-                    <p>Bạn chưa lưu tin nào. Hãy tìm và lưu những tin yêu thích!</p>
-                    <a href="index.html" class="btn-primary">Tìm phòng trọ</a>
-                </div>
-            </div>
-        `; // Hiển thị empty state nếu cần
-    }
-
-    showNotification('Đã bỏ lưu tin thành công!', 'success');
-};

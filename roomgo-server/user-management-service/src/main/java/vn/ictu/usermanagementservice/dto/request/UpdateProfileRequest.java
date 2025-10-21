@@ -14,10 +14,12 @@ import java.util.Date;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UpdateProfileRequest implements Serializable {
-    private String firstname;
-    private String lastname;
+    private String avatarUrl;
+    private String fullName;
     private String email;
     private String phone;
     private Gender gender;
     private Date dateOfBirth;
+    private String address;
+    private String bio;
 }

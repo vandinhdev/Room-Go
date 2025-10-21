@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="../access/css/loading.css">
+    >
+</head>
+<body>
+    <div class="main-container">
+        <div class="loading-spinner" id="loadingSpinner">
+            <div class="spinner"></div>
+            <p>Đang tải thông tin...</p>
+        </div>
+
+        <div class="error-message" id="errorMessage" style="display: none;">
+            <div class="error-content">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h3>Không thể tải thông tin</h3>
+                <p id="errorText">Đã xảy ra lỗi khi tải thông tin người dùng.</p>
+                <button class="btn btn-primary" onclick="location.reload()">Thử lại</button>
+            </div>
+        </div>
+    </div>
+    
+</body>
+</html>

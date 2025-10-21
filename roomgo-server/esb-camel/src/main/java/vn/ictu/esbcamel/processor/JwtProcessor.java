@@ -1,14 +1,15 @@
 package vn.ictu.esbcamel.processor;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+import org.springframework.web.server.ResponseStatusException;
 
 import javax.crypto.SecretKey;
 import java.util.List;
@@ -56,9 +57,18 @@ public class JwtProcessor implements Processor {
 
             log.info("✅ JWT verified: email={}, roles={}", email, roles);
 
+        } catch (ExpiredJwtException e) {
+            log.warn("⚠️ Token expired: {}", e.getMessage());
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token expired");
+        } catch (MalformedJwtException e) {
+            log.error("❌ Invalid token format: {}", e.getMessage());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Malformed token");
+        } catch (JwtException e) {
+            log.error("❌ Invalid signature or token: {}", e.getMessage());
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid JWT signature");
         } catch (Exception e) {
-            log.error("❌ JWT parsing failed: {}", e.getMessage(), e);
-            throw new RuntimeException("Invalid JWT token", e);
+            log.error("❌ Unexpected error parsing JWT: {}", e.getMessage(), e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "JWT processing failed");
         }
     }
 }
