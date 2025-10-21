@@ -55,8 +55,7 @@ function initChatPopup(room) {
 
     chatInput.addEventListener('input', function() {
         this.style.height = 'auto';
-        this.style.height = Math.min(this.scrollHeight, 80) + 'px';
-        
+        this.style.height = Math.min(this.scrollHeight, 120) + 'px';
         sendChat.disabled = !this.value.trim();
     });
 
