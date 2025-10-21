@@ -62,7 +62,6 @@ public class RoomServiceImpl implements RoomService {
                 minPrice, maxPrice, minArea, maxArea, pageable
         );
 
-        // ✅ Chỉ lưu lịch sử khi có tìm kiếm thực sự (không phải refresh)
         boolean isMeaningfulSearch =
                 StringUtils.hasText(keyword) ||
                         StringUtils.hasText(province) ||
@@ -133,13 +132,12 @@ public class RoomServiceImpl implements RoomService {
         room.setWard(req.getWard());
         room.setAddress(req.getAddress());
         room.setOwnerId(ownerId);
-        room.setStatus(RoomStatus.AVAILABLE);
+        room.setStatus(RoomStatus.PENDING);
 
         setGeoLocation(req, room, fullAddress);
         RoomEntity savedRoom = roomRepository.save(room);
         log.info("Room entity saved with ID: {}", savedRoom.getId());
         saveRoomImages(savedRoom, req.getImageUrls());
-        log.info("📸 Received image URLs: {}", req.getImageUrls());
         log.info("Saved images for room ID: {}", savedRoom.getId());
 
         log.info("Created room id: {}", savedRoom.getId());
@@ -174,6 +172,26 @@ public class RoomServiceImpl implements RoomService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    public void approveRoom(Long roomId, boolean approved) {
+        RoomEntity room = getRoomEntity(roomId);
+        if (room.getStatus() != RoomStatus.PENDING) {
+            log.warn("Room {} không ở trạng thái chờ duyệt (hiện là {}).", roomId, room.getStatus());
+            return;
+        }
+        if (approved) {
+            room.setStatus(RoomStatus.ACTIVE);
+            log.info("Room {} đã được duyệt và hiển thị.", roomId);
+        } else {
+            room.setStatus(RoomStatus.REJECTED);
+            log.info("Room {} bị từ chối duyệt.", roomId);
+        }
+
+        roomRepository.save(room);
+
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
     public void deleteRoom(Long id) {
         RoomEntity room = getRoomEntity(id);
         roomRepository.delete(room);
@@ -190,7 +208,6 @@ public class RoomServiceImpl implements RoomService {
                                    BigDecimal minArea, BigDecimal maxArea,
                                    String sort, int page, int size, Long userId) {
 
-        // ✅ Dùng HashMap để chấp nhận null
         Map<String, Object> params = new HashMap<>();
         params.put("keyword", keyword);
         params.put("province", province);
@@ -206,7 +223,6 @@ public class RoomServiceImpl implements RoomService {
 
         String query = SearchQueryBuilder.buildQuery(params);
 
-        // ✅ Kiểm tra bản ghi gần nhất xem có trùng không
         Optional<SearchHistory> lastHistoryOpt =
                 searchHistoryRepository.findTopByUserIdOrderBySearchedAtDesc(userId);
 
@@ -232,7 +248,6 @@ public class RoomServiceImpl implements RoomService {
 
         searchHistoryRepository.save(history);
 
-        // ✅ Giới hạn số lượng lịch sử (VD: giữ tối đa 50 bản gần nhất)
         List<SearchHistory> allHistories = searchHistoryRepository.findByUserIdOrderBySearchedAtDesc(userId);
         if (allHistories.size() > 50) {
             List<SearchHistory> toDelete = allHistories.subList(50, allHistories.size());
@@ -257,7 +272,7 @@ public class RoomServiceImpl implements RoomService {
 
 
         roomImageRepository.saveAll(images);
-        log.info("💾 Saving {} images for room {}", imageUrls == null ? 0 : imageUrls.size(), room.getId());
+        log.info("Saving {} images for room {}", imageUrls == null ? 0 : imageUrls.size(), room.getId());
 
         log.info("Saved {} images for room {}", images.size(), room.getId());
     }

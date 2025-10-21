@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import vn.ictu.communicationservice.common.enums.MessageType;
 
 
@@ -33,6 +35,7 @@ public class Message implements Serializable {
     private String content;
 
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(name = "message_type", length = 20)
     private MessageType messageType = MessageType.TEXT;
 

@@ -1,6 +1,9 @@
 package vn.ictu.roommanagementservice.common.enums;
 
 public enum RoomStatus {
-    AVAILABLE,
+    PENDING,
+    ACTIVE,
+    INACTIVE,
+    REJECTED,
     RENTED
 }

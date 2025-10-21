@@ -1,5 +1,6 @@
-import { API_BASE_URL } from "./config.js";
+import { API_BASE_URL, CLOUDINARY_CONFIG } from "./config.js";
 import { authManager } from './auth.js';
+
 
 document.addEventListener('DOMContentLoaded', function() {
     initializeProfile();
@@ -17,25 +18,22 @@ async function getCurrentUser() {
     }
 
     try {
-        // Use authManager with auto-refresh token
         const response = await authManager.makeAuthenticatedRequest('/user/profile', {
             method: 'GET'
         });
 
         if (response.ok) {
             const apiResponse = await response.json();
-            console.log('Fetched user profile:', apiResponse.data);
             return apiResponse.data;
         } else {
-            console.error('Error fetching user profile:', response.statusText);
             return null;
         }
     } catch (error) {
-        console.error('Error fetching user profile:', error);
         return null;
     }
 }
 
+// Khởi tạo dữ liệu và điều hướng nếu chưa đăng nhập
 async function initializeProfile() {
     const user = await getCurrentUser();
 
@@ -46,7 +44,7 @@ async function initializeProfile() {
     updateProfileHeader(user);
 }
 
-// Cập nhật header profile
+// Cập nhật phần header của hồ sơ
 function updateProfileHeader(user) {
     const profileAvatar = document.getElementById('profileAvatar');
     const profileName = document.getElementById('profileName');
@@ -67,7 +65,7 @@ function updateProfileHeader(user) {
     }
 }
 
-// Thiết lập chức năng tab
+// Thiết lập chuyển tab giao diện
 function setupTabs() {
     const tabButtons = document.querySelectorAll('.tab-btn');
     const tabContents = document.querySelectorAll('.tab-content');
@@ -85,7 +83,7 @@ function setupTabs() {
     });
 }
 
-// Thiết lập các form và nút chức năng
+// Thiết lập các form và xử lý nút chức năng
 function setupForms() {
     const basicInfoForm = document.getElementById('basicInfoForm');
     const editBasicInfoBtn = document.getElementById('editBasicInfoBtn');
@@ -193,6 +191,7 @@ function setupForms() {
     }
 }
 
+// Thiết lập các modal xác nhận/xử lý tài khoản
 function setupModals() {
     const deleteAccountBtn = document.getElementById('deleteAccountBtn');
     const deleteModal = document.getElementById('deleteModal');
@@ -224,7 +223,6 @@ function setupModals() {
         });
     }
 
-    // Close modal when clicking outside
     window.addEventListener('click', function(e) {
         if (e.target === deleteModal) {
             deleteModal.style.display = 'none';
@@ -232,50 +230,53 @@ function setupModals() {
     });
 }
 
-// Tải dữ liệu user và hiển thị
+// Tải dữ liệu user và hiển thị lên giao diện
 async function loadUserData() {
-    const user = await getCurrentUser();
-    if (!user) return;
+    try {
+        const user = await getCurrentUser();
+        if (!user) return;
 
-    document.getElementById('displayFullName').textContent = user.lastName + " " + user.firstName || 'Chưa cập nhật';
-    document.getElementById('displayBirthDate').textContent = user.dateOfBirth || 'Chưa cập nhật';
-    document.getElementById('displayAddress').textContent = user.address || 'Chưa cập nhật';
-    document.getElementById('displayBio').textContent = user.bio || 'Chưa cập nhật';
-    document.getElementById('displayEmail').textContent = user.email || 'Chưa cập nhật';
-    document.getElementById('displayPhone').textContent = user.phone || 'Chưa cập nhật';
+        document.getElementById('displayFullName').textContent = user.lastName + " " + user.firstName || 'Chưa cập nhật';
+        document.getElementById('displayBirthDate').textContent = user.dateOfBirth || 'Chưa cập nhật';
+        document.getElementById('displayAddress').textContent = user.address || 'Chưa cập nhật';
+        document.getElementById('displayBio').textContent = user.bio || 'Chưa cập nhật';
+        document.getElementById('displayEmail').textContent = user.email || 'Chưa cập nhật';
+        document.getElementById('displayPhone').textContent = user.phone || 'Chưa cập nhật';
 
-    if (user.dateOfBirth) {
-        const dob = new Date(user.dateOfBirth);
-        document.getElementById('displayBirthDate').textContent = dob.toLocaleDateString('vi-VN');
+        if (user.dateOfBirth) {
+            const dob = new Date(user.dateOfBirth);
+            document.getElementById('displayBirthDate').textContent = dob.toLocaleDateString('vi-VN');
+        }
+
+        if (user.emailVerified) {
+            document.getElementById('emailVerified').style.display = 'inline-flex';
+        }
+        if (user.phoneVerified) {
+            document.getElementById('phoneVerified').style.display = 'inline-flex';
+        }
+
+        const fullNameInput = document.getElementById('fullName');
+        const birthDateInput = document.getElementById('birthDate');
+        const addressInput = document.getElementById('address');
+        const bioInput = document.getElementById('bio');
+        const newEmailInput = document.getElementById('newEmail');
+        const newPhoneInput = document.getElementById('newPhone');
+
+        if (fullNameInput) fullNameInput.value = user.lastName + " " + user.firstName || '';
+        if (birthDateInput) birthDateInput.value = user.dateOfBirth || '';
+        if (addressInput) addressInput.value = user.address || '';
+        if (bioInput) bioInput.value = user.bio || '';
+        if (newEmailInput) newEmailInput.value = user.email || '';
+        if (newPhoneInput) newPhoneInput.value = user.phone || '';
+
+        const settings = JSON.parse(localStorage.getItem('notificationSettings')) || {
+            email: true,
+            sms: false
+        };
+    } finally {
+        document.body.classList.remove('loading');
+        document.body.classList.add('loaded');
     }
-
-    if (user.emailVerified) {
-        document.getElementById('emailVerified').style.display = 'inline-flex';
-    }
-    if (user.phoneVerified) {
-        document.getElementById('phoneVerified').style.display = 'inline-flex';
-    }
-
-    // Điền dữ liệu vào form chỉnh sửa
-    const fullNameInput = document.getElementById('fullName');
-    const birthDateInput = document.getElementById('birthDate');
-    const addressInput = document.getElementById('address');
-    const bioInput = document.getElementById('bio');
-    const newEmailInput = document.getElementById('newEmail');
-    const newPhoneInput = document.getElementById('newPhone');
-
-    if (fullNameInput) fullNameInput.value = user.lastName + " " + user.firstName || '';
-    if (birthDateInput) birthDateInput.value = user.dateOfBirth || '';
-    if (addressInput) addressInput.value = user.address || '';
-    if (bioInput) bioInput.value = user.bio || '';
-    if (newEmailInput) newEmailInput.value = user.email || '';
-    if (newPhoneInput) newPhoneInput.value = user.phone || '';
-
-    // Load notification settings
-    const settings = JSON.parse(localStorage.getItem('notificationSettings')) || {
-        email: true,
-        sms: false
-    };
     
     const emailNotifications = document.getElementById('emailNotifications');
     const smsNotifications = document.getElementById('smsNotifications');
@@ -324,28 +325,28 @@ function togglePhoneEdit(showEdit) {
     }
 }
 
-// Cập nhật thông tin cơ bản
+// Cập nhật thông tin cơ bản của người dùng
 async function updateBasicInfo() {
-    const userInfo = JSON.parse(localStorage.getItem('userInfo'));
-    if (!userInfo || !userInfo.token) return;
-
-    // Lấy dữ liệu từ form
-    const formData = new FormData(document.getElementById('basicInfoForm'));
-    const fullName = formData.get('fullName');
-    const dateOfBirth = formData.get('birthDate');
-    const address = formData.get('address');
-    const bio = formData.get('bio');
-
-
-    const updateData = {
-        fullName,
-        dateOfBirth,
-        address,
-        bio
-    };
-
+    window.showFullScreenLoading('Đang cập nhật thông tin');
+    
     try {
-        // Use authManager with auto-refresh token
+        const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+        if (!userInfo || !userInfo.token) return;
+
+        const formData = new FormData(document.getElementById('basicInfoForm'));
+        const fullName = formData.get('fullName');
+        const dateOfBirth = formData.get('birthDate');
+        const address = formData.get('address');
+        const bio = formData.get('bio');
+
+
+        const updateData = {
+            fullName,
+            dateOfBirth,
+            address,
+            bio
+        };
+
         const response = await authManager.makeAuthenticatedRequest('/user/update-profile', {
             method: 'PUT',
             body: JSON.stringify(updateData)
@@ -353,55 +354,57 @@ async function updateBasicInfo() {
 
         if (response.ok) {
             const apiResponse = await response.json();
-
-            console.log('Profile updated successfully:', apiResponse);
-            
-            // Cập nhật display
             await loadUserData();
             toggleBasicInfoEdit(false);
 
-            // Hiển thị thông báo thành công
             Utils.showNotification('Cập nhật thông tin thành công!', 'success');
         } else {
             const errorResponse = await response.json();
             Utils.showNotification(errorResponse.message || 'Có lỗi xảy ra khi cập nhật thông tin!', 'error');
         }
     } catch (error) {
-        console.error('Error updating profile:', error);
         Utils.showNotification('Có lỗi xảy ra khi cập nhật thông tin!', 'error');
+    } finally {
+        window.hideFullScreenLoading();
     }
 }
 
+// Cập nhật email người dùng
 async function updateEmail() {
-    const userInfo = JSON.parse(localStorage.getItem('userInfo'));
-    if (!userInfo || !userInfo.token) return;
-
-    const newEmail = document.getElementById('newEmail').value;
+    window.showFullScreenLoading('Đang cập nhật email');
     
-    if (!newEmail) {
-        Utils.showNotification('Vui lòng nhập email!', 'error');
-        return;
-    }
-
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(newEmail)) {
-        Utils.showNotification('Email không hợp lệ!', 'error');
-        return;
-    }
-
-    const updateData = {
-        email: newEmail
-    };
-
     try {
-        // Use authManager with auto-refresh token
-        const response = await authManager.makeAuthenticatedRequest('/user/update-profile', {
+        const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+        if (!userInfo || !userInfo.token) return;
+
+        const newEmail = document.getElementById('newEmail').value;
+        
+        if (!newEmail) {
+            Utils.showNotification('Vui lòng nhập email!', 'error');
+            return;
+        }
+
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(newEmail)) {
+            Utils.showNotification('Email không hợp lệ!', 'error');
+            return;
+        }
+
+        const updateData = {
+            newEmail: newEmail
+        };
+
+        const response = await authManager.makeAuthenticatedRequest('/user/update-email', {
             method: 'PUT',
             body: JSON.stringify(updateData)
         });
 
         if (response.ok) {
+            // Cập nhật thông tin userInfo trong localStorage với email mới
+            userInfo.email = newEmail;
+            localStorage.setItem('userInfo', JSON.stringify(userInfo));
+            
             await loadUserData();
             toggleEmailEdit(false);
             Utils.showNotification('Cập nhật email thành công!', 'success');
@@ -410,36 +413,39 @@ async function updateEmail() {
             Utils.showNotification(errorResponse.message || 'Có lỗi xảy ra khi cập nhật email!', 'error');
         }
     } catch (error) {
-        console.error('Error updating email:', error);
         Utils.showNotification('Có lỗi xảy ra khi cập nhật email!', 'error');
+    } finally {
+        window.hideFullScreenLoading();
     }
 }
 
+// Cập nhật số điện thoại người dùng
 async function updatePhone() {
-    const userInfo = JSON.parse(localStorage.getItem('userInfo'));
-    if (!userInfo || !userInfo.token) return;
-
-    const newPhone = document.getElementById('newPhone').value;
+    window.showFullScreenLoading('Đang cập nhật số điện thoại');
     
-    if (!newPhone) {
-        Utils.showNotification('Vui lòng nhập số điện thoại!', 'error');
-        return;
-    }
-
-    // Validate phone number format
-    const phoneRegex = /^[0-9]{10,11}$/;
-    if (!phoneRegex.test(newPhone)) {
-        Utils.showNotification('Số điện thoại không hợp lệ!', 'error');
-        return;
-    }
-
-    const updateData = {
-        phone: newPhone
-    };
-
     try {
-        // Use authManager with auto-refresh token
-        const response = await authManager.makeAuthenticatedRequest('/user/update-profile', {
+        const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+        if (!userInfo || !userInfo.token) return;
+
+        const newPhone = document.getElementById('newPhone').value;
+        
+        if (!newPhone) {
+            Utils.showNotification('Vui lòng nhập số điện thoại!', 'error');
+            return;
+        }
+
+        // Validate phone number format
+        const phoneRegex = /^[0-9]{10,11}$/;
+        if (!phoneRegex.test(newPhone)) {
+            Utils.showNotification('Số điện thoại không hợp lệ!', 'error');
+            return;
+        }
+
+        const updateData = {
+            newPhone: newPhone
+        };
+
+        const response = await authManager.makeAuthenticatedRequest('/user/update-phone', {
             method: 'PUT',
             body: JSON.stringify(updateData)
         });
@@ -453,45 +459,46 @@ async function updatePhone() {
             Utils.showNotification(errorResponse.message || 'Có lỗi xảy ra khi cập nhật số điện thoại!', 'error');
         }
     } catch (error) {
-        console.error('Error updating phone:', error);
         Utils.showNotification('Có lỗi xảy ra khi cập nhật số điện thoại!', 'error');
+    } finally {
+        window.hideFullScreenLoading();
     }
 }
 
+// Đổi mật khẩu người dùng
 async function changePassword() {
-    const currentPassword = document.getElementById('currentPassword').value;
-    const newPassword = document.getElementById('newPassword').value;
-    const confirmPassword = document.getElementById('confirmPassword').value;
-
-    const userInfo = JSON.parse(localStorage.getItem('userInfo'));
-    if (!userInfo || !userInfo.token) return;
-
-    // Kiểm tra mật khẩu mới
-    if (newPassword.length < 6) {
-        Utils.showNotification('Mật khẩu mới phải có ít nhất 6 ký tự!', 'error');
-        return;
-    }
-
-    if (newPassword !== confirmPassword) {
-        Utils.showNotification('Mật khẩu xác nhận không khớp!', 'error');
-        return;
-    }
-
-    const changePasswordData = {
-        oldPassword: currentPassword,
-        newPassword: newPassword,
-        confirmPassword: confirmPassword
-    };
-
+    window.showFullScreenLoading('Đang đổi mật khẩu');
+    
     try {
-        // Use authManager with auto-refresh token
+        const currentPassword = document.getElementById('currentPassword').value;
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+
+        const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+        if (!userInfo || !userInfo.token) return;
+
+        if (newPassword.length < 6) {
+            Utils.showNotification('Mật khẩu mới phải có ít nhất 6 ký tự!', 'error');
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            Utils.showNotification('Mật khẩu xác nhận không khớp!', 'error');
+            return;
+        }
+
+        const changePasswordData = {
+            oldPassword: currentPassword,
+            newPassword: newPassword,
+            confirmPassword: confirmPassword
+        };
+
         const response = await authManager.makeAuthenticatedRequest('/user/change-password', {
             method: 'PATCH',
             body: JSON.stringify(changePasswordData)
         });
 
         if (response.ok) {
-            // Reset form
             document.getElementById('changePasswordForm').reset();
             Utils.showNotification('Đổi mật khẩu thành công!', 'success');
         } else {
@@ -499,8 +506,9 @@ async function changePassword() {
             Utils.showNotification(errorResponse.message || 'Có lỗi xảy ra khi đổi mật khẩu!', 'error');
         }
     } catch (error) {
-        console.error('Error changing password:', error);
         Utils.showNotification('Có lỗi xảy ra khi đổi mật khẩu!', 'error');
+    } finally {
+        window.hideFullScreenLoading();
     }
 }
 
@@ -531,31 +539,88 @@ function togglePassword(inputId) {
     }
 }
 
-// Xử lý thay đổi avatar từ api
-function handleAvatarChange(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    const userInfo = authManager.getCurrentUser();
-    if (!userInfo || !userInfo.token) return;
+// Tải ảnh avatar lên Cloudinary
+async function uploadAvatarToCloudinary(file) {
     const formData = new FormData();
-    formData.append('avatar', file);
+    formData.append('file', file);
+    formData.append('upload_preset', CLOUDINARY_CONFIG.uploadPreset);
+    formData.append('folder', 'avatars');
     
-    // Use authManager with auto-refresh token
-    authManager.makeAuthenticatedRequest('/user/update-profile', {
-        method: 'POST',
-        body: formData,
-        // Don't set Content-Type header for FormData, browser will set it automatically with boundary
-        headers: {}
-    }).then(response => {   
+    try {
+        const response = await fetch(
+            `https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.cloudName}/image/upload`,
+            {
+                method: 'POST',
+                body: formData
+            }
+        );
+        
+        if (!response.ok) {
+            throw new Error('Upload failed');
+        }
+        
+        const data = await response.json();
+        return data.secure_url;
+    } catch (error) {
+        throw error;
+    }
+}
+
+// Xử lý thay đổi avatar: upload trước rồi cập nhật profile
+async function handleAvatarChange(event) {
+    window.showFullScreenLoading('Đang tải ảnh lên');
+    
+    try {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        if (!file.type.match('image.*')) {
+            Utils.showNotification('Vui lòng chọn file ảnh!', 'error');
+            return;
+        }
+        
+        const maxSize = 5 * 1024 * 1024;
+        if (file.size > maxSize) {
+            Utils.showNotification('Kích thước ảnh tối đa 5MB!', 'error');
+            return;
+        }
+        
+        const userInfo = authManager.getCurrentUser();
+        if (!userInfo || !userInfo.token) return;
+        
+        const cloudinaryUrl = await uploadAvatarToCloudinary(file);
+    
+        const response = await authManager.makeAuthenticatedRequest('/user/update-avatar', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ avatarUrl: cloudinaryUrl })
+        });
+        
         if (response.ok) {
             Utils.showNotification('Cập nhật ảnh đại diện thành công!', 'success');
-            loadUserData();
+            
+            const profileAvatar = document.getElementById('profileAvatar');
+            profileAvatar.innerHTML = `<img src="${cloudinaryUrl}" alt="Avatar">`;
+            
+            setTimeout(() => {
+                loadUserData();
+            }, 500);
         } else {
             Utils.showNotification('Có lỗi xảy ra khi cập nhật ảnh đại diện!', 'error');
         }
-    });
+    } catch (error) {
+        const user = await getCurrentUser();
+        if (user) {
+            updateProfileHeader(user);
+        }
+        
+        Utils.showNotification('Không thể tải ảnh lên. Vui lòng thử lại!', 'error');
+    } finally {
+        window.hideFullScreenLoading();
+    }
 }
 
+// Lưu cài đặt thông báo vào localStorage
 function saveNotificationSettings() {
     const emailNotifications = document.getElementById('emailNotifications').checked;
     const smsNotifications = document.getElementById('smsNotifications').checked;
@@ -569,23 +634,21 @@ function saveNotificationSettings() {
     Utils.showNotification('Lưu cài đặt thông báo thành công!', 'success');
 }
 
-function deleteAccount() {
-    const user = getCurrentUser();
+// Xoá tài khoản và dữ liệu liên quan ở localStorage
+async function deleteAccount() {
+    const user = await getCurrentUser();
     if (!user) return;
 
-    // Xóa tất cả dữ liệu user
     localStorage.removeItem('currentUser');
     localStorage.removeItem('userPosts');
     localStorage.removeItem('favouriteRooms');
     localStorage.removeItem('notificationSettings');
 
-    // Hiển thị thông báo và chuyển về trang chủ
     alert('Tài khoản đã được xóa thành công!');
     window.location.href = 'index.html';
 }
-// Global functions for post actions
+// Hàm toàn cục mở trang chỉnh sửa tin đăng
 window.editPost = function(postId) {
-    // Redirect to edit form
     window.location.href = `roomForm.html?edit=${postId}`;
 };
 

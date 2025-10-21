@@ -9,12 +9,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class UserRespone {
     private Long id;
+    private String avatar;
     private String email;
     private String firstName;
     private String lastName;
 
     public String getFullName() {
-        return (firstName != null ? firstName : "") + " " +
-                (lastName != null ? lastName : "");
+        return  (lastName != null ? lastName : "") + " " +
+                (firstName != null ? firstName : "");
     }
 }

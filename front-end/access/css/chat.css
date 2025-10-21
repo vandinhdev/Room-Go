@@ -711,4 +711,162 @@ body {
 
 /* ========== CHAT POPUP STYLES ========== */
 
+/* Room Introduction Card Styles */
+.room-intro-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(255, 107, 53, 0.15);
+    max-width: 350px;
+    margin-bottom: 8px;
+    border: 2px solid #ff6b35;
+    transition: all 0.3s ease;
+}
+
+.room-intro-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(255, 107, 53, 0.25);
+    border-color: #e55a2b;
+}
+
+.room-intro-image {
+    width: 100%;
+    height: 150px;
+    overflow: hidden;
+    background: linear-gradient(135deg, #ff6b35 0%, #ff8a5b 100%);
+}
+
+.room-intro-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.room-intro-details {
+    padding: 16px;
+    background: white;
+}
+
+.room-intro-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    line-height: 1.5;
+}
+
+.room-intro-price {
+    font-size: 18px;
+    font-weight: 700;
+    color: #ff6b35;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.room-intro-price::before {
+    content: '';
+    font-size: 16px;
+}
+
+.room-intro-info {
+    display: flex;
+    gap: 12px;
+    font-size: 13px;
+    color: #5a6c7d;
+    margin-bottom: 12px;
+}
+
+.room-intro-info span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: #f8f9fa;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+.room-intro-info i {
+    color: #ff6b35;
+    font-size: 12px;
+}
+
+.room-intro-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px;
+    background: linear-gradient(135deg, #ff6b35 0%, #ff8a5b 100%);
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 8px;
+    margin-top: 8px;
+    transition: all 0.3s ease;
+}
+
+.room-intro-card:hover .room-intro-action {
+    background: linear-gradient(135deg, #e55a2b 0%, #ff6b35 100%);
+    transform: translateX(3px);
+}
+
+.room-intro-action i {
+    font-size: 14px;
+    transition: transform 0.3s ease;
+}
+
+.room-intro-card:hover .room-intro-action i {
+    transform: translateX(4px);
+}
+
+/* Special styling for room intro message */
+.room-intro-message {
+    animation: fadeInUp 0.3s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive for chat page */
+@media (max-width: 768px) {
+    .room-intro-card {
+        max-width: 280px;
+    }
+    
+    .room-intro-details {
+        padding: 12px;
+    }
+    
+    .room-intro-title {
+        font-size: 14px;
+    }
+    
+    .room-intro-price {
+        font-size: 16px;
+    }
+    
+    .room-intro-info {
+        font-size: 12px;
+        gap: 8px;
+    }
+}
+
+
+
 

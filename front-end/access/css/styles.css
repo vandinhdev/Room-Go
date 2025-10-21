@@ -509,56 +509,7 @@ body {
 .notification-badge.hidden {
     display: none;
 }
-.favourite-room {
-    display: none;
-    position: absolute;
-    top: 58px;
-    left: -104px;
-    width: 400px;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-    z-index: 999;
-}
 
-.favourite-room::before {
-    content: '';
-    position: absolute;
-    top: -24px;
-    left: 160px;
-    border-width: 12px;
-    border-style: solid;
-    border-color: transparent transparent #fff transparent;
-    filter: drop-shadow(0 -1px 1px rgba(0,0,0,0.1));
-    transform: none;
-}
-
-.favourite-header {
-    padding: 10px 20px;
-    font-weight: 600;
-    color: #333;
-    border-bottom: 1px solid #ccc;
-}
-
-.favourite-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 20px 40px;
-    gap: 8px;
-}
-
-.favourite-content p {
-    font-weight: 700;
-    color: #000;
-}
-
-.favourite-content span {
-    font-size: 14px;
-    color: #666;
-    text-align: center;
-}
 
 
 /* ==========================================================================
@@ -608,7 +559,6 @@ body {
 .favourite-remove {
     position: absolute;
     right: 18px;
-    top: 48px;
     font-size: 24px;
     cursor: pointer;
 }
@@ -715,7 +665,6 @@ body {
 
 .notification-message {
     font-size: 13px;
-    color: #666;
     margin-bottom: 6px;
     line-height: 1.4;
 }

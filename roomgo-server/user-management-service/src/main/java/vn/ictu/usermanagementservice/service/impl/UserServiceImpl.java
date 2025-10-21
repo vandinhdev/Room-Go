@@ -12,8 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import vn.ictu.usermanagementservice.common.enums.UserStatus;
-import vn.ictu.usermanagementservice.dto.request.UpdateInfoRequest;
-import vn.ictu.usermanagementservice.dto.request.UpdateProfileRequest;
+import vn.ictu.usermanagementservice.dto.request.*;
 import vn.ictu.usermanagementservice.dto.response.UserPageResponse;
 import vn.ictu.usermanagementservice.dto.response.UserResponse;
 import vn.ictu.usermanagementservice.exception.ResourceNotFoundException;
@@ -112,6 +111,41 @@ public class UserServiceImpl implements UserService {
         userEntity.setBio(req.getBio());
         userRepository.save(userEntity);
 
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateEmail(UpdateEmailRequest req, String email) {
+        UserEntity userEntity = userRepository.findByEmail(email);
+        if (userEntity == null) {
+            throw new ResourceNotFoundException("User not found with email: " + email);
+        }
+        userEntity.setEmail(req.getNewEmail());
+        userRepository.save(userEntity);
+
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updatePhone(UpdatePhoneRequest req, String email) {
+        UserEntity userEntity = userRepository.findByEmail(email);
+        if (userEntity == null) {
+            throw new ResourceNotFoundException("User not found with email: " + email);
+        }
+        userEntity.setPhone(req.getNewPhone());
+        userRepository.save(userEntity);
+
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateAvatar(UpdateAvatarRequest request, String email) {
+        UserEntity userEntity = userRepository.findByEmail(email);
+        if (userEntity == null) {
+            throw new ResourceNotFoundException("User not found with email: " + email);
+        }
+        userEntity.setAvatarUrl(request.getAvatarUrl());
+        userRepository.save(userEntity);
     }
 
     @Override

@@ -1,4 +1,3 @@
-// User Profile Page JavaScript
 import { API_BASE_URL } from './config.js';
 import { authManager } from './auth.js';
 
@@ -9,29 +8,24 @@ const UserProfile = {
     currentFilter: 'all',
     currentSort: 'newest',
 
-    // Initialize the user profile page
+    // Khởi tạo trang hồ sơ người dùng
     init() {
         this.bindEvents();
     },
 
-    // Bind event listeners
+    // Gắn các sự kiện tương tác cho trang
     bindEvents() {
-        
-        // Room sorting
         document.getElementById('sortRooms')?.addEventListener('change', (e) => {
             this.setSorting(e.target.value);
         });
 
-        // Contact button
         document.getElementById('contactBtn')?.addEventListener('click', () => {
             this.showContactModal();
         });
 
-        
-
-
     },
 
+    // Tải hồ sơ người dùng với hiệu ứng loading
     async loadProfileWithLoading(userId) {
         await loadingWrapper(async () => {
             await this.loadUserProfile(userId);
@@ -41,54 +35,39 @@ const UserProfile = {
             loadingText: 'Đang tải thông tin người dùng...',
             onRetry: () => this.loadProfileWithLoading(userId)
         });
-    }, // <-- Add this comma
+    },
 
-    // Load user profile data
+    // Tải dữ liệu hồ sơ người dùng từ API
     async loadUserProfile(userId) {
         try {
-            console.log('Loading profile for user ID:', userId);
             this.currentUserId = userId;
-            window.showLoading();
-
-            // Fetch user data and rooms data from API
             const [userData, roomsData] = await Promise.all([
                 this.fetchUserData(userId),
                 this.fetchUserRooms(userId)
             ]);
-
-            console.log('Fetched user data:', userData);
-            console.log('Fetched rooms data:', roomsData);
-
-            // Calculate stats from actual rooms data
             userData.stats.totalRooms = roomsData.length;
             userData.stats.activeRooms = roomsData.filter(room => room.status === 'AVAILABLE').length;
             userData.stats.totalViews = roomsData.reduce((total, room) => total + (room.views || 0), 0);
 
             this.displayUserData(userData);
             this.displayUserRooms(roomsData);
-            
-            // Hide loading and show profile content
-            window.hideLoading();
             this.showProfileContent();
 
         } catch (error) {
-            console.error('Error loading user profile:', error);
-            
-            // Try to show demo data if API fails
             if (error.message && error.message.includes('fetch')) {
-                console.log('API not available, showing demo data');
                 this.showDemoData(userId);
             } else {
                 window.showError('Không thể tải thông tin người dùng. Vui lòng thử lại sau.');
             }
+        } finally {
+            document.body.classList.remove('loading');
+            document.body.classList.add('loaded');
         }
     },
     
-
-    // Fetch user data from API
+    // Lấy thông tin người dùng từ API
     async fetchUserData(userId) {
         try {
-            // Use authManager with auto-refresh token
             const response = await authManager.makeAuthenticatedRequest(`/user/${userId}`, {
                 method: 'GET'
             });
@@ -99,8 +78,6 @@ const UserProfile = {
 
             const apiResponse = await response.json();
             const userData = apiResponse.data || apiResponse;
-
-            // Convert API response to expected format
             return {
                 id: userData.id,
                 fullName: `${userData.lastName || ''} ${userData.firstName || ''}`,
@@ -111,7 +88,7 @@ const UserProfile = {
                 accountType: userData.role === 'ADMIN' ? 'Quản trị viên' : 'Người dùng thường',
                 status: userData.status === 'ACTIVE' ? 'active' : 'inactive',
                 stats: {
-                    totalRooms: 0, // Will be calculated from user's rooms
+                    totalRooms: 0,
                     totalViews: 0,
                     averageRating: 4.5,
                     activeRooms: 0
@@ -121,17 +98,14 @@ const UserProfile = {
                 }
             };
         } catch (error) {
-            console.error('Error fetching user data:', error);
             throw error;
         }
     },
 
-    // Fetch user's rooms from API
+    // Lấy danh sách phòng của người dùng từ API
     async fetchUserRooms(userId) {
         try {
             const formatPrice = Utils.formatPrice;
-
-            // Use authManager with auto-refresh token
             const response = await authManager.makeAuthenticatedRequest('/room/list', {
                 method: 'GET'
             });
@@ -148,13 +122,9 @@ const UserProfile = {
             } else if (Array.isArray(apiResponse.data)) {
                 allRooms = apiResponse.data;
             }
-
-            // Filter rooms by ownerId
             const userRooms = allRooms.filter(room => 
                 room.ownerId == userId || room.owner_id == userId
             );
-
-            // Convert to expected format
             return userRooms.map(room => ({
                 id: room.id,
                 title: room.title,
@@ -164,23 +134,17 @@ const UserProfile = {
                 image: room.imageUrls && room.imageUrls.length > 0 ? room.imageUrls[0] : 
                        (room.images && room.images.length > 0 ? room.images[0].url : 'https://via.placeholder.com/300x200'),
                 area: room.area,
-                features: [], // API might not have features, can be added later
+                features: [],
                 postedDate: room.createdAt || room.created_at || '2024-01-01',
-                views: 0 // API might not have view count
+                views: 0
             }));
         } catch (error) {
-            console.error('Error fetching user rooms:', error);
             throw error;
         }
     },
 
-  
-
-    // Display user data in the UI
+    // Hiển thị thông tin người dùng lên giao diện
     displayUserData(userData) {
-        console.log('Displaying user data:', userData);
-        
-        // User header
         const displayNameElement = document.getElementById('userDisplayName');
         const joinDateElement = document.getElementById('userJoinDate');
         
@@ -194,37 +158,29 @@ const UserProfile = {
             joinDateElement.innerHTML = 
                 `<i class="fas fa-calendar-alt"></i> Tham gia từ: ${Utils.formatDate(joinDate)}`;
         }
-
-        // User avatar
         const avatarElement = document.getElementById('userAvatarLarge');
         if (avatarElement) {
             if (userData.avatar) {
                 avatarElement.innerHTML = `<img src="${userData.avatar}" alt="${userData.displayName}">`;
             } else {
-                // Use first letter of name as avatar
                 const firstLetter = (userData.displayName || 'U').charAt(0).toUpperCase();
                 avatarElement.innerHTML = firstLetter;
             }
         }
     },
 
-    // Display user rooms
+    // Hiển thị danh sách phòng của người dùng
     displayUserRooms(rooms) {
-        console.log('Displaying user rooms:', rooms);
         this.userRooms = rooms || [];
         this.filteredRooms = [...this.userRooms];
         this.renderRooms();
     },
 
-    // Render rooms list
+    // Render danh sách phòng ra giao diện
     renderRooms() {
         const container = document.getElementById('userRoomsList');
         const noRoomsMessage = document.getElementById('noRoomsMessage');
-
-        console.log('Rendering rooms:', this.filteredRooms);
-
         if (!container) {
-            console.error('userRoomsList container not found');
             return;
         }
 
@@ -233,7 +189,6 @@ const UserProfile = {
             if (noRoomsMessage) {
                 noRoomsMessage.style.display = 'block';
             } else {
-                // Create a simple message if no element exists
                 container.innerHTML = '<p class="no-rooms">Người dùng này chưa đăng phòng nào.</p>';
                 container.style.display = 'block';
             }
@@ -250,15 +205,12 @@ const UserProfile = {
             <div class="room-card" onclick="UserProfile.viewRoom(${room.id})">
                 <div class="room-image">
                     <img src="${room.image}" alt="${room.title}">
-                    <div class="room-status-badge ${room.status}">
-                        ${room.status === 'available' ? 'Còn trống' : 'Đã thuê'}
-                    </div>
                 </div>
                 <div class="room-content">
                     <h3 class="room-title">${room.title}</h3>
                     <div class="room-price">${room.price}</div>
                     <div class="room-location">
-                        <i class="fas fa-map-marker-alt"></i>
+                        <i class=" fas fa-map-marker-alt"></i>
                         ${room.location}
                     </div>
                     <div class="room-features">
@@ -276,11 +228,9 @@ const UserProfile = {
         `).join('');
     },
 
-    // Filter rooms
+    // Thiết lập bộ lọc danh sách phòng
     setFilter(filter) {
         this.currentFilter = filter;
-        
-        // Update active filter button
         document.querySelectorAll('.filter-btn').forEach(btn => {
             btn.classList.remove('active');
             if (btn.dataset.filter === filter) {
@@ -291,15 +241,14 @@ const UserProfile = {
         this.applyFiltersAndSort();
     },
 
-    // Set sorting option
+    // Thiết lập sắp xếp danh sách phòng
     setSorting(sortOption) {
         this.currentSort = sortOption;
         this.applyFiltersAndSort();
     },
 
-    // Apply filters and sorting
+    // Áp dụng bộ lọc và sắp xếp cho danh sách phòng
     applyFiltersAndSort() {
-        // Apply filter
         switch (this.currentFilter) {
             case 'available':
                 this.filteredRooms = this.userRooms.filter(room => room.status === 'available');
@@ -310,8 +259,6 @@ const UserProfile = {
             default:
                 this.filteredRooms = [...this.userRooms];
         }
-
-        // Apply sorting
         switch (this.currentSort) {
             case 'newest':
                 this.filteredRooms.sort((a, b) => new Date(b.postedDate) - new Date(a.postedDate));
@@ -330,37 +277,38 @@ const UserProfile = {
         this.renderRooms();
     },
 
-    // Parse price string to number for sorting
+    // Chuyển chuỗi giá về số để sắp xếp
     parsePrice(priceStr) {
         if (!priceStr) return 0;
         return parseInt(priceStr.replace(/[^\d]/g, '')) || 0;
     },
 
-    // Show contact modal
+    // Hiển thị thông báo liên hệ (tạm thời)
     showContactModal() {
-        // For now, just show a simple alert. This can be enhanced with a modal later
         Utils.showNotification('Tính năng liên hệ sẽ được cập nhật trong phiên bản tiếp theo.', 'info');
     },
 
-    // View room details
+    // Mở trang chi tiết phòng
     viewRoom(roomId) {
         window.open(`detail.html?id=${roomId}`);
     },
 
-    // Wrapper methods for HTML to use
+    // Hiển thị thông báo lỗi
     showError(message) {
         window.showError(message);
     },
 
+    // Hiển thị trạng thái đang tải
     showLoading() {
         window.showLoading();
     },
 
+    // Ẩn trạng thái đang tải
     hideLoading() {
         window.hideLoading();
     },
 
-    // Show profile content
+    // Hiển thị nội dung trang hồ sơ
     showProfileContent() {
         const profileContainer = document.getElementById('userProfileContainer');
         if (profileContainer) {
@@ -371,10 +319,8 @@ const UserProfile = {
    
 };
 
-// Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     UserProfile.init();
 });
 
-// Export for global access
 window.UserProfile = UserProfile;

@@ -32,4 +32,6 @@ public interface RoomService {
     Long createRoom(CreateRoomRequest req, String email, String bearerToken);
     void updateRoom(UpdateRoomRequest req);
     void deleteRoom(Long id);
+
+    void approveRoom(Long roomId, boolean approved);
 }

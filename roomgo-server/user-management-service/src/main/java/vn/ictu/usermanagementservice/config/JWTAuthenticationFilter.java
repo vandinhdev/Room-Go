@@ -54,7 +54,6 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
 
         String path = request.getServletPath();
-        String method = request.getMethod();
 
 
         //log.info("[USER-SERVICE] Incoming request: {} {}", method, path);

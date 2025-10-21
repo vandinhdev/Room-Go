@@ -36,4 +36,4 @@ openapi:
     version: 1.0.0
 
 serpapi:
-  key: ${SERPAPI_KEY:acdda4c258f533346bf0651e79076443eec0fe6595a7f71dd65b117da9ee69dd}
+  key: ${SERPAPI_KEY:97e3683e14aefa3ff09f9298658544a33eac184154bc0c2a2049a48ea4bb6ef8}

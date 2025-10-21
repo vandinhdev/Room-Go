@@ -1,166 +1,23 @@
-// Mock data for statistics
-const mockUsers = [
-    {
-        id: 1,
-        username: "admin",
-        fullName: "Admin User",
-        email: "admin@roomgo.com",
-        role: "admin",
-        avatar: "https://i.pravatar.cc/100?img=4",
-        registeredAt: new Date("2024-01-15"),
-        lastActive: new Date("2024-10-02"),
-        isActive: true
-    },
-    {
-        id: 2,
-        username: "user1",
-        fullName: "Nguyễn Văn A",
-        email: "user1@example.com",
-        role: "user",
-        avatar: "https://i.pravatar.cc/100?img=1",
-        registeredAt: new Date("2024-09-20"),
-        lastActive: new Date("2024-10-01"),
-        isActive: true
-    },
-    {
-        id: 3,
-        username: "user2",
-        fullName: "Trần Thị B",
-        email: "user2@example.com",
-        role: "user",
-        avatar: "https://i.pravatar.cc/100?img=2",
-        registeredAt: new Date("2024-09-25"),
-        lastActive: new Date("2024-09-30"),
-        isActive: true
-    },
-    {
-        id: 4,
-        username: "user3",
-        fullName: "Lê Văn C",
-        email: "user3@example.com",
-        role: "user",
-        avatar: "https://i.pravatar.cc/100?img=3",
-        registeredAt: new Date("2024-10-01"),
-        lastActive: new Date("2024-10-02"),
-        isActive: true
-    },
-    {
-        id: 5,
-        username: "user4",
-        fullName: "Phạm Thị D",
-        email: "user4@example.com",
-        role: "user",
-        avatar: "https://i.pravatar.cc/100?img=5",
-        registeredAt: new Date("2024-09-15"),
-        lastActive: new Date("2024-09-28"),
-        isActive: false
-    }
-];
+// Import API configuration
+import { API_BASE_URL } from './config.js';
 
-const mockPosts = [
-    {
-        id: 1,
-        title: "Phòng trọ cao cấp quận 1",
-        price: 8000000,
-        location: "Quận 1, TP.HCM",
-        userId: 2,
-        status: "pending",
-        createdAt: new Date("2024-10-01T10:00:00"),
-        views: 45
-    },
-    {
-        id: 2,
-        title: "Căn hộ mini quận 7",
-        price: 6500000,
-        location: "Quận 7, TP.HCM",
-        userId: 3,
-        status: "approved",
-        createdAt: new Date("2024-09-28T14:30:00"),
-        views: 123
-    },
-    {
-        id: 3,
-        title: "Phòng trọ sinh viên quận Thủ Đức",
-        price: 2500000,
-        location: "Thủ Đức, TP.HCM",
-        userId: 2,
-        status: "rejected",
-        createdAt: new Date("2024-09-25T16:45:00"),
-        views: 78
-    },
-    {
-        id: 4,
-        title: "Nhà nguyên căn quận 2",
-        price: 15000000,
-        location: "Quận 2, TP.HCM",
-        userId: 4,
-        status: "pending",
-        createdAt: new Date("2024-10-02T08:20:00"),
-        views: 12
-    },
-    {
-        id: 5,
-        title: "Phòng trọ quận Bình Thạnh",
-        price: 4500000,
-        location: "Bình Thạnh, TP.HCM",
-        userId: 1,
-        status: "approved",
-        createdAt: new Date("2024-09-30T12:00:00"),
-        views: 89
-    },
-    {
-        id: 6,
-        title: "Studio quận 3",
-        price: 7000000,
-        location: "Quận 3, TP.HCM",
-        userId: 3,
-        status: "approved",
-        createdAt: new Date("2024-09-22T15:30:00"),
-        views: 156
-    }
-];
-
-const mockActivities = [
-    {
-        type: "user",
-        title: "Người dùng mới đăng ký",
-        description: "Lê Văn C đã tạo tài khoản mới",
-        time: new Date("2024-10-01T14:30:00")
-    },
-    {
-        type: "post",
-        title: "Tin đăng mới",
-        description: "Nhà nguyên căn quận 2 - 15,000,000 VNĐ",
-        time: new Date("2024-10-02T08:20:00")
-    },
-    {
-        type: "approve",
-        title: "Duyệt tin đăng",
-        description: "Admin đã duyệt tin 'Phòng trọ quận Bình Thạnh'",
-        time: new Date("2024-09-30T16:45:00")
-    },
-    {
-        type: "user",
-        title: "Người dùng đăng nhập",
-        description: "Nguyễn Văn A đã đăng nhập vào hệ thống",
-        time: new Date("2024-10-01T09:15:00")
-    },
-    {
-        type: "post",
-        title: "Cập nhật tin đăng",
-        description: "Căn hộ mini quận 7 đã được cập nhật giá",
-        time: new Date("2024-09-29T11:20:00")
-    }
-];
+// API endpoints
+const API_ENDPOINTS = {
+    users: `${API_BASE_URL}/user/list`,
+    rooms: `${API_BASE_URL}/room/list`,
+    statistics: `${API_BASE_URL}/statistics`
+};
 
 class StatisticsManager {
     constructor() {
-        this.users = [...mockUsers];
-        this.posts = [...mockPosts];
-        this.activities = [...mockActivities];
-        this.currentUser = JSON.parse(localStorage.getItem('currentUser')) || 
-                          JSON.parse(localStorage.getItem('userInfo')) || null;
-        this.isAdmin = this.currentUser && this.currentUser.role === 'admin';
+        this.users = [];
+        this.posts = [];
+        this.activities = [];
+        
+        // Lấy thông tin user từ localStorage
+        const userInfoStr = localStorage.getItem('userInfo');
+        this.currentUser = userInfoStr ? JSON.parse(userInfoStr) : null;
+        this.isAdmin = this.currentUser && this.currentUser.role === 'ADMIN';
         
         this.userChart = null;
         this.postStatusChart = null;
@@ -168,16 +25,226 @@ class StatisticsManager {
         this.init();
     }
 
-    init() {
-        this.checkAdminPermission();
-        this.loadOverviewStats();
-        this.loadDetailStats();
-        this.loadActivityTimeline();
-        this.initCharts();
+    async init() {
+        if (!this.checkAdminPermission()) {
+            return;
+        }
+        
+        // Kiểm tra đăng nhập - token nằm trong userInfo
+        const userInfo = this.currentUser;
+        const token = userInfo?.token;
+        
+        if (!token) {
+            this.showLoginRequired();
+            return;
+        }
+        
+        this.showLoading();
+        
+        const loadingTimeout = setTimeout(() => {
+            console.log('⚠️ Loading timeout reached - forcing hide loading');
+            this.hideLoading();
+        }, 10000);
+        
+        try {
+            await Promise.all([
+                this.fetchUsers(),
+                this.fetchPosts()
+            ]);
+            
+
+            this.generateActivitiesFromData();
+            
+            this.loadOverviewStats();
+            this.loadDetailStats();
+            this.loadActivityTimeline();
+            this.initCharts();
+            
+            console.log('✅ Statistics loaded successfully');
+            
+        } catch (error) {
+            this.showError('Không thể tải dữ liệu thống kê. Vui lòng thử lại sau.');
+        } finally {
+            this.hideLoading();
+            clearTimeout(loadingTimeout);
+        }
+    }
+
+    showLoginRequired() {
+        const container = document.querySelector('.stats-container');
+        if (container) {
+            container.innerHTML = `
+                <div style="text-align: center; padding: 100px 20px;">
+                    <i class="fas fa-sign-in-alt" style="font-size: 64px; color: #667eea; margin-bottom: 20px;"></i>
+                    <h2 style="color: #666; margin-bottom: 15px;">Vui lòng đăng nhập</h2>
+                    <p style="color: #999; margin-bottom: 30px;">Bạn cần đăng nhập để xem trang thống kê</p>
+                    <a href="auth.html" class="action-btn primary" style="display: inline-block; text-decoration: none; background: #667eea; color: white; padding: 12px 30px; border-radius: 8px; font-weight: 500;">
+                        <i class="fas fa-sign-in-alt me-2"></i>
+                        Đăng nhập ngay
+                    </a>
+                </div>
+            `;
+        }
+    }
+
+    showLoading() {
+        // Không cần làm gì - CSS đã xử lý
+    }
+
+    hideLoading() {
+        // Thêm class 'loaded' để ẩn loading và hiện nội dung
+        document.body.classList.remove('loading');
+        document.body.classList.add('loaded');
+        document.documentElement.classList.remove('loading');
+    }
+
+    showError(message) {
+        const container = document.querySelector('.stats-container');
+        if (container) {
+            const errorDiv = document.createElement('div');
+            errorDiv.style.cssText = `
+                background: #fee;
+                border: 1px solid #fcc;
+                color: #c33;
+                padding: 15px;
+                border-radius: 8px;
+                margin: 20px;
+                text-align: center;
+            `;
+            errorDiv.innerHTML = `
+                <i class="fas fa-exclamation-triangle"></i> ${message}
+            `;
+            container.prepend(errorDiv);
+        }
+    }
+
+    async fetchUsers() {
+        try {
+            // Lấy token từ userInfo
+            const token = this.currentUser?.token;
+            
+            // Kiểm tra token (không cần log nữa vì đã check ở init)
+            if (!token) {
+                this.users = [];
+                return;
+            }
+            
+            const userEmail = this.currentUser?.email || '';
+            
+            // Không cần phân trang cho statistics, lấy tất cả
+            const url = new URL(`${API_ENDPOINTS.users}`);
+            url.searchParams.append('page', '0');
+            url.searchParams.append('size', '1000');
+            
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                    'X-User-Email': userEmail
+                }
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('API Error:', response.status, errorText);
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            // API trả về { status, message, data: { users: [], ... } }
+            console.log('Users API Response:', result);
+            
+            this.users = result.data?.users || [];
+            console.log('Fetched users:', this.users.length);
+        } catch (error) {
+            console.error('Error fetching users:', error);
+            this.users = [];
+        }
+    }
+    async fetchPosts() {
+        try {
+            // Lấy token từ userInfo
+            const token = this.currentUser?.token;
+            
+            // Kiểm tra token (không cần log nữa vì đã check ở init)
+            if (!token) {
+                this.posts = [];
+                return;
+            }
+            
+            const userEmail = this.currentUser?.email || '';
+            
+            // Lấy tất cả rooms cho statistics
+            const url = new URL(`${API_ENDPOINTS.rooms}`);
+            url.searchParams.append('page', '1');
+            url.searchParams.append('size', '1000');
+            url.searchParams.append('size', '1000');
+            
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                    'X-User-Email': userEmail
+                }
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('API Error:', response.status, errorText);
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            // API trả về { status, message, data: { rooms: [], ... } }
+            console.log('Rooms API Response:', result);
+            
+            this.posts = result.data?.rooms || [];
+            console.log('Fetched rooms/posts:', this.posts.length);
+        } catch (error) {
+            console.error('Error fetching posts:', error);
+            this.posts = [];
+        }
+    }
+
+    generateActivitiesFromData() {
+        const activities = [];
+        
+        // Add recent posts as activities
+        const recentPosts = [...this.posts]
+            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+            .slice(0, 10);
+        
+        recentPosts.forEach(post => {
+            activities.push({
+                type: 'post',
+                title: 'Tin đăng mới',
+                description: `${post.title} - ${this.formatCurrency(post.price)}`,
+                time: new Date(post.createdAt)
+            });
+        });
+
+        // Add recent users as activities
+        const recentUsers = [...this.users]
+            .sort((a, b) => new Date(b.createdAt || b.registeredAt) - new Date(a.createdAt || a.registeredAt))
+            .slice(0, 10);
+        
+        recentUsers.forEach(user => {
+            activities.push({
+                type: 'user',
+                title: 'Người dùng mới đăng ký',
+                description: `${user.fullName || user.userName || user.email} đã tạo tài khoản mới`,
+                time: new Date(user.createdAt || user.registeredAt)
+            });
+        });
+
+        // Sort by time (newest first)
+        this.activities = activities.sort((a, b) => new Date(b.time) - new Date(a.time));
+        
+        console.log('✅ Generated activities from data:', this.activities.length);
     }
 
     checkAdminPermission() {
-        if (!this.currentUser || !this.isAdmin) {
+        if (!this.currentUser || this.currentUser.role !== 'ADMIN') {
             const container = document.querySelector('.stats-container');
             if (container) {
                 container.innerHTML = `
@@ -201,18 +268,70 @@ class StatisticsManager {
         // Calculate stats
         const totalUsers = this.users.length;
         const totalPosts = this.posts.length;
-        const totalViews = this.posts.reduce((sum, post) => sum + post.views, 0);
+        const totalViews = this.posts.reduce((sum, post) => sum + (post.views || 0), 0);
        
-
         // Update DOM
-        document.getElementById('totalUsers').textContent = totalUsers;
-        document.getElementById('totalPosts').textContent = totalPosts;
-        document.getElementById('totalViews').textContent = this.formatNumber(totalViews);
-       
-        // Update trends (mock data)
-        document.getElementById('userTrend').textContent = '+12%';
-        document.getElementById('postTrend').textContent = '+8%';
+        const totalUsersEl = document.getElementById('totalUsers');
+        const totalPostsEl = document.getElementById('totalPosts');
+        const totalViewsEl = document.getElementById('totalViews');
         
+        if (totalUsersEl) totalUsersEl.textContent = totalUsers;
+        if (totalPostsEl) totalPostsEl.textContent = totalPosts;
+        if (totalViewsEl) totalViewsEl.textContent = this.formatNumber(totalViews);
+       
+        // Calculate trends (comparing with previous period)
+        const userTrend = this.calculateUserTrend();
+        const postTrend = this.calculatePostTrend();
+        
+        const userTrendEl = document.getElementById('userTrend');
+        const postTrendEl = document.getElementById('postTrend');
+        
+        if (userTrendEl) userTrendEl.textContent = userTrend;
+        if (postTrendEl) postTrendEl.textContent = postTrend;
+    }
+
+    calculateUserTrend() {
+        // Calculate users registered in last 7 days vs previous 7 days
+        const now = new Date();
+        const last7Days = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        const previous7Days = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+        
+        const recentUsers = this.users.filter(user => {
+            const date = new Date(user.createdAt || user.registeredAt);
+            return date >= last7Days;
+        }).length;
+        
+        const previousUsers = this.users.filter(user => {
+            const date = new Date(user.createdAt || user.registeredAt);
+            return date >= previous7Days && date < last7Days;
+        }).length;
+        
+        if (previousUsers === 0) return recentUsers > 0 ? '+100%' : '0%';
+        
+        const trend = ((recentUsers - previousUsers) / previousUsers * 100).toFixed(0);
+        return trend > 0 ? `+${trend}%` : `${trend}%`;
+    }
+
+    calculatePostTrend() {
+        // Calculate posts in last 7 days vs previous 7 days
+        const now = new Date();
+        const last7Days = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        const previous7Days = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+        
+        const recentPosts = this.posts.filter(post => {
+            const date = new Date(post.createdAt);
+            return date >= last7Days;
+        }).length;
+        
+        const previousPosts = this.posts.filter(post => {
+            const date = new Date(post.createdAt);
+            return date >= previous7Days && date < last7Days;
+        }).length;
+        
+        if (previousPosts === 0) return recentPosts > 0 ? '+100%' : '0%';
+        
+        const trend = ((recentPosts - previousPosts) / previousPosts * 100).toFixed(0);
+        return trend > 0 ? `+${trend}%` : `${trend}%`;
     }
 
     loadDetailStats() {
@@ -221,26 +340,54 @@ class StatisticsManager {
         const regularUserCount = this.users.filter(user => user.role === 'USER').length;
         const todayUsers = this.getUsersRegisteredToday();
         const weekUsers = this.getUsersRegisteredThisWeek();
-        const activeUsers = this.users.filter(user => user.isActive).length;
+        const activeUsers = this.users.filter(user => user.isActive || user.status === 'ACTIVE').length;
 
-        document.getElementById('adminCount').textContent = adminCount;
-        document.getElementById('regularUserCount').textContent = regularUserCount;
-        document.getElementById('todayUsers').textContent = todayUsers;
-        document.getElementById('weekUsers').textContent = weekUsers;
-        document.getElementById('activeUsers').textContent = activeUsers;
+        const adminCountEl = document.getElementById('adminCount');
+        const regularUserCountEl = document.getElementById('regularUserCount');
+        const todayUsersEl = document.getElementById('todayUsers');
+        const weekUsersEl = document.getElementById('weekUsers');
+        const activeUsersEl = document.getElementById('activeUsers');
+
+        if (adminCountEl) adminCountEl.textContent = adminCount;
+        if (regularUserCountEl) regularUserCountEl.textContent = regularUserCount;
+        if (todayUsersEl) todayUsersEl.textContent = todayUsers;
+        if (weekUsersEl) weekUsersEl.textContent = weekUsers;
+        if (activeUsersEl) activeUsersEl.textContent = activeUsers;
 
         // Post details
-        const pendingPosts = this.posts.filter(post => post.status === 'pending').length;
-        const approvedPosts = this.posts.filter(post => post.status === 'approved').length;
-        const rejectedPosts = this.posts.filter(post => post.status === 'rejected').length;
+        const pendingPosts = this.posts.filter(post => post.status === 'PENDING').length;
+        const approvedPosts = this.posts.filter(post => post.status === 'APPROVED').length;
+        const rejectedPosts = this.posts.filter(post => post.status === 'REJECTED').length;
         const todayPosts = this.getPostsCreatedToday();
-        const avgPostsPerDay = Math.round(this.posts.length / 30); // Assuming 30 days
+        
+        // Calculate average posts per day based on data timespan
+        const avgPostsPerDay = this.calculateAvgPostsPerDay();
 
-        document.getElementById('pendingPosts').textContent = pendingPosts;
-        document.getElementById('approvedPosts').textContent = approvedPosts;
-        document.getElementById('rejectedPosts').textContent = rejectedPosts;
-        document.getElementById('todayPosts').textContent = todayPosts;
-        document.getElementById('avgPostsPerDay').textContent = avgPostsPerDay;
+        const pendingPostsEl = document.getElementById('pendingPosts');
+        const approvedPostsEl = document.getElementById('approvedPosts');
+        const rejectedPostsEl = document.getElementById('rejectedPosts');
+        const todayPostsEl = document.getElementById('todayPosts');
+        const avgPostsPerDayEl = document.getElementById('avgPostsPerDay');
+
+        if (pendingPostsEl) pendingPostsEl.textContent = pendingPosts;
+        if (approvedPostsEl) approvedPostsEl.textContent = approvedPosts;
+        if (rejectedPostsEl) rejectedPostsEl.textContent = rejectedPosts;
+        if (todayPostsEl) todayPostsEl.textContent = todayPosts;
+        if (avgPostsPerDayEl) avgPostsPerDayEl.textContent = avgPostsPerDay;
+    }
+
+    calculateAvgPostsPerDay() {
+        if (this.posts.length === 0) return 0;
+        
+        // Find oldest and newest post
+        const dates = this.posts.map(post => new Date(post.createdAt).getTime());
+        const oldestDate = Math.min(...dates);
+        const newestDate = Math.max(...dates);
+        
+        // Calculate days between
+        const daysDiff = Math.max(1, Math.ceil((newestDate - oldestDate) / (1000 * 60 * 60 * 24)));
+        
+        return Math.round(this.posts.length / daysDiff);
     }
 
     loadActivityTimeline() {

@@ -5,13 +5,8 @@ let allUsers = [];
 let currentUsers = [];
 let editingUserId = null;
 
-// Kiểm tra quyền admin và load dữ liệu
 document.addEventListener('DOMContentLoaded', async function() {
-    console.log('DOMContentLoaded triggered');
-    
     const userInfo = authManager.getCurrentUser();
-    console.log('Current userInfo:', userInfo);
-    
     if (!userInfo || userInfo.role !== 'ADMIN') {
         if (window.Utils && typeof Utils.showNotification === 'function') {
             Utils.showNotification('Bạn không có quyền truy cập trang này!', 'error');
@@ -23,24 +18,18 @@ document.addEventListener('DOMContentLoaded', async function() {
         }, 1000);
         return;
     }
-    
-    console.log('Admin check passed, loading users...');
     setupEventListeners();
     await fetchUsers();
 });
 
+// Gắn sự kiện cho trang quản lý người dùng
 function setupEventListeners() {
-    console.log('Setting up event listeners');
-    
-    // Tìm kiếm người dùng
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
         searchInput.addEventListener('input', function(e) {
             filterUsers(e.target.value);
         });
     }
-    
-    // Form submit
     const userForm = document.getElementById('userForm');
     if (userForm) {
         userForm.addEventListener('submit', function(e) {
@@ -48,8 +37,6 @@ function setupEventListeners() {
             saveUser();
         });
     }
-    
-    // Đóng modal khi click outside
     const userModal = document.getElementById('userModal');
     if (userModal) {
         userModal.addEventListener('click', function(e) {
@@ -60,18 +47,15 @@ function setupEventListeners() {
     }
 }
 
-// Fetch users from API
+// Lấy danh sách người dùng từ API
 async function fetchUsers() {
     try {
         const userInfo = JSON.parse(localStorage.getItem('userInfo'));
         if (!userInfo || !userInfo.token) {
-            console.error('No user token found');
             return;
         }
 
         showLoading();
-
-        // Use authManager with auto-refresh token
         const response = await authManager.makeAuthenticatedRequest('/user/list', {
             method: 'GET'
         });
@@ -81,8 +65,6 @@ async function fetchUsers() {
         }
 
         const data = await response.json();
-        
-        // Xử lý response data
         let usersArray = [];
         if (data && data.status === 200 && data.data && Array.isArray(data.data.users)) {
             usersArray = data.data.users;
@@ -91,12 +73,10 @@ async function fetchUsers() {
         } else if (Array.isArray(data)) {
             usersArray = data;
         }
-
-        // Chuyển đổi format
         allUsers = usersArray.map(user => ({
             id: user.id,
             username: user.username || user.email,
-            fullName: `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'N/A',
+            fullName: `${user.lastName || ''} ${user.firstName || ''}`.trim() || 'N/A',
             email: user.email,
             phone: user.phone || 'Chưa có',
             role: user.role?.toLowerCase() || 'user',
@@ -106,12 +86,10 @@ async function fetchUsers() {
         }));
 
         currentUsers = [...allUsers];
-        console.log('Loaded users from API:', allUsers.length);
         hideLoading();
         renderUsers();
 
     } catch (error) {
-        console.error('Lỗi khi tải danh sách người dùng:', error);
         hideLoading();
         
         if (window.Utils && typeof Utils.showNotification === 'function') {
@@ -126,33 +104,22 @@ async function fetchUsers() {
     }
 }
 
+// Hiển thị trạng thái đang tải
 function showLoading() {
-    const loadingSpinner = document.getElementById('loadingSpinner');
-    const managementContent = document.getElementById('managementContent');
-    
-    if (loadingSpinner) loadingSpinner.style.display = 'flex';
-    if (managementContent) managementContent.style.display = 'none';
 }
 
+// Ẩn trạng thái đang tải
 function hideLoading() {
-    const loadingSpinner = document.getElementById('loadingSpinner');
-    const managementContent = document.getElementById('managementContent');
-    
-    if (loadingSpinner) loadingSpinner.style.display = 'none';
-    if (managementContent) managementContent.style.display = 'block';
+    document.body.classList.remove('loading');
+    document.body.classList.add('loaded');
 }
 
+// Render bảng danh sách người dùng
 function renderUsers() {
-    console.log('renderUsers called');
-    console.log('currentUsers:', currentUsers);
-    
     const tbody = document.getElementById('usersTableBody');
     if (!tbody) {
-        console.error('usersTableBody not found!');
         return;
     }
-    
-    // Clear loading và old content
     tbody.innerHTML = '';
     
     if (!currentUsers || currentUsers.length === 0) {
@@ -162,32 +129,23 @@ function renderUsers() {
     
     try {
         currentUsers.forEach(user => {
-            console.log('Creating row for user:', user.fullName);
             const row = createUserRow(user);
             tbody.appendChild(row);
         });
-        
-        console.log('Users rendered successfully');
     } catch (error) {
-        console.error('Error rendering users:', error);
         tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px; color: red;">Lỗi hiển thị dữ liệu</td></tr>';
     }
 }
 
+// Tạo một dòng người dùng trong bảng
 function createUserRow(user) {
     const row = document.createElement('tr');
-    
-    // Avatar và thông tin
     const avatarHtml = user.avatar 
         ? `<div class="user-avatar-table"><img src="${user.avatar}" alt="${user.fullName}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" onerror="this.style.display='none'; this.parentElement.innerHTML='${user.fullName.charAt(0).toUpperCase()}'"></div>`
         : `<div class="user-avatar-table">${user.fullName.charAt(0).toUpperCase()}</div>`;
-    
-    // Trạng thái
     const status = user.status || 'active';
     const statusClass = status === 'active' ? 'status-active' : 'status-inactive';
     const statusText = status === 'active' ? 'Hoạt động' : 'Không hoạt động';
-    
-    // Định dạng ngày
     const createdDate = user.created_at ? new Date(user.created_at).toLocaleDateString('vi-VN') : 'N/A';
     
     row.innerHTML = `
@@ -196,7 +154,6 @@ function createUserRow(user) {
                 ${avatarHtml}
                 <div class="user-details">
                     <h4>${user.fullName}</h4>
-                    <p>@${user.username}</p>
                 </div>
             </div>
         </td>
@@ -220,9 +177,8 @@ function createUserRow(user) {
     return row;
 }
 
+// Lọc danh sách người dùng theo từ khoá
 function filterUsers(searchTerm) {
-    console.log('Filtering users with term:', searchTerm);
-    
     if (!searchTerm || searchTerm.trim() === '') {
         currentUsers = [...allUsers];
     } else {
@@ -239,8 +195,8 @@ function filterUsers(searchTerm) {
 }
 
 
+// Xoá người dùng theo ID
 async function deleteUser(userId) {
-    console.log('Deleting user:', userId);
     const user = allUsers.find(u => u.id === userId);
     if (!user) return;
     
@@ -254,7 +210,6 @@ async function deleteUser(userId) {
                     method: 'DELETE'
                 });
             } else {
-                // Use authManager with auto-refresh token
                 response = await authManager.makeAuthenticatedRequest(`/user/delete/${userId}`, {
                     method: 'DELETE'
                 });
@@ -264,7 +219,6 @@ async function deleteUser(userId) {
                 throw new Error('Không thể xóa người dùng');
             }
 
-            // Xóa khỏi mảng local
             allUsers = allUsers.filter(u => u.id !== userId);
             currentUsers = currentUsers.filter(u => u.id !== userId);
             renderUsers();
@@ -275,7 +229,6 @@ async function deleteUser(userId) {
                 showNotification('Đã xóa người dùng thành công!', 'success');
             }
         } catch (error) {
-            console.error('Lỗi khi xóa người dùng:', error);
             if (window.Utils && typeof Utils.showNotification === 'function') {
                 Utils.showNotification('Không thể xóa người dùng. Vui lòng thử lại!', 'error');
             } else {
@@ -285,8 +238,8 @@ async function deleteUser(userId) {
     }
 }
 
+// Bật/tắt trạng thái tài khoản người dùng
 async function toggleUserStatus(userId) {
-    console.log('Toggling status for user:', userId);
     const user = allUsers.find(u => u.id === userId);
     if (!user) return;
     
@@ -301,8 +254,6 @@ async function toggleUserStatus(userId) {
                 method: 'PATCH'
             });
         } else {
-            // Fallback method
-            // Use authManager with auto-refresh token
             response = await authManager.makeAuthenticatedRequest(`/user/update-status/${userId}?status=${newStatus.toUpperCase()}`, {
                 method: 'PATCH'
             });
@@ -312,7 +263,6 @@ async function toggleUserStatus(userId) {
             throw new Error('Không thể cập nhật trạng thái người dùng');
         }
 
-        // Cập nhật local
         user.status = newStatus;
         renderUsers();
         
@@ -323,7 +273,6 @@ async function toggleUserStatus(userId) {
             showNotification(`Đã ${statusText} tài khoản thành công!`, 'success');
         }
     } catch (error) {
-        console.error('Lỗi khi cập nhật trạng thái người dùng:', error);
         if (window.Utils && typeof Utils.showNotification === 'function') {
             Utils.showNotification('Không thể cập nhật trạng thái. Vui lòng thử lại!', 'error');
         } else {
@@ -332,13 +281,12 @@ async function toggleUserStatus(userId) {
     }
 }
 
+// Mở modal thêm người dùng
 function openAddUserModal() {
-    console.log('Opening add user modal');
     editingUserId = null;
     const modal = document.getElementById('userModal');
     if (modal) {
         modal.style.display = 'block';
-        // Reset form if needed
         const form = document.getElementById('userForm');
         if (form) {
             form.reset();
@@ -346,8 +294,8 @@ function openAddUserModal() {
     }
 }
 
+// Mở modal sửa thông tin người dùng
 function editUser(userId) {
-    console.log('Editing user:', userId);
     const user = allUsers.find(u => u.id === userId);
     if (!user) return;
     
@@ -355,17 +303,15 @@ function editUser(userId) {
     const modal = document.getElementById('userModal');
     if (modal) {
         modal.style.display = 'block';
-        // Fill form with user data
-        // Implementation depends on your form structure
     }
 }
 
+// Lưu thông tin người dùng (tạm thời)
 function saveUser() {
-    console.log('Saving user');
-    // Implementation for save user
     closeUserModal();
 }
 
+// Đóng modal người dùng
 function closeUserModal() {
     const modal = document.getElementById('userModal');
     if (modal) {
@@ -374,8 +320,8 @@ function closeUserModal() {
     editingUserId = null;
 }
 
+// Hiển thị thông báo (fallback khi thiếu Utils)
 function showNotification(message, type = 'success') {
-    console.log('Notification:', message);
     if (window.Utils && typeof Utils.showNotification === 'function') {
         Utils.showNotification(message, type);
     } else {
@@ -383,12 +329,9 @@ function showNotification(message, type = 'success') {
     }
 }
 
-// Expose functions to global scope for onclick handlers
 window.openAddUserModal = openAddUserModal;
 window.editUser = editUser;
 window.deleteUser = deleteUser;
 window.toggleUserStatus = toggleUserStatus;
 window.closeUserModal = closeUserModal;
 window.filterUsers = filterUsers;
-
-console.log('user-management.js fully loaded');

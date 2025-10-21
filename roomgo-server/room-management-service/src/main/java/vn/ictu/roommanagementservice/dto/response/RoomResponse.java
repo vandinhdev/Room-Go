@@ -28,4 +28,5 @@ public class RoomResponse implements Serializable {
     private Double latitude;
     private Double longitude;
     private List<String> imageUrls;
+    private String createdAt;
 }

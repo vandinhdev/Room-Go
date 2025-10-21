@@ -3,6 +3,7 @@ import { authManager } from './auth.js';
 
 const DEFAULT_AVATAR_URL = 'https://cdn-icons-png.freepik.com/128/3135/3135715.png';
 
+// Xây dựng markup cho avatar
 function buildAvatarMarkup(avatarUrl, displayName = 'User avatar') {
     if (avatarUrl) {
         return `<img src="${avatarUrl}" alt="${displayName}" onerror="this.onerror=null;this.src='${DEFAULT_AVATAR_URL}';">`;
@@ -15,18 +16,16 @@ function buildAvatarMarkup(avatarUrl, displayName = 'User avatar') {
     return `<img src="${DEFAULT_AVATAR_URL}" alt="${displayName}">`;
 }
 
-// Utility function to ensure Utils is ready
+// Đợi Utils sẵn sàng
 function waitForUtils(timeout = 5000) {
     return new Promise((resolve, reject) => {
         const startTime = Date.now();
         
         function check() {
             if (window.Utils && typeof Utils.makeAuthenticatedRequest === 'function') {
-                console.log('✅ Utils is ready');
                 resolve();
             } else if (Date.now() - startTime > timeout) {
-                console.warn('⚠️ Utils timeout, using fallback');
-                resolve(); // Still resolve to allow fallback
+                resolve();
             } else {
                 setTimeout(check, 50);
             }
@@ -36,12 +35,12 @@ function waitForUtils(timeout = 5000) {
     });
 }
 
-// Quản lý tin đã lưu
+// Lấy danh sách phòng đã lưu
 function getFavouriteRooms() {
   return JSON.parse(localStorage.getItem("favouriteRooms")) || [];
 }
 
-// Lưu tin
+// Lưu phòng vào danh sách yêu thích
 function saveRoom(room) {
   let favourite = getFavouriteRooms();
   if (!favourite.find(p => p.id === room.id)) {
@@ -50,33 +49,26 @@ function saveRoom(room) {
   }
 }
 
-// Xoá tin
+// Xóa phòng khỏi danh sách yêu thích
 function removeRoom(id) {
   let favourite = getFavouriteRooms().filter(p => p.id !== id);
   localStorage.setItem("favouriteRooms", JSON.stringify(favourite));
 }
 
-// ================== API FUNCTIONS ==================
-// Fetch room detail from API
+// Lấy thông tin chi tiết phòng từ API
 async function fetchRoomDetail(roomId) {
     try {
         let response;
         
-        // Kiểm tra xem Utils.makeAuthenticatedRequest có sẵn không
         if (window.Utils && typeof Utils.makeAuthenticatedRequest === 'function') {
-            console.log('🔑 Using Utils.makeAuthenticatedRequest');
             response = await Utils.makeAuthenticatedRequest(`/room/${roomId}`, {
                 method: 'GET'
             });
         } else if (authManagerFallback) {
-            // Sử dụng authManager đã load
-            console.log('🔑 Using authManagerFallback');
             response = await authManagerFallback.makeAuthenticatedRequest(`/room/${roomId}`, {
                 method: 'GET'
             });
         } else {
-            // Fallback method - load authManager dynamically
-            console.log('🔑 Loading authManager dynamically');
             const { authManager } = await import('./auth.js');
             response = await authManager.makeAuthenticatedRequest(`/room/${roomId}`, {
                 method: 'GET'
@@ -88,14 +80,11 @@ async function fetchRoomDetail(roomId) {
         }
 
         const data = await response.json();
-        console.log('Room Detail API Response:', data);
         
-        // Handle different response formats
         let room = null;
         if (data && data.status === 200 && data.data) {
             room = data.data;
         } else if (data && data.id) {
-            // Direct room object
             room = data;
         } else if (data && data.room) {
             room = data.room;
@@ -103,7 +92,6 @@ async function fetchRoomDetail(roomId) {
         
         if (room) {
             
-            // Fetch owner information if ownerId exists
             if (room.ownerId) {
                 try {
                     let ownerResponse;
@@ -113,7 +101,6 @@ async function fetchRoomDetail(roomId) {
                             method: 'GET'
                         });
                     } else {
-                        // Fallback method
                         const { authManager } = await import('./auth.js');
                         ownerResponse = await authManager.makeAuthenticatedRequest(`/user/${room.ownerId}`, {
                             method: 'GET'
@@ -122,32 +109,29 @@ async function fetchRoomDetail(roomId) {
                     
                     if (ownerResponse.ok) {
                         const ownerData = await ownerResponse.json();
-                        console.log('Owner info:', ownerData);
                         
                         const owner = ownerData.data || ownerData;
-                        room.ownerName = `${owner.firstName || ''} ${owner.lastName || ''}`.trim();
+                        room.ownerName = `${owner.lastName || ''} ${owner.firstName || ''}`.trim();
                         room.ownerUserName = owner.userName;
                         room.ownerEmail = owner.email;
+                        room.ownerPhone = owner.phone;
                         room.ownerAvatar = owner.avatarUrl || owner.avatar || null;
                     }
                 } catch (ownerError) {
-                    console.warn('Không thể tải thông tin chủ phòng:', ownerError);
                     room.ownerName = `Chủ phòng #${room.ownerId}`;
                 }
             }
             
             return room;
         } else {
-            console.warn('Unexpected room detail API response format:', data);
             return null;
         }
     } catch (error) {
-        console.error('Lỗi tải chi tiết phòng:', error);
         throw error;
     }
 }
 
-// Fetch similar rooms from API
+// Lấy danh sách phòng tương tự
 async function fetchSimilarRooms(currentRoom) {
     try {
         let response;
@@ -157,8 +141,6 @@ async function fetchSimilarRooms(currentRoom) {
                 method: 'GET'
             });
         } else {
-            // Fallback method
-            console.warn('Utils.makeAuthenticatedRequest không có sẵn, sử dụng fallback');
             const { authManager } = await import('./auth.js');
             response = await authManager.makeAuthenticatedRequest('/room/list', {
                 method: 'GET'
@@ -170,12 +152,10 @@ async function fetchSimilarRooms(currentRoom) {
         }
 
         const data = await response.json();
-        console.log('Similar Rooms API Response:', data);
         
         if (data && data.status === 200 && data.data && Array.isArray(data.data.rooms)) {
             let rooms = data.data.rooms;
             
-            // Fetch owner information for all rooms
             const uniqueOwnerIds = [...new Set(rooms.map(r => r.ownerId).filter(Boolean))];
             
             if (uniqueOwnerIds.length > 0) {
@@ -189,7 +169,6 @@ async function fetchSimilarRooms(currentRoom) {
                                 method: 'GET'
                             });
                         } else {
-                            // Fallback method
                             const { authManager } = await import('./auth.js');
                             ownerRes = await authManager.makeAuthenticatedRequest(`/user/${userId}`, {
                                 method: 'GET'
@@ -201,15 +180,13 @@ async function fetchSimilarRooms(currentRoom) {
                             ownerMap[userId] = ownerData.data || ownerData;
                         }
                     } catch (e) {
-                        console.warn(`⚠️ Không lấy được chủ nhà ID ${userId}`, e);
                     }
                 }));
 
-                // Attach owner info to rooms
                 rooms = rooms.map(room => {
                     const owner = ownerMap[room.ownerId];
                     const ownerName = owner ? 
-                        `${owner.firstName || ''} ${owner.lastName || ''}`.trim() : 
+                        `${owner.lastName || ''} ${owner.firstName || ''}`.trim() : 
                         `Chủ phòng #${room.ownerId}`;
                         
                     return {
@@ -220,46 +197,37 @@ async function fetchSimilarRooms(currentRoom) {
                 });
             }
             
-            // Filter and score similar rooms
             return getSimilarRooms(currentRoom, rooms);
         } else {
-            console.warn('Unexpected similar rooms API response format:', data);
             return [];
         }
     } catch (error) {
-        console.error('🚨 Lỗi tải phòng tương tự:', error);
         return [];
     }
 }
 
-// Load room detail and similar rooms
+// Tải thông tin chi tiết phòng và phòng tương tự
 window.loadRoomDetail = async function loadRoomDetail(roomId) {
-    // Đợi Utils sẵn sàng
-    await waitForUtils();
-    
-    // Sử dụng loading utility với cấu hình cho trang detail
-    await loadingWrapper(async () => {
-        // Fetch room detail
+    try {
+        await waitForUtils();
+        
         const room = await fetchRoomDetail(roomId);
         if (!room) {
             throw new Error('Không tìm thấy phòng!');
         }
 
-        // Render room detail
         renderRoomDetail(room);
 
-        // Fetch and render similar rooms
         const similarRooms = await fetchSimilarRooms(room);
         renderSimilarRoom(similarRooms);
 
         return room;
-    }, {
-        ...LoadingUtils.detailPage,
-        loadingText: 'Đang tải thông tin phòng...',
-        onRetry: () => loadRoomDetail(roomId)
-    }).catch(error => {
-        console.error('Lỗi tải chi tiết phòng:', error);
-    });
+    } catch (error) {
+        throw error;
+    } finally {
+        document.body.classList.remove('loading');
+        document.body.classList.add('loaded');
+    }
 }
 
 // Lấy ID phòng từ URL
@@ -268,304 +236,9 @@ function getRoomIdFromUrl() {
     return parseInt(params.get('id'), 10);
 }
 
-// Khởi tạo chi tiết phòng
-function initChatPopup(room) {
-    const chatBtn = document.getElementById('chatBtn');
-    const chatPopup = document.getElementById('chatPopup');
-    const closeChat = document.getElementById('closeChat');
-    const sendChat = document.getElementById('sendChat');
-    const chatInput = document.getElementById('chatInput');
-    const chatMessages = document.getElementById('chatMessages');
-    const typingIndicator = document.getElementById('typingIndicator');
-    const quickActions = document.querySelectorAll('.quick-action');
-    const emojiBtn = document.getElementById('emojiBtn');
-    const attachBtn = document.getElementById('attachBtn');
 
-    if (!chatBtn || !chatPopup) return;
 
-    chatBtn.onclick = () => {
-        chatPopup.style.display = 'block';
-        setTimeout(() => chatPopup.classList.add('show'), 10);
-        chatInput.focus();
-    };
-
-    closeChat.onclick = () => {
-        chatPopup.classList.remove('show');
-        setTimeout(() => chatPopup.style.display = 'none', 300);
-    };
-
-    chatInput.addEventListener('input', function() {
-        this.style.height = 'auto';
-        this.style.height = Math.min(this.scrollHeight, 80) + 'px';
-        
-        sendChat.disabled = !this.value.trim();
-    });
-
-    function sendMessage(messageText) {
-        if (!messageText.trim()) return;
-
-        const now = new Date();
-        const timeString = now.toLocaleTimeString('vi-VN', { 
-            hour: '2-digit', 
-            minute: '2-digit' 
-        });
-
-        const userMessage = createMessageElement(messageText, 'user', timeString);
-        chatMessages.appendChild(userMessage);
-        
-        chatInput.value = '';
-        chatInput.style.height = 'auto';
-        sendChat.disabled = true;
-        
-        scrollToBottom();
-
-        setTimeout(() => {
-            showTypingIndicator();
-            setTimeout(() => {
-                hideTypingIndicator();
-                const responses = getOwnerResponse(messageText);
-                const responseTime = new Date().toLocaleTimeString('vi-VN', { 
-                    hour: '2-digit', 
-                    minute: '2-digit' 
-                });
-                const ownerMessage = createMessageElement(responses, 'owner', responseTime);
-                chatMessages.appendChild(ownerMessage);
-                scrollToBottom();
-            }, 1500 + Math.random() * 1000);
-        }, 500);
-    }
-
-    // Tạo phần tử tin nhắn
-    function createMessageElement(text, sender, time) {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `chat-message message-${sender}`;
-        
-        messageDiv.innerHTML = `
-            <div class="message-bubble">${text}</div>
-            <div class="message-time">${time}</div>
-        `;
-        
-        return messageDiv;
-    }
-
-    // Hiện/ẩn chỉ báo đang gõ
-    function showTypingIndicator() {
-        typingIndicator.style.display = 'flex';
-        scrollToBottom();
-    }
-
-    function hideTypingIndicator() {
-        typingIndicator.style.display = 'none';
-    }
-
-    // Cuộn xuống dưới cùng
-    function scrollToBottom() {
-        setTimeout(() => {
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }, 100);
-    }
-
-    // Phản hồi giả lập từ chủ nhà
-    function getOwnerResponse(message) {
-        const msg = message.toLowerCase();
-        
-        if (msg.includes('còn trống') || msg.includes('available')) {
-            return room.status === 'available' 
-                ? 'Phòng vẫn còn trống bạn nhé! Bạn có muốn đến xem phòng không?'
-                : 'Phòng này đã có người thuê rồi, nhưng tôi có phòng tương tự khác. Bạn có quan tâm không?';
-        }
-        
-        if (msg.includes('xem phòng') || msg.includes('visit')) {
-            return 'Tuyệt vời! Bạn có thể đến xem phòng vào cuối tuần được không? Tôi sẽ sắp xếp thời gian phù hợp.';
-        }
-        
-        if (msg.includes('giá') || msg.includes('price') || msg.includes('thương lượng')) {
-            return `Giá phòng hiện tại là ${formatPrice(room.price)}. Giá này đã bao gồm điện nước và wifi. Chúng ta có thể thảo luận thêm khi bạn đến xem phòng.`;
-        }
-        
-        if (msg.includes('tiện ích') || msg.includes('facilities')) {
-            return 'Phòng có đầy đủ tiện ích: điều hòa, nóng lạnh, wifi miễn phí, bảo vệ 24/7. Khu vực rất an ninh và thuận tiện đi lại.';
-        }
-        
-        if (msg.includes('địa chỉ') || msg.includes('address') || msg.includes('ở đâu')) {
-            return `Địa chỉ cụ thể: ${room.address || 'Tôi sẽ gửi địa chỉ chi tiết khi bạn xác nhận xem phòng'}. Gần trường học, siêu thị và bến xe.`;
-        }
-        
-        if (msg.includes('xin chào') || msg.includes('hello') || msg.includes('hi')) {
-            return 'Xin chào bạn! Cảm ơn bạn đã quan tâm đến phòng trọ. Bạn cần tôi tư vấn thông tin gì về phòng này không?';
-        }
-        
-        const responses = [
-            'Cảm ơn bạn đã quan tâm! Tôi sẽ trả lời chi tiết trong ít phút.',
-            'Để tôi kiểm tra thông tin và phản hồi bạn ngay nhé.',
-            'Bạn có thể để lại số điện thoại để tôi tư vấn trực tiếp được không?',
-            'Cảm ơn câu hỏi của bạn. Tôi sẽ trả lời sớm nhất có thể.'
-        ];
-        
-        return responses[Math.floor(Math.random() * responses.length)];
-    }
-
-    sendChat.onclick = () => {
-        sendMessage(chatInput.value);
-    };
-
-    chatInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            sendMessage(chatInput.value);
-        }
-    });
-
-    quickActions.forEach(action => {
-        action.addEventListener('click', () => {
-            const message = action.dataset.message;
-            chatInput.value = message;
-            chatInput.style.height = 'auto';
-            sendChat.disabled = false;
-            chatInput.focus();
-        });
-    });
-
-    let emojiPickerVisible = false;
-    
-    function createEmojiPicker() {
-        const emojiCategories = {
-            'Mặt cười': ['😊', '�', '🥰', '😍', '🤗', '😘', '😉', '😋', '😎', '🤩', '😌', '😏'],
-            'Cảm xúc': ['❤️', '�', '�', '�', '👍', '👏', '🙏', '💪', '✨', '�', '🔥', '⭐'],
-            'Nhà cửa': ['�🏠', '🏡', '🏢', '🏬', '🏪', '🏘️', '🏙️', '�️', '🚪', '🛏️', '🛋️', '📐'],
-            'Tiền bạc': ['�💰', '�', '💳', '💎', '🏧', '📊', '📈', '💸', '🤑', '💲', '💱', '🧾']
-        };
-        
-        const picker = document.createElement('div');
-        picker.className = 'emoji-picker';
-        picker.id = 'emojiPicker';
-        
-        Object.values(emojiCategories).flat().forEach(emoji => {
-            const emojiItem = document.createElement('div');
-            emojiItem.className = 'emoji-item';
-            emojiItem.textContent = emoji;
-            emojiItem.onclick = () => {
-                chatInput.value += emoji;
-                chatInput.focus();
-                sendChat.disabled = !chatInput.value.trim();
-                hideEmojiPicker();
-            };
-            picker.appendChild(emojiItem);
-        });
-        
-        return picker;
-    }
-    
-    function showEmojiPicker() {
-        hideEmojiPicker();
-        const picker = createEmojiPicker();
-        chatPopup.querySelector('.chat-popup-input-container').appendChild(picker);
-        emojiPickerVisible = true;
-    }
-    
-    function hideEmojiPicker() {
-        const existingPicker = document.getElementById('emojiPicker');
-        if (existingPicker) {
-            existingPicker.remove();
-        }
-        emojiPickerVisible = false;
-    }
-
-    emojiBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (emojiPickerVisible) {
-            hideEmojiPicker();
-        } else {
-            showEmojiPicker();
-        }
-    });
-
-    function createFileInput() {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'image/*,.pdf,.doc,.docx,.txt';
-        input.style.display = 'none';
-        
-        input.onchange = (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                showFilePreview(file);
-            }
-        };
-        
-        return input;
-    }
-    
-    function showFilePreview(file) {
-        let preview = chatPopup.querySelector('.file-preview');
-        if (!preview) {
-            preview = document.createElement('div');
-            preview.className = 'file-preview';
-            preview.innerHTML = `
-                <div class="file-info">
-                    <div class="file-icon">
-                        <i class="fas fa-file"></i>
-                    </div>
-                    <div class="file-details">
-                        <div class="file-name"></div>
-                        <div class="file-size"></div>
-                    </div>
-                </div>
-                <button class="file-remove" onclick="this.parentElement.classList.remove('show')">
-                    <i class="fas fa-times"></i>
-                </button>
-            `;
-            
-            chatPopup.querySelector('.chat-popup-input-container').insertBefore(
-                preview, 
-                chatPopup.querySelector('.chat-popup-input-container').firstChild
-            );
-        }
-        
-        const fileName = preview.querySelector('.file-name');
-        const fileSize = preview.querySelector('.file-size');
-        const fileIcon = preview.querySelector('.file-icon i');
-        
-        fileName.textContent = file.name;
-        fileSize.textContent = formatFileSize(file.size);
-        
-        if (file.type.startsWith('image/')) {
-            fileIcon.className = 'fas fa-image';
-        } else if (file.type.includes('pdf')) {
-            fileIcon.className = 'fas fa-file-pdf';
-        } else if (file.type.includes('word')) {
-            fileIcon.className = 'fas fa-file-word';
-        } else {
-            fileIcon.className = 'fas fa-file';
-        }
-        
-        preview.classList.add('show');
-    }
-    
-    function formatFileSize(bytes) {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    }
-
-    attachBtn.addEventListener('click', () => {
-        const fileInput = createFileInput();
-        document.body.appendChild(fileInput);
-        fileInput.click();
-        document.body.removeChild(fileInput);
-    });
-
-    document.addEventListener('click', (e) => {
-        if (emojiPickerVisible && !emojiBtn.contains(e.target) && !document.getElementById('emojiPicker')?.contains(e.target)) {
-            hideEmojiPicker();
-        }
-    });
-
-    sendChat.disabled = true;
-}
-
+// Định dạng giá tiền
 function formatPrice(price) {
     if (!price) return '';
     if (price >= 1000000) {
@@ -574,6 +247,7 @@ function formatPrice(price) {
     return price.toLocaleString('vi-VN') + ' đ/tháng';
 }
 
+// Cập nhật giao diện xác thực
 function updateAuthUI() {
     const authButtons = document.getElementById('authButtons');
     const userMenu = document.querySelector('.user-menu');
@@ -581,7 +255,6 @@ function updateAuthUI() {
     const userEmail = document.querySelector('.user-email');
     
     if (!authButtons || !userMenu) {
-        console.warn("authButtons hoặc userMenu chưa có trong DOM, bỏ qua updateAuthUI");
         return;
     }
     
@@ -603,7 +276,6 @@ function updateAuthUI() {
         authButtons.style.display = 'block';
         userMenu.classList.add('d-none');
         
-        // Populate auth buttons if empty
         if (authButtons.innerHTML.trim() === '') {
             authButtons.innerHTML = `
                 <a href="auth.html" class="auth-btn login-btn">Đăng nhập</a>
@@ -613,9 +285,7 @@ function updateAuthUI() {
     }
 }
 
-
-
-
+// Hiển thị ảnh
 function showImage(idx) {
     document.querySelectorAll('.room-img').forEach((img, i) => {
         img.style.display = i === idx ? 'block' : 'none';
@@ -628,6 +298,7 @@ function showImage(idx) {
     });
 }
 
+// Thay đổi ảnh
 function changeImage(delta) {
     const images = document.querySelectorAll('.room-img');
     const currentIdx = Array.from(images).findIndex(img => img.style.display === 'block');
@@ -635,6 +306,7 @@ function changeImage(delta) {
     showImage(newIdx);
 }
 
+// Hiển thị chi tiết phòng
 function renderRoomDetail(room) {
     const container = document.getElementById('roomDetail');
     if (!room) {
@@ -672,9 +344,9 @@ function renderRoomDetail(room) {
     });
     
     let thumbsHtml = images.map((img, idx) => `<img src="${img}" class="room-thumb" data-idx="${idx}" style="width:64px;height:48px;object-fit:cover;border-radius:6px;border:2px solid ${idx===0?'#ff6b35':'#eee'};margin-right:8px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.07);">`).join('');
-    // Handle owner info - use fetched owner data or fallback
     const ownerId = room.ownerId || room.owner_id;
     const ownerName = room.ownerName || `Chủ phòng #${ownerId}`;
+    const ownerPhone = room.ownerPhone || '';
     const ownerAvatarMarkup = buildAvatarMarkup(room.ownerAvatar, ownerName);
 
     container.innerHTML = `
@@ -723,7 +395,7 @@ function renderRoomDetail(room) {
                         <i class="fas fa-check-circle"></i>
                         <div>
                             <div class="info-label">Trạng thái</div>
-                            <div class="info-value">${(room.status === 'AVAILABLE' || room.status === 'available') ? 'Còn trống' : 'Đã thuê'}</div>
+                            <div class="info-value">${(room.status === 'ACTIVE' || room.status === 'active') ? 'Còn trống' : 'Đã thuê'}</div>
                         </div>
                     </div>
                 </div>
@@ -731,14 +403,13 @@ function renderRoomDetail(room) {
                     <div class="user-avatar" style="transition: all 0.3s ease;">${ownerAvatarMarkup}</div>
                     <div class="user-info">
                         <div class="user-name" style="transition: all 0.3s ease;">${ownerName}</div>
-                        <div class="user-status">Đang hoạt động</div>
-                        <div class="user-stats">
-                            <div class="stat-item">
-                                <i class="fas fa-home"></i>
-                                <span>5 phòng cho thuê</span>
-                            </div>
-                        </div>
                     </div>
+
+                    <button  id="contactBtn" class="contact-button">
+                        <i class="fas fa-phone"></i>
+                        ${ownerPhone || 'Chưa cập nhật'}
+                    </button>
+
                     <button  id="chatBtn" class="contact-button">
                         <i class="fas fa-comment"></i>
                         Nhắn tin
@@ -750,7 +421,7 @@ function renderRoomDetail(room) {
                 
                 <h3 style="font-size:20px;color:#222;margin-bottom:12px;">Mô tả chi tiết</h3>
                 <div class="listing-type" style="font-size:17px;color:#444;margin-bottom:24px;line-height:1.7;background:#f8f9fa;padding:16px;border-radius:8px;">${room.description || ''}</div>
-                <div style="margin-bottom:16px;color:#666;">Ngày đăng: <b>${room.created_at ? new Date(room.created_at).toLocaleDateString('vi-VN') : ''}</b></div>
+                <div style="margin-bottom:16px;color:#666;">Ngày đăng: <b>${room.createdAt ? new Date(room.createdAt).toLocaleDateString('vi-VN') : ''}</b></div>
                 ${mapSection}
             </div>
         </div>
@@ -760,10 +431,6 @@ function renderRoomDetail(room) {
                         <div class="chat-owner-avatar">${buildAvatarMarkup(room.ownerAvatar, ownerName)}</div>
                         <div class="chat-owner-details">
                             <h4>${ownerName}</h4>
-                            <div class="chat-owner-status">
-                                <div class="status-dot"></div>
-                                <span>Đang hoạt động</span>
-                            </div>
                         </div>
                     </div>
                     <button id="closeChat" class="chat-popup-close">×</button>
@@ -853,8 +520,6 @@ function renderRoomDetail(room) {
             const ownerId = room.ownerId || room.owner_id;
             if (ownerId) {
                 window.location.href = `user-profile.html?userId=${ownerId}`;
-            } else {
-                console.warn('Không tìm thấy ID chủ phòng');
             }
         };
 
@@ -865,10 +530,8 @@ function renderRoomDetail(room) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Update auth UI
     updateAuthUI();
     
-    // Setup logout handler (sử dụng ID đúng và kiểm tra tồn tại)
     const setupLogoutHandler = () => {
         const logoutButton = document.getElementById('logoutButton');
         if (logoutButton) {
@@ -876,31 +539,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 e.preventDefault();
                 logout();
                 updateAuthUI();
-                window.location.href = 'index.html'; // Quay về trang chủ sau khi đăng xuất
+                window.location.href = 'index.html';
             });
         }
     };
-
     
-    
-    // Thử setup ngay lập tức
     setupLogoutHandler();
     
-    // Setup lại sau khi header được load
     document.addEventListener('headerLoaded', setupLogoutHandler);
     
-    // Render room detail
     const roomId = getRoomIdFromUrl();
     if (!roomId) {
         window.location.href = 'index.html';
         return;
     }
     
-    // Load room detail from API
     loadRoomDetail(roomId);
-
     
-    // Xử lý sự kiện chuyển ảnh (đặt sau khi render room detail)
     setTimeout(() => {
         const roomDetailContainer = document.getElementById('roomDetail');
         if (roomDetailContainer) {
@@ -918,6 +573,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 100);
 });
 
+// Lấy danh sách phòng tương tự
 function getSimilarRooms(currentRoom, allRooms) {
   if (!currentRoom || !allRooms || !Array.isArray(allRooms)) return [];
 
@@ -926,32 +582,26 @@ function getSimilarRooms(currentRoom, allRooms) {
     .map(r => {
       let score = 0;
 
-      // Cùng khu vực: +2 điểm
       if (r.district === currentRoom.district) score += 2;
 
-      // Giá chênh lệch < 1 triệu: +1 điểm
       if (Math.abs(r.price - currentRoom.price) <= 1000000) score += 1;
 
-      // Diện tích chênh lệch < 5m²: +1 điểm
       if (Math.abs(r.area - currentRoom.area) <= 5) score += 1;
 
-      // Cùng trạng thái: +1 điểm
       if (r.status === currentRoom.status) score += 1;
 
       return { ...r, score };
     })
-    .filter(r => r.score > 0) // chỉ giữ phòng có điểm tương đồng > 0
-    .sort((a, b) => b.score - a.score) // sắp xếp giảm dần theo điểm
-    .slice(0, 6); // lấy tối đa 6 phòng tương tự nhất
+    .filter(r => r.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 6);
 }
 
-let currentPage = 0;
-const visible = 3; // số card hiển thị cùng lúc 
 
+// Hiển thị danh sách phòng tương tự
 function renderSimilarRoom(rooms) {
     const saved = getFavouriteRooms();
-    const container = document.getElementById('similarRoomWrapper'); 
-    // container ngoài cùng, bạn đặt 1 div rỗng trong HTML, vd: <div id="similarRoomWrapper"></div>
+    const container = document.getElementById('similarRoomWrapper');
 
     if (!container) return;
 
@@ -965,9 +615,8 @@ function renderSimilarRoom(rooms) {
         return;
     }
 
-    // Tạo khung ngoài
     container.innerHTML = `
-        <div class="similar-form">
+        <div class="similar-form" id="similarForm">
             <div class="similar-form__title">Tin đăng tương tự</div>
             <button class="nav-btn prev"><i class="fas fa-chevron-left"></i></button>
             <div class="similar-viewport">
@@ -981,14 +630,13 @@ function renderSimilarRoom(rooms) {
 
     rooms.forEach(room => {
         const isSaved = saved.some(p => p.id === room.id);
-        // Handle both imageUrls (from API) and images (legacy format)
-        const mainImage = room.imageUrls?.[0] || 
-                         (room.images?.[0]?.url) || 
+        const mainImage = room.imageUrls?.[0] ||
+                         (room.images?.[0]?.url) ||
                          'https://via.placeholder.com/240x180?text=No+Image';
 
-    const ownerId = room.ownerId || room.owner_id;
-    const ownerName = room.ownerName || `Chủ phòng #${ownerId}`;
-    const ownerAvatarMarkup = buildAvatarMarkup(room.ownerAvatar, ownerName);
+        const ownerId = room.ownerId || room.owner_id;
+        const ownerName = room.ownerName || `Chủ phòng #${ownerId}`;
+        const ownerAvatarMarkup = buildAvatarMarkup(room.ownerAvatar, ownerName);
 
         const card = document.createElement('div');
         card.className = 'similar-card';
@@ -1002,12 +650,11 @@ function renderSimilarRoom(rooms) {
             </div>
             <div class="similar-content">
                 <div class="similar-title">${room.title}</div>
-                <div class="similar-type">${room.description || ''}</div>
                 <div class="similar-price">${formatPrice(room.price)}</div>
                 <div class="similar-area">${room.area ? room.area + ' m²' : ''}</div>
                 <div class="similar-location">
                     <span class="location-icon"><i class="fa-solid fa-location-dot"></i></span>
-                    <span>${room.address || ''}</span>
+                    <span>${room.district || ''}</span>
                 </div>
                 <div class="similar-footer">
                     <div class="user-info">
@@ -1018,12 +665,10 @@ function renderSimilarRoom(rooms) {
             </div>
         `;
 
-        // Event: click card
         card.addEventListener('click', () => {
             window.location.href = `./detail.html?id=${room.id}`;
         });
 
-        // Event: click tim
         card.querySelector('.heart-icon').addEventListener('click', function (e) {
             e.stopPropagation();
             const icon = this.querySelector('i');
@@ -1042,14 +687,17 @@ function renderSimilarRoom(rooms) {
     });
 
     updateSlider(rooms.length);
-    
-    // Setup slider navigation after rendering
+
     setTimeout(() => {
         setupSliderNavigation();
     }, 100);
 }
 
 
+
+// Cập nhật slider phòng tương tự
+let currentPage = 0;
+const visible = 3; // số phòng hiển thị cùng lúc
 function updateSlider(total) {
   const track = document.getElementById('similarRoom');
   const translate = currentPage * 100; 
@@ -1060,7 +708,7 @@ function updateSlider(total) {
   document.querySelector('.next').style.display = 'inline-block';
 }
 
-// Setup slider navigation events
+// Thiết lập điều hướng slider
 function setupSliderNavigation() {
   const prevBtn = document.querySelector('.prev');
   const nextBtn = document.querySelector('.next');
@@ -1089,7 +737,562 @@ function setupSliderNavigation() {
   }
 }
 
-// ================== LOADING FUNCTIONS ==================
-// Loading functions đã được chuyển sang loading.js để tái sử dụng
+// Khởi tạo popup chat
+function initChatPopup(room) {
+    const chatBtn = document.getElementById('chatBtn');
+    const chatPopup = document.getElementById('chatPopup');
+    const closeChat = document.getElementById('closeChat');
+    const sendChat = document.getElementById('sendChat');
+    const chatInput = document.getElementById('chatInput');
+    const chatMessages = document.getElementById('chatMessages');
+    const typingIndicator = document.getElementById('typingIndicator');
+    const quickActions = document.querySelectorAll('.quick-action');
+    const emojiBtn = document.getElementById('emojiBtn');
+    const attachBtn = document.getElementById('attachBtn');
+
+    if (!chatBtn || !chatPopup) return;
+
+    chatBtn.onclick = async () => {
+        if (room && room.id) {
+            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+            if (!userInfo.token || !userInfo.email) {
+                if (window.Utils && typeof Utils.showNotification === 'function') {
+                    Utils.showNotification('Vui lòng đăng nhập để chat', 'warning');
+                } else {
+                    alert('Vui lòng đăng nhập để chat');
+                }
+                setTimeout(() => {
+                    window.location.href = 'auth.html';
+                }, 1500);
+                return;
+            }
+
+            try {
+                let conversation = await checkExistingConversation(room.id);
+                
+                if (conversation) {
+                    chatPopup.dataset.conversationId = conversation.id;
+                    
+                    await loadConversationMessages(conversation.id, chatMessages);
+                    
+                } else {
+                    conversation = await createConversation(room.id);
+                    
+                    if (conversation && conversation.id) {
+                        chatPopup.dataset.conversationId = conversation.id;
+                        
+                        chatMessages.innerHTML = '';
+                        
+                        await sendRoomIntroMessage(conversation.id, room, chatMessages);
+                        
+                        if (window.Utils && typeof Utils.showNotification === 'function') {
+                            Utils.showNotification('Đã tạo cuộc trò chuyện mới', 'success');
+                        }
+                    }
+                }
+            } catch (error) {
+                if (window.Utils && typeof Utils.showNotification === 'function') {
+                    Utils.showNotification('Không thể tải cuộc trò chuyện', 'error');
+                }
+                return;
+            }
+
+            chatPopup.style.display = 'block';
+            setTimeout(() => chatPopup.classList.add('show'), 10);
+            chatInput.focus();
+        } else {
+            if (window.Utils && typeof Utils.showNotification === 'function') {
+                Utils.showNotification('Không thể mở chat. Thông tin phòng không hợp lệ.', 'error');
+            }
+        }
+    };
+
+    closeChat.onclick = () => {
+        chatPopup.classList.remove('show');
+        setTimeout(() => chatPopup.style.display = 'none', 300);
+    };
+
+    chatInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 80) + 'px';
+        
+        sendChat.disabled = !this.value.trim();
+    });
+
+    // Gửi tin nhắn
+    function sendMessage(messageText) {
+        if (!messageText.trim()) return;
+
+        const conversationId = chatPopup.dataset.conversationId;
+        if (!conversationId) {
+            if (window.Utils && typeof Utils.showNotification === 'function') {
+                Utils.showNotification('Không thể gửi tin nhắn. Vui lòng thử lại.', 'error');
+            }
+            return;
+        }
+
+        sendMessageToAPI(conversationId, messageText, chatMessages, chatInput, sendChat);
+    }
+
+    // Tạo phần tử tin nhắn
+    function createMessageElement(text, sender, time) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `chat-message message-${sender}`;
+        
+        messageDiv.innerHTML = `
+            <div class="message-bubble">${text}</div>
+            <div class="message-time">${time}</div>
+        `;
+        
+        return messageDiv;
+    }
+
+    // Hiện chỉ báo đang gõ
+    function showTypingIndicator() {
+        typingIndicator.style.display = 'flex';
+        scrollToBottom();
+    }
+
+    // Ẩn chỉ báo đang gõ
+    function hideTypingIndicator() {
+        typingIndicator.style.display = 'none';
+    }
+
+    // Cuộn xuống dưới cùng
+    function scrollToBottom() {
+        setTimeout(() => {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }, 100);
+    }
+
+    sendChat.onclick = () => {
+        sendMessage(chatInput.value);
+    };
+
+    chatInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage(chatInput.value);
+        }
+    });
+
+    quickActions.forEach(action => {
+        action.addEventListener('click', () => {
+            const message = action.dataset.message;
+            chatInput.value = message;
+            chatInput.style.height = 'auto';
+            sendChat.disabled = false;
+            chatInput.focus();
+        });
+    });
+
+    let emojiPickerVisible = false;
+    
+    // Tạo emoji picker
+    function createEmojiPicker() {
+        const emojiCategories = {
+            'Mặt cười': ['😊', '😁', '🥰', '😍', '🤗', '😘', '😉', '😋', '😎', '🤩', '😌', '😏'],
+            'Cảm xúc': ['❤️', '💕', '💖', '💗', '👍', '👏', '🙏', '💪', '✨', '⭐', '🔥', '⭐'],
+            'Nhà cửa': ['🏠', '🏡', '🏢', '🏬', '🏪', '🏘️', '🏙️', '🏗️', '🚪', '🛏️', '🛋️', '📐'],
+            'Tiền bạc': ['💰', '💵', '💳', '💎', '🏧', '📊', '📈', '💸', '🤑', '💲', '💱', '🧾']
+        };
+        
+        const picker = document.createElement('div');
+        picker.className = 'emoji-picker';
+        picker.id = 'emojiPicker';
+        
+        Object.values(emojiCategories).flat().forEach(emoji => {
+            const emojiItem = document.createElement('div');
+            emojiItem.className = 'emoji-item';
+            emojiItem.textContent = emoji;
+            emojiItem.onclick = () => {
+                chatInput.value += emoji;
+                chatInput.focus();
+                sendChat.disabled = !chatInput.value.trim();
+                hideEmojiPicker();
+            };
+            picker.appendChild(emojiItem);
+        });
+        
+        return picker;
+    }
+    
+    // Hiện emoji picker
+    function showEmojiPicker() {
+        hideEmojiPicker();
+        const picker = createEmojiPicker();
+        chatPopup.querySelector('.chat-popup-input-container').appendChild(picker);
+        emojiPickerVisible = true;
+    }
+    
+    // Ẩn emoji picker
+    function hideEmojiPicker() {
+        const existingPicker = document.getElementById('emojiPicker');
+        if (existingPicker) {
+            existingPicker.remove();
+        }
+        emojiPickerVisible = false;
+    }
+
+    emojiBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (emojiPickerVisible) {
+            hideEmojiPicker();
+        } else {
+            showEmojiPicker();
+        }
+    });
+
+    // Tạo input file
+    function createFileInput() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*,.pdf,.doc,.docx,.txt';
+        input.style.display = 'none';
+        
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                showFilePreview(file);
+            }
+        };
+        
+        return input;
+    }
+    
+    // Hiện preview file
+    function showFilePreview(file) {
+        let preview = chatPopup.querySelector('.file-preview');
+        if (!preview) {
+            preview = document.createElement('div');
+            preview.className = 'file-preview';
+            preview.innerHTML = `
+                <div class="file-info">
+                    <div class="file-icon">
+                        <i class="fas fa-file"></i>
+                    </div>
+                    <div class="file-details">
+                        <div class="file-name"></div>
+                        <div class="file-size"></div>
+                    </div>
+                </div>
+                <button class="file-remove" onclick="this.parentElement.classList.remove('show')">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            chatPopup.querySelector('.chat-popup-input-container').insertBefore(
+                preview, 
+                chatPopup.querySelector('.chat-popup-input-container').firstChild
+            );
+        }
+        
+        const fileName = preview.querySelector('.file-name');
+        const fileSize = preview.querySelector('.file-size');
+        const fileIcon = preview.querySelector('.file-icon i');
+        
+        fileName.textContent = file.name;
+        fileSize.textContent = formatFileSize(file.size);
+        
+        if (file.type.startsWith('image/')) {
+            fileIcon.className = 'fas fa-image';
+        } else if (file.type.includes('pdf')) {
+            fileIcon.className = 'fas fa-file-pdf';
+        } else if (file.type.includes('word')) {
+            fileIcon.className = 'fas fa-file-word';
+        } else {
+            fileIcon.className = 'fas fa-file';
+        }
+        
+        preview.classList.add('show');
+    }
+    
+    // Định dạng kích thước file
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    attachBtn.addEventListener('click', () => {
+        const fileInput = createFileInput();
+        document.body.appendChild(fileInput);
+        fileInput.click();
+        document.body.removeChild(fileInput);
+    });
+
+    document.addEventListener('click', (e) => {
+        if (emojiPickerVisible && !emojiBtn.contains(e.target) && !document.getElementById('emojiPicker')?.contains(e.target)) {
+            hideEmojiPicker();
+        }
+    });
+
+    sendChat.disabled = true;
+}
+
+
+// Lấy headers xác thực cho chat
+function getChatAuthHeaders() {
+    const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+    const token = userInfo.token;
+    const email = userInfo.email;
+    
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        'X-User-Email': email
+    };
+}
+
+// Kiểm tra cuộc trò chuyện có tồn tại không
+async function checkExistingConversation(roomId) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/chat/get-all-user-conversations`, {
+            method: 'GET',
+            headers: getChatAuthHeaders()
+        });
+
+        if (!response.ok) {
+            return null;
+        }
+
+        const result = await response.json();
+        
+        if (result.status === 200 && result.data) {
+            const existingConv = result.data.find(conv => conv.roomId === roomId);
+            if (existingConv) {
+                return existingConv;
+            }
+        }
+        
+        return null;
+    } catch (error) {
+        return null;
+    }
+}
+
+// Tạo cuộc trò chuyện mới
+async function createConversation(roomId) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/chat/add-conversations/${roomId}`, {
+            method: 'POST',
+            headers: getChatAuthHeaders()
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Failed to create conversation: ${response.status}`);
+        }
+
+        const result = await response.json();
+        
+        if (result.status === 201 && typeof result.data === 'number') {
+            return { id: result.data, roomId: roomId };
+        }
+        
+        if (result.status === 200 && result.data) {
+            if (typeof result.data === 'object' && result.data.id) {
+                return result.data;
+            }
+            if (typeof result.data === 'number') {
+                return { id: result.data, roomId: roomId };
+            }
+        }
+        
+        if (result.id) {
+            return result;
+        }
+        
+        throw new Error('Invalid response format - check console for details');
+    } catch (error) {
+        throw error;
+    }
+}
+
+
+// Tải tin nhắn của cuộc trò chuyện
+async function loadConversationMessages(conversationId, chatMessagesContainer) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/chat/conversation/${conversationId}`, {
+            method: 'GET',
+            headers: getChatAuthHeaders()
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to load messages: ${response.status}`);
+        }
+
+        const result = await response.json();
+        
+        if (result.status === 200 && result.data && result.data.messages) {
+            const messages = result.data.messages;
+            const currentUserEmail = JSON.parse(localStorage.getItem('userInfo') || '{}').email;
+            
+            chatMessagesContainer.innerHTML = '';
+            
+            if (messages.length === 0) {
+                chatMessagesContainer.innerHTML = `
+                    <div class="chat-welcome">
+                        <i class="fas fa-comment-dots" style="font-size: 24px; color: #ff6b35; margin-bottom: 8px;"></i>
+                        <div>Chưa có tin nhắn nào. Hãy bắt đầu cuộc trò chuyện!</div>
+                    </div>
+                `;
+            } else {
+                messages.forEach(msg => {
+                    const isCurrentUser = msg.senderEmail === currentUserEmail;
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = `chat-message message-${isCurrentUser ? 'user' : 'owner'}`;
+                    
+                    const time = new Date(msg.createdAt).toLocaleTimeString('vi-VN', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    
+                    messageDiv.innerHTML = `
+                        <div class="message-bubble">${msg.content}</div>
+                        <div class="message-time">${time}</div>
+                    `;
+                    
+                    chatMessagesContainer.appendChild(messageDiv);
+                });
+                
+                setTimeout(() => {
+                    chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+                }, 100);
+            }
+        }
+    } catch (error) {
+        chatMessagesContainer.innerHTML = `
+            <div class="chat-welcome">
+                <i class="fas fa-exclamation-circle" style="font-size: 24px; color: #dc3545; margin-bottom: 8px;"></i>
+                <div>Không thể tải tin nhắn. Vui lòng thử lại.</div>
+            </div>
+        `;
+    }
+}
+
+// Gửi tin nhắn giới thiệu phòng
+async function sendRoomIntroMessage(conversationId, room, chatMessagesContainer) {
+    try {
+        const roomImage = room.imageUrls?.[0] || 
+                         (room.images?.[0]?.url) || 
+                         'https://via.placeholder.com/300x200?text=No+Image';
+        
+        const roomCardHTML = `
+            <div class="room-intro-card">
+                <div class="room-intro-image">
+                    <img src="${roomImage}" alt="${room.title}">
+                </div>
+                <div class="room-intro-details">
+                    <div class="room-intro-title">${room.title}</div>
+                    <div class="room-intro-price">${formatPrice(room.price)}</div>
+                    <div class="room-intro-info">
+                        <span><i class="fas fa-expand"></i> ${room.area} m²</span>
+                        <span><i class="fas fa-map-marker-alt"></i> ${room.district}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        const introMessage = `ROOM_INTRO|${roomImage}|${room.title}|${formatPrice(room.price)}|${room.area}|${room.district}|${room.id}`;
+
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('vi-VN', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'chat-message message-user room-intro-message';
+        messageDiv.innerHTML = `
+            ${roomCardHTML}
+            <div class="message-time">${timeString}</div>
+        `;
+        chatMessagesContainer.appendChild(messageDiv);
+
+        setTimeout(() => {
+            chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+        }, 100);
+
+        const response = await fetch(`${API_BASE_URL}/chat/send-message`, {
+            method: 'POST',
+            headers: getChatAuthHeaders(),
+            body: JSON.stringify({
+                conversationId: parseInt(conversationId),
+                content: introMessage,
+                messageType: 'TEXT'
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to send intro message: ${response.status}`);
+        }
+
+        const result = await response.json();
+        
+    } catch (error) {
+    }
+}
+
+// Gửi tin nhắn đến API
+async function sendMessageToAPI(conversationId, messageText, chatMessagesContainer, chatInputElement, sendButtonElement) {
+    try {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('vi-VN', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+
+        const userMessage = document.createElement('div');
+        userMessage.className = 'chat-message message-user';
+        userMessage.innerHTML = `
+            <div class="message-bubble">${messageText}</div>
+            <div class="message-time">${timeString}</div>
+        `;
+        chatMessagesContainer.appendChild(userMessage);
+        
+        chatInputElement.value = '';
+        chatInputElement.style.height = 'auto';
+        sendButtonElement.disabled = true;
+        
+        setTimeout(() => {
+            chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+        }, 100);
+
+        const response = await fetch(`${API_BASE_URL}/chat/send-message`, {
+            method: 'POST',
+            headers: getChatAuthHeaders(),
+            body: JSON.stringify({
+                conversationId: parseInt(conversationId),
+                content: messageText,
+                messageType: 'TEXT'
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to send message: ${response.status}`);
+        }
+
+        const result = await response.json();
+        
+        if (result.status === 200) {
+        }
+    } catch (error) {
+        if (window.Utils && typeof Utils.showNotification === 'function') {
+            Utils.showNotification('Không thể gửi tin nhắn. Vui lòng thử lại.', 'error');
+        }
+        
+        const lastMessage = chatMessagesContainer.lastElementChild;
+        if (lastMessage && lastMessage.classList.contains('message-user')) {
+            lastMessage.style.opacity = '0.5';
+            lastMessage.title = 'Gửi tin nhắn thất bại';
+        }
+    }
+}
+
+
+
 
 

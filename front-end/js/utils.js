@@ -1,50 +1,109 @@
-// Utility functions for the Room-Go application
-window.Utils = {
-    // Show notification to user
-    showNotification(message, type = 'success', duration = 3000) {
-        // Remove existing notifications
-        const existingNotifications = document.querySelectorAll('.notification');
-        existingNotifications.forEach(notification => notification.remove());
+const Utils = {
+    // Hiển thị thông báo nổi (toast) trên màn hình
+    showNotification(message, type = 'info', duration = 3000) {
+        const existing = document.querySelector('.notification');
+        if (existing) {
+            existing.remove();
+        }
 
-        // Create notification element
         const notification = document.createElement('div');
         notification.className = `notification notification-${type}`;
-        notification.textContent = message;
-        
-        // Style notification
+        notification.innerHTML = `
+            <div class="notification-content">
+                <span class="notification-message">${message}</span>
+                <button class="notification-close" onclick="this.parentElement.parentElement.remove()">×</button>
+            </div>
+        `;
+
         notification.style.cssText = `
             position: fixed;
             top: 20px;
             right: 20px;
-            padding: 12px 20px;
-            border-radius: 8px;
-            color: white;
-            font-weight: 500;
             z-index: 10000;
-            transition: all 0.3s ease;
             max-width: 400px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            ${type === 'success' ? 'background-color: #28a745;' : 
-              type === 'error' ? 'background-color: #dc3545;' : 
-              type === 'warning' ? 'background-color: #ffc107; color: #212529;' : 
-              'background-color: #17a2b8;'}
+            padding: 0;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            animation: slideInRight 0.3s ease;
         `;
+
+        const bgColors = {
+            success: '#059669',
+            error: '#dc2626',
+            warning: '#fa9d32ff',
+            info: '#2563eb'
+        };
+
+        notification.querySelector('.notification-content').style.cssText = `
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 20px;
+            background: ${bgColors[type] || bgColors.info};
+            color: white;
+            border-radius: 10px;
+            font-weight: 600;
+        `;
+
+        notification.querySelector('.notification-close').style.cssText = `
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 0;
+            margin-left: 15px;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.3s ease;
+        `;
+
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideInRight {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            @keyframes slideOutRight {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
 
         document.body.appendChild(notification);
 
-        // Auto remove after specified duration
         setTimeout(() => {
-            notification.style.opacity = '0';
-            notification.style.transform = 'translateX(100%)';
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.parentNode.removeChild(notification);
-                }
-            }, 300);
+            if (notification.parentElement) {
+                notification.style.animation = 'slideOutRight 0.3s ease';
+                setTimeout(() => {
+                    if (notification.parentElement) {
+                        notification.remove();
+                    }
+                }, 300);
+            }
         }, duration);
     },
 
-    // Format price in Vietnamese currency
+
+
+    // Định dạng giá tiền theo VNĐ/tháng
     formatPrice(price) {
         if (!price) return '';
         if (price >= 1000000) {
@@ -53,7 +112,7 @@ window.Utils = {
         return price.toLocaleString('vi-VN') + ' đ/tháng';
     },
 
-    // Format date
+    // Định dạng ngày kiểu Việt Nam (dd/MM/yyyy)
     formatDate(dateString) {
         const date = new Date(dateString);
         return date.toLocaleDateString('vi-VN', {
@@ -63,23 +122,22 @@ window.Utils = {
         });
     },
 
-    // Get user info from localStorage
+    // Lấy thông tin người dùng từ localStorage
     getCurrentUser() {
         try {
             return JSON.parse(localStorage.getItem('userInfo'));
         } catch (error) {
-            console.error('Error parsing user info:', error);
             return null;
         }
     },
 
-    // Check if user is authenticated
+    // Kiểm tra trạng thái đăng nhập (có token)
     isAuthenticated() {
         const userInfo = this.getCurrentUser();
         return userInfo && userInfo.token;
     },
 
-    // Redirect to login if not authenticated
+    // Bắt buộc đăng nhập, chuyển hướng nếu chưa đăng nhập
     requireAuth(redirectTo = 'auth.html') {
         if (!this.isAuthenticated()) {
             this.showNotification('Vui lòng đăng nhập để tiếp tục!', 'warning');
@@ -91,10 +149,8 @@ window.Utils = {
         return true;
     },
 
-    // Handle API errors
+    // Xử lý lỗi API và hiển thị thông báo
     handleApiError(error, defaultMessage = 'Có lỗi xảy ra. Vui lòng thử lại sau.') {
-        console.error('API Error:', error);
-        
         if (error.message) {
             this.showNotification(error.message, 'error');
         } else {
@@ -102,7 +158,7 @@ window.Utils = {
         }
     },
 
-    // Debounce function for search inputs
+    // Tạo hàm debounce để trì hoãn thực thi
     debounce(func, wait) {
         let timeout;
         return function executedFunction(...args) {
@@ -115,75 +171,70 @@ window.Utils = {
         };
     },
 
-    // Validate email format
+    // Kiểm tra định dạng email hợp lệ
     isValidEmail(email) {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return emailRegex.test(email);
     },
 
-    // Validate phone number format (Vietnamese)
+    // Kiểm tra định dạng số điện thoại Việt Nam (10-11 số)
     isValidPhone(phone) {
         const phoneRegex = /^[0-9]{10,11}$/;
         return phoneRegex.test(phone);
     },
 
-    // Safe JSON parse
+    // Parse JSON an toàn, trả về giá trị mặc định nếu lỗi
     safeJsonParse(str, defaultValue = null) {
         try {
             return JSON.parse(str);
         } catch (error) {
-            console.error('Error parsing JSON:', error);
             return defaultValue;
         }
     },
 
-    // Generate unique ID
+    // Sinh ID ngẫu nhiên dạng chuỗi
     generateId() {
         return Date.now().toString(36) + Math.random().toString(36).substr(2);
     },
 
-    // Truncate text
+    // Rút gọn chuỗi văn bản theo độ dài cho trước
     truncateText(text, maxLength = 100) {
         if (!text) return '';
         if (text.length <= maxLength) return text;
         return text.substr(0, maxLength) + '...';
     },
 
-    // Get authentication token (user token or guest token)
+    // Lấy token xác thực (ưu tiên người dùng, fallback khách)
     async getAuthToken() {
         try {
             const { authManager } = await import('./auth.js');
             return await authManager.getValidToken();
         } catch (error) {
-            console.error('Không thể lấy token:', error);
             throw new Error('Không thể kết nối tới server. Vui lòng thử lại sau.');
         }
     },
 
-    // Make API request with automatic token refresh
+    // Gọi API có tự động làm mới token
     async makeAuthenticatedRequest(url, options = {}) {
         try {
             const { authManager } = await import('./auth.js');
             return await authManager.makeAuthenticatedRequest(url, options);
         } catch (error) {
-            console.error('Lỗi authenticated request:', error);
             throw error;
         }
     },
 
-    // Get guest token from API (deprecated - use authManager.getGuestToken)
+    // Lấy guest token từ API (ưu tiên dùng authManager.getGuestToken)
     async getGuestToken() {
         try {
             const { authManager } = await import('./auth.js');
             return await authManager.getGuestToken();
         } catch (error) {
-            console.error('Lỗi lấy guest token:', error);
             throw error;
         }
     }
 };
 
-// Make Utils available globally
 window.Utils = Utils;
 
 if (typeof module !== 'undefined' && module.exports) {

@@ -41,7 +41,7 @@ public class RoomMapper {
                 }
             }
         } catch (Exception e) {
-            log.error("❌ Error loading images for room id {}: {}", entity.getId(), e.getMessage());
+            log.error("Error loading images for room id {}: {}", entity.getId(), e.getMessage());
         }
 
         return RoomResponse.builder()
@@ -57,8 +57,9 @@ public class RoomMapper {
                 .latitude(entity.getLatitude())
                 .longitude(entity.getLongitude())
                 .ownerId(entity.getOwnerId())
-                .status(entity.getStatus() != null ? entity.getStatus() : RoomStatus.AVAILABLE)
+                .status(entity.getStatus() != null ? entity.getStatus() : RoomStatus.PENDING)
                 .imageUrls(imageUrls)
+                .createdAt(entity.getCreatedAt() != null ? entity.getCreatedAt().toString() : null)
                 .build();
     }
 

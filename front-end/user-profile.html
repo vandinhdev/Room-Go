@@ -9,9 +9,14 @@
     <link rel="stylesheet" href="access/css/footer.css">
     <link rel="stylesheet" href="access/css/responsive.css">
     <link rel="stylesheet" href="access/css/profile.css">
+    <link rel="stylesheet" href="access/css/favourite.css">
     <link rel="stylesheet" href="access/css/user-profile.css">
     <link rel="stylesheet" href="access/css/loading.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <script>
+        // Set loading class immediately before page renders
+        document.documentElement.classList.add('loading');
+    </script>
     <style>
         .loading-spinner {
             display: flex;
@@ -39,28 +44,19 @@
         }
     </style>
 </head>
-<body>
-    <!-- Main Content -->
-    <div class="main-container">
-        <!-- Loading indicator -->
-        <div class="loading-spinner" id="loadingSpinner">
-            <div class="spinner"></div>
-            <p>Đang tải thông tin...</p>
-        </div>
-
-        <!-- Error message -->
-        <div class="error-message" id="errorMessage" style="display: none;">
-            <div class="error-content">
-                <i class="fas fa-exclamation-triangle"></i>
-                <h3>Không thể tải thông tin</h3>
-                <p id="errorText">Đã xảy ra lỗi khi tải thông tin người dùng.</p>
-                <button class="btn btn-primary" onclick="location.reload()">Thử lại</button>
+<body class="loading">
+    <div id="initialLoadingOverlay">
+        <div class="loading-content">
+            <div class="spinner-container">
+                <div class="spinner"></div>
             </div>
+            <h3>Đang tải thông tin người dùng...</h3>
+            <p>Vui lòng đợi trong giây lát</p>
         </div>
+    </div>
 
-        <!-- User Profile Content -->
+    <div class="main-container">
         <div class="user-profile-container" id="userProfileContainer" style="display: none;">
-            <!-- User Header -->
             <div class="user-profile-header">
                 <div class="user-avatar-section">
                     <div class="user-avatar-large" id="userAvatarLarge">
@@ -83,7 +79,6 @@
                         <i class="fas fa-phone"></i>
                         Liên hệ
                     </button>
-                    <!-- message button -->
                     <button class="btn btn-primary" id="messageBtn">
                         <i class="fas fa-comment"></i>
                         Nhắn tin
@@ -91,7 +86,6 @@
                 </div>
             </div>
 
-            <!-- User Content Tabs -->
             <div class="user-content">
                 <div class="content-tabs">
                     <button class="tab-btn active" data-tab="rooms">
@@ -101,16 +95,10 @@
                     
                 </div>
 
-                <!-- Rooms Tab -->
                 <div class="tab-content active" id="rooms-tab">
-                    
-
-                    <!-- Rooms List -->
                     <div class="user-rooms-list" id="userRoomsList">
-                        <!-- Rooms will be loaded here -->
                     </div>
 
-                    <!-- No rooms message -->
                     <div class="no-rooms-message" id="noRoomsMessage" style="display: none;">
                         <i class="fas fa-home"></i>
                         <p>Người dùng này chưa đăng phòng nào.</p>
@@ -124,24 +112,19 @@
 
    
 
-    <!-- Scripts -->
     <script src="js/loading.js"></script>
     <script src="js/utils.js"></script>
     <script type="module" src="js/header.js"></script>
     <script type="module" src="js/auth.js"></script>
     <script type="module" src="js/user-profile.js"></script>
     <script>
-        // Initialize page when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
-            // Get user ID from URL parameters
             const urlParams = new URLSearchParams(window.location.search);
             const userId = urlParams.get('userId');
             
             if (userId) {
-                // Load user profile data
                 UserProfile.loadUserProfile(userId);
             } else {
-                // Show error if no user ID provided
                 UserProfile.showError('Không tìm thấy thông tin người dùng.');
             }
         });

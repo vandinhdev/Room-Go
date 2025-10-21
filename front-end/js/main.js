@@ -84,8 +84,6 @@ async function removeFavoriteRoomAPI(roomId) {
       }
       return false;
     }
-
-    // Use authManager with auto-refresh token
     const response = await authManager.makeAuthenticatedRequest(`/favorite-rooms/remove/${roomId}`, {
       method: 'DELETE'
     });
@@ -119,7 +117,6 @@ async function syncFavoriteRooms() {
       return;
     }
 
-    // Use authManager with auto-refresh token
     const response = await authManager.makeAuthenticatedRequest('/favorite-rooms/me', {
       method: 'GET'
     });
@@ -130,7 +127,6 @@ async function syncFavoriteRooms() {
 
     const data = await response.json();
     
-    // Xử lý response data
     let favoriteRooms = [];
     if (data && data.data && Array.isArray(data.data)) {
       favoriteRooms = data.data.map(fav => fav.room).filter(room => room != null);
@@ -143,7 +139,6 @@ async function syncFavoriteRooms() {
     console.log('Đã đồng bộ danh sách yêu thích từ server:', favoriteRooms.length);
   } catch (error) {
     console.error('Lỗi khi đồng bộ danh sách yêu thích:', error);
-    // Không hiển thị lỗi cho user, vì đây là chức năng nền
   }
 }
 
@@ -189,7 +184,6 @@ function renderPagination(totalRooms) {
   container.innerHTML = html;
 }
 
-// ================== GLOBAL APP METHODS ==================
 window.app = {
   changePage(page) {
     const totalPages = Math.ceil(state.filteredRooms.length / state.roomsPerPage);
@@ -204,13 +198,10 @@ window.app = {
   },
 };
 
-// ================== FETCH API ROOMS ==================
 async function fetchRooms() {
   try {
-    // Đồng bộ danh sách yêu thích trước khi load phòng
     await syncFavoriteRooms();
     
-    // Use authManager with auto-refresh token
     const response = await authManager.makeAuthenticatedRequest('/room/list', {
       method: 'GET'
     });
@@ -219,7 +210,6 @@ async function fetchRooms() {
 
     const data = await response.json();
 
-    // Handle different response formats
     let roomsArray = [];
     if (data && data.status === 200 && data.data && Array.isArray(data.data.rooms)) {
       roomsArray = data.data.rooms;
@@ -241,7 +231,6 @@ async function fetchRooms() {
       const ownerMap = {};
       await Promise.all(uniqueOwnerIds.map(async (userId) => {
         try {
-          // Use authManager with auto-refresh token
           const ownerRes = await authManager.makeAuthenticatedRequest(`/user/${userId}`, {
             method: 'GET'
           });
@@ -255,12 +244,11 @@ async function fetchRooms() {
         }
       }));
 
-      // Gắn tên chủ nhà vào từng phòng
       rooms = rooms.map(room => {
         const owner = ownerMap[room.ownerId];
         const ownerAvatar = owner ? owner.avatarUrl || null : null;
         const ownerName = owner ? 
-          `${owner.firstName || ''} ${owner.lastName || ''}`.trim() : 
+          `${owner.lastName || ''} ${owner.firstName || ''}`.trim() : 
           `Chủ phòng #${room.ownerId}`;
           
         return {
@@ -271,10 +259,8 @@ async function fetchRooms() {
         
       });
       
+      rooms = rooms.filter(room => room.status?.toUpperCase() === 'ACTIVE');
 
-      // =========================
-
-      // Store pagination info if available
       if (data && data.data) {
         state.pagination = {
           pageNumber: data.data.pageNumber || 1,
@@ -285,12 +271,12 @@ async function fetchRooms() {
       } else {
         state.pagination = {
           pageNumber: 1,
-          pageSize: roomsArray.length,
+          pageSize: rooms.length, 
           totalPages: 1,
-          totalElements: roomsArray.length
+          totalElements: rooms.length 
         };
       }
-      console.log('Loaded rooms with owners:', rooms);
+      console.log('Loaded ACTIVE rooms with owners:', rooms);
     } else {
       console.warn('No rooms found in API response');
       rooms = [];
@@ -313,12 +299,10 @@ async function fetchRooms() {
 }
 
 
-// ================== RENDER ROOMS ==================
 function renderRooms(roomList) {
   const grid = document.getElementById('listingsGrid');
   if (!grid) return;
   
-  // Ensure roomList is an array
   if (!Array.isArray(roomList)) {
     console.warn('roomList is not an array:', roomList);
     roomList = [];
@@ -335,7 +319,6 @@ function renderRooms(roomList) {
   paginatedRooms.forEach(room => {
     const isSaved = saved.find(p => p.id === room.id);
     
-    // Owner info is now fetched and attached in fetchRooms()
     const ownerName = room.ownerName || 'Chủ phòng';
     const ownerAvatarUrl = room.ownerAvatar;
     const ownerInitial = ownerName.charAt(0).toUpperCase();
@@ -344,7 +327,6 @@ function renderRooms(roomList) {
       : ownerInitial;
 
     
-    // Handle both imageUrls (from API) and images (legacy format)
     const mainImage = room.imageUrls?.length ? room.imageUrls[0] : 
                      (room.images?.length ? room.images[0].url : '');
 
@@ -357,19 +339,17 @@ function renderRooms(roomList) {
           ? `<img src="${mainImage}" alt="${room.title}" style="width: 100%; height: 100%; object-fit: cover;">`
           : `<div style="background: linear-gradient(135deg, #8B4513, #D2B48C); width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px;">${room.title}</div>`
         }
-        <div class="image-overlay">${(room.status === 'AVAILABLE' || room.status === 'available') ? 'Có phòng' : 'Đã thuê'}</div>
         <div class="heart-icon">
           <i class="${isSaved ? 'fa-solid heart-filled' : 'fa-regular heart-empty'} fa-heart"></i>
         </div>
       </div>
       <div class="listing-content">
         <div class="listing-title">${room.title}</div>
-        <div class="listing-type">${room.description || ''}</div>
         <div class="listing-price">${formatPrice(room.price)}</div>
         <div class="listing-area">${room.area ? room.area + ' m²' : ''}</div>
         <div class="listing-location">
           <span class="location-icon"><i class="fa-solid fa-location-dot"></i></span>
-          <span>${room.address || ''}</span>
+          <span>${room.district || ''}</span>
         </div>
         <div class="listing-footer">
           <div class="user-info">
@@ -380,32 +360,28 @@ function renderRooms(roomList) {
       </div>
     `;
 
-    // Click để xem chi tiết
     card.addEventListener('click', () => {
       window.location.href = `./detail.html?id=${room.id}`;
     });
 
-    // Click trái tim để lưu
     card.querySelector('.heart-icon').addEventListener('click', async (e) => {
       e.stopPropagation();
       const icon = e.currentTarget.querySelector('i');
       const isFilled = icon.classList.contains('heart-filled');
       
       if (isFilled) {
-        // Xóa khỏi yêu thích
         const success = await removeFavoriteRoomAPI(room.id);
         if (success) {
           icon.classList.remove('fa-solid', 'heart-filled');
           icon.classList.add('fa-regular', 'heart-empty');
-          removeRoom(room.id); // Cập nhật localStorage
+          removeRoom(room.id);
         }
       } else {
-        // Thêm vào yêu thích
         const success = await addFavoriteRoomAPI(room.id);
         if (success) {
           icon.classList.remove('fa-regular', 'heart-empty');
           icon.classList.add('fa-solid', 'heart-filled');
-          saveRoom(room); // Cập nhật localStorage
+          saveRoom(room);
         }
       }
     });
@@ -414,7 +390,6 @@ function renderRooms(roomList) {
   });
 }
 
-// ================== FILTER & SEARCH ==================
 function getFilteredRooms() {
   let filtered = rooms;
   const provinceSelect = document.getElementById('provinceSelect');
@@ -446,17 +421,17 @@ function getFilteredRooms() {
 }
 
 function updateRooms() {
-  renderRooms(getFilteredRooms());
+  const filtered = getFilteredRooms();
+  console.log('📊 Filtered rooms:', filtered.length, 'from total:', rooms.length);
+  window.app.updateFilteredRooms(filtered);
 }
 
-// ================== INIT ==================
 document.addEventListener('DOMContentLoaded', () => {
   initializeFiltersAndTabs();
   document.addEventListener('headerLoaded', initializeHeaderDependentElements);
   fetchRooms();
 });
 
-// ================== FILTER INIT ==================
 function initializeFiltersAndTabs() {
   document.querySelectorAll('.filter-btn').forEach(btn => {
     btn.addEventListener('click', function () {
@@ -466,14 +441,11 @@ function initializeFiltersAndTabs() {
   });
 }
 
-// ================== HEADER ELEMENTS ==================
 function initializeHeaderDependentElements() {
     const provinceSelect = document.getElementById('provinceSelect');
     const districtSelect = document.getElementById('districtSelect');
     const wardSelect = document.getElementById('wardSelect');
-    const logoutBtn = document.getElementById('logoutButton'); // ✅ fix ID cho đúng với header.html
-
-    // Setup logout button
+    const logoutBtn = document.getElementById('logoutButton');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', async (e) => {
             e.preventDefault();
@@ -485,7 +457,6 @@ function initializeHeaderDependentElements() {
         });
     }
 
-    // Setup location selectors
 
     let provinceList = [];
     let districtMap = {};

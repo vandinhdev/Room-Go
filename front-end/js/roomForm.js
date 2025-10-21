@@ -1,35 +1,24 @@
-// roomForm.js
-import { API_BASE_URL } from './config.js';
+import { API_BASE_URL, CLOUDINARY_CONFIG, VIETMAP_CONFIG } from './config.js';
 import { authManager } from './auth.js';
 
-// Initialize the uploaded images array
 window.uploadedImages = [];
 
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('roomForm');
     const imageContainer = document.getElementById('imageContainer');
     
-    // Load provinces data
     loadProvinces();
     
-    // Set up province/district/ward cascading selects
     document.getElementById('province').addEventListener('change', loadDistricts);
     document.getElementById('district').addEventListener('change', loadWards);
     document.getElementById('ward').addEventListener('change', updateAddressSuggestion);
     
-    // Set up address search with Vietmap
     setupAddressSearch();
     
-    // Set up map functionality
-    setupMapFunctionality();
-    
-    // Handle form submission
     form.addEventListener('submit', handleSubmit);
     
-    // Setup image upload zone
     setupImageUpload();
     
-    // Check if editing existing room
     const urlParams = new URLSearchParams(window.location.search);
     const roomId = urlParams.get('id');
     if (roomId) {
@@ -37,112 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Thiết lập chức năng bản đồ
-function setupMapFunctionality() {
-    const showMapBtn = document.getElementById('showMapBtn');
-    const mapContainer = document.getElementById('mapContainer');
-    
-    if (!showMapBtn || !mapContainer) return;
-    
-    // Kiểm tra xem có tọa độ sẵn không
-    const latitudeInput = document.getElementById('latitude');
-    const longitudeInput = document.getElementById('longitude');
-    
-    // Nếu không có tọa độ ban đầu, ẩn nút hiển thị bản đồ
-    if (!latitudeInput.value || !longitudeInput.value) {
-        showMapBtn.classList.add('d-none');
-    }
-    
-    // Khi nhấn vào nút hiển thị bản đồ
-    showMapBtn.addEventListener('click', function() {
-        const latitude = document.getElementById('latitude').value;
-        const longitude = document.getElementById('longitude').value;
-        
-        if (!latitude || !longitude) {
-            alert('Vui lòng chọn địa chỉ cụ thể trước để hiển thị trên bản đồ.');
-            return;
-        }
-        
-        // Chuyển đổi giữa hiển thị và ẩn bản đồ
-        if (mapContainer.classList.contains('d-none')) {
-            mapContainer.classList.remove('d-none');
-            showMapBtn.innerHTML = '<i class="fas fa-map-location-dot me-1"></i> Ẩn bản đồ';
-            
-            // Khởi tạo bản đồ nếu chưa có
-            if (!mapContainer.hasChildNodes()) {
-                initMap(parseFloat(latitude), parseFloat(longitude));
-            } else {
-                // Cập nhật vị trí mới nếu bản đồ đã tồn tại
-                updateMapMarker(parseFloat(latitude), parseFloat(longitude));
-            }
-        } else {
-            mapContainer.classList.add('d-none');
-            showMapBtn.innerHTML = '<i class="fas fa-map-location-dot me-1"></i> Xem vị trí trên bản đồ';
-        }
-    });
-}
-
-// Khởi tạo bản đồ Vietmap
-function initMap(latitude, longitude) {
-    // API key của Vietmap
-    const apiKey = 'c3d0f188ff669f89042771a20656579073cffec5a8a69747';
-    
-    // Khởi tạo bản đồ
-    window.map = new vietmapgl.Map({
-        container: 'mapContainer',
-        style: `https://maps.vietmap.vn/api/maps/light/styles.json?apikey=${apiKey}`,
-        center: [longitude, latitude], // [lng, lat]
-        zoom: 16
-    });
-    
-    // Thêm điều khiển zoom và xoay bản đồ
-    window.map.addControl(new vietmapgl.NavigationControl(), 'bottom-right');
-    
-    // Thêm marker cho vị trí
-    window.marker = new vietmapgl.Marker()
-        .setLngLat([longitude, latitude])
-        .addTo(window.map);
-    
-    // Lấy thông tin địa chỉ từ tọa độ để hiển thị popup
-    fetchAddressFromCoordinates(latitude, longitude);
-}
-
-// Cập nhật vị trí marker trên bản đồ
-function updateMapMarker(latitude, longitude) {
-    if (window.map && window.marker) {
-        window.map.setCenter([longitude, latitude]);
-        window.marker.setLngLat([longitude, latitude]);
-        
-        // Cập nhật thông tin địa chỉ trong popup
-        fetchAddressFromCoordinates(latitude, longitude);
-    }
-}
-
-// Lấy thông tin địa chỉ từ tọa độ (reverse geocoding)
-async function fetchAddressFromCoordinates(latitude, longitude) {
-    try {
-        const apiKey = 'c3d0f188ff669f89042771a20656579073cffec5a8a69747';
-        const response = await fetch(`https://maps.vietmap.vn/api/reverse/v3?lat=${latitude}&lng=${longitude}&apikey=${apiKey}`);
-        const data = await response.json();
-        
-        if (data && data.features && data.features.length > 0) {
-            const addressInfo = data.features[0].properties;
-            const popup = new vietmapgl.Popup({ offset: 25 })
-                .setLngLat([longitude, latitude])
-                .setHTML(`<div>
-                    <strong>Vị trí phòng trọ</strong><br>
-                    ${document.getElementById('address').value}
-                </div>`)
-                .addTo(window.map);
-            
-            window.marker.setPopup(popup);
-        }
-    } catch (error) {
-        console.error('Lỗi khi lấy thông tin địa chỉ:', error);
-    }
-}
-
-// Setup image upload functionality
+// Thiết lập tính năng tải ảnh và tương tác
 function setupImageUpload() {
     const uploadZone = document.getElementById('uploadZone');
     const smallUploadZone = document.getElementById('smallUploadZone');
@@ -151,18 +35,14 @@ function setupImageUpload() {
     
     if (!uploadZone || !fileInput) return;
     
-    // Check initial state
     toggleUploadZoneDisplay();
     
-    // Click on the upload zone to trigger file input
     uploadZone.addEventListener('click', function(e) {
-        // Ngăn chặn việc click vào input sẽ gọi lại sự kiện click
         if (e.target !== fileInput) {
             fileInput.click();
         }
     });
     
-    // Click on small upload zone
     if (smallUploadZone) {
         smallUploadZone.addEventListener('click', function(e) {
             if (e.target !== smallFileInput) {
@@ -170,7 +50,6 @@ function setupImageUpload() {
             }
         });
         
-        // Handle file selection for small upload
         smallFileInput.addEventListener('change', function(e) {
             if (e.target.files.length > 0) {
                 handleFiles(e.target.files);
@@ -178,14 +57,12 @@ function setupImageUpload() {
         });
     }
     
-    // Handle file selection for main upload
     fileInput.addEventListener('change', function(e) {
         if (e.target.files.length > 0) {
             handleFiles(e.target.files);
         }
     });
     
-    // Handle drag and drop for main upload zone
     uploadZone.addEventListener('dragover', function(e) {
         e.preventDefault();
         uploadZone.classList.add('dragover');
@@ -204,7 +81,6 @@ function setupImageUpload() {
         }
     });
     
-    // Handle drag and drop for small upload zone
     if (smallUploadZone) {
         smallUploadZone.addEventListener('dragover', function(e) {
             e.preventDefault();
@@ -226,7 +102,7 @@ function setupImageUpload() {
     }
 }
 
-// Function to toggle between large and small upload zones
+// Chuyển đổi hiển thị giữa vùng tải ảnh lớn/nhỏ
 function toggleUploadZoneDisplay() {
     const uploadZone = document.getElementById('uploadZone');
     const smallUploadZone = document.getElementById('smallUploadZone');
@@ -235,18 +111,16 @@ function toggleUploadZoneDisplay() {
     if (!uploadZone || !smallUploadZone) return;
     
     if (imageCount > 0) {
-        // Hide large upload zone, show small one
         uploadZone.style.display = 'none';
         smallUploadZone.style.display = 'flex';
     } else {
-        // Show large upload zone, hide small one
         uploadZone.style.display = 'flex';
         smallUploadZone.style.display = 'none';
     }
 }
 
-// Handle the selected files
-function handleFiles(files) {
+// Xử lý các tệp ảnh được chọn
+async function handleFiles(files) {
     const MAX_IMAGES = 12;
     const currentCount = document.querySelectorAll('.image-upload').length;
     const remainingSlots = MAX_IMAGES - currentCount;
@@ -259,48 +133,58 @@ function handleFiles(files) {
     const filesToProcess = Math.min(files.length, remainingSlots);
     const imageContainer = document.getElementById('imageContainer');
     const fileInput = document.getElementById('fileUpload');
+    const smallFileInput = document.getElementById('smallFileUpload');
     
     for (let i = 0; i < filesToProcess; i++) {
         if (!files[i].type.match('image.*')) {
             continue;
         }
         
+        const file = files[i];
         const reader = new FileReader();
         
-        reader.onload = (function(file) {
-            return function(e) {
-                // Create image preview element
-                const imgDiv = document.createElement('div');
-                imgDiv.className = 'image-upload';
-                
-                // Generate a unique ID for this image
-                const imgId = 'img_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
-                
-                imgDiv.innerHTML = `
-                    <div class="image-preview-wrapper">
-                        <img src="${e.target.result}" class="image-preview" alt="Ảnh phòng trọ">
-                        <div class="image-caption">Ảnh ${currentCount + i + 1}</div>
-                        <div class="delete-image" data-id="${imgId}">
-                            <i class="fas fa-times"></i>
-                        </div>
+        const imgId = 'img_' + Date.now() + '_' + Math.floor(Math.random() * 1000) + '_' + i;
+        
+        const imgDiv = document.createElement('div');
+        imgDiv.className = 'image-upload';
+        
+        reader.onload = async function(e) {
+            imgDiv.innerHTML = `
+                <div class="image-preview-wrapper">
+                    <img src="${e.target.result}" class="image-preview" alt="Ảnh phòng trọ">
+                    <div class="image-caption">
+                        <i class="fas fa-spinner fa-spin me-1"></i> Đang tải lên...
                     </div>
-                `;
+                    <div class="delete-image" data-id="${imgId}" style="pointer-events: none; opacity: 0.5;">
+                        <i class="fas fa-times"></i>
+                    </div>
+                </div>
+            `;
+            
+            imageContainer.appendChild(imgDiv);
+            
+            toggleUploadZoneDisplay();
+            
+            try {
+                const cloudinaryUrl = await uploadToCloudinary(file);
                 
-                // Add the new image element to container
-                imageContainer.appendChild(imgDiv);
-                
-                // Store image data
                 window.uploadedImages.push({
                     id: imgId,
                     file: file,
-                    dataUrl: e.target.result
+                    dataUrl: cloudinaryUrl,
+                    cloudinaryUrl: cloudinaryUrl
                 });
                 
-                // Add event listener for delete button
-                imgDiv.querySelector('.delete-image').addEventListener('click', function() {
+                const caption = imgDiv.querySelector('.image-caption');
+                const imageNumber = document.querySelectorAll('.image-upload').length;
+                caption.innerHTML = `Ảnh ${imageNumber}`;
+                
+                const deleteBtn = imgDiv.querySelector('.delete-image');
+                deleteBtn.style.pointerEvents = 'auto';
+                deleteBtn.style.opacity = '1';
+                
+                deleteBtn.addEventListener('click', function() {
                     const imageId = this.getAttribute('data-id');
-                    
-                    // Check minimum number of images (3) - only prevent deletion if we would go below 3
                     const currentImageCount = document.querySelectorAll('.image-upload').length;
                     if (currentImageCount <= 3) {
                         alert('Phải có ít nhất 3 hình ảnh cho phòng trọ!');
@@ -310,79 +194,115 @@ function handleFiles(files) {
                     removeImage(imageId, imgDiv);
                 });
                 
-                // Toggle upload zone display after adding image
-                toggleUploadZoneDisplay();
-            };
-        })(files[i]);
+            } catch (error) {
+                const caption = imgDiv.querySelector('.image-caption');
+                caption.innerHTML = '<i class="fas fa-exclamation-circle me-1"></i> Lỗi tải lên';
+                caption.style.backgroundColor = 'rgba(220, 53, 69, 0.9)';
+                
+                const deleteBtn = imgDiv.querySelector('.delete-image');
+                deleteBtn.style.pointerEvents = 'auto';
+                deleteBtn.style.opacity = '1';
+                deleteBtn.addEventListener('click', function() {
+                    imgDiv.remove();
+                    toggleUploadZoneDisplay();
+                    updateImageCaptions();
+                });
+                
+                alert('Không thể tải ảnh lên. Vui lòng thử lại.');
+            }
+        };
         
-        reader.readAsDataURL(files[i]);
+        reader.readAsDataURL(file);
     }
     
-    // Reset file input to allow selecting the same file again
     fileInput.value = '';
+    if (smallFileInput) {
+        smallFileInput.value = '';
+    }
 }
 
+// Xoá ảnh khỏi danh sách và DOM
 function removeImage(imageId, element) {
-    // Remove element from DOM
     element.remove();
     
-    // Remove from our array
     const index = window.uploadedImages.findIndex(img => img.id === imageId);
     if (index !== -1) {
         window.uploadedImages.splice(index, 1);
     }
     
-    // Update numbering
     updateImageCaptions();
     
-    // Toggle upload zone display after removing image
     toggleUploadZoneDisplay();
 }
 
+// Cập nhật lại chú thích thứ tự ảnh
 function updateImageCaptions() {
     document.querySelectorAll('.image-upload').forEach((div, index) => {
         div.querySelector('.image-caption').textContent = `Ảnh ${index + 1}`;
     });
 }
 
+// Tải ảnh lên Cloudinary và trả về URL
+async function uploadToCloudinary(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', CLOUDINARY_CONFIG.uploadPreset);
+    
+    try {
+        const response = await fetch(
+            `https://api.cloudinary.com/v1_1/${CLOUDINARY_CONFIG.cloudName}/image/upload`,
+            {
+                method: 'POST',
+                body: formData
+            }
+        );
+        
+        if (!response.ok) {
+            throw new Error('Upload failed');
+        }
+        
+        const data = await response.json();
+        return data.secure_url;
+    } catch (error) {
+        throw error;
+    }
+}
+
+// Tải danh sách tỉnh/thành phố
 async function loadProvinces() {
     try {
         const response = await fetch('https://provinces.open-api.vn/api/p/');
         const provinces = await response.json();
         const select = document.getElementById('province');
         
-        // Clear existing options except the first placeholder
         select.innerHTML = '<option value="">Chọn tỉnh/thành phố</option>';
         
         provinces.forEach(province => {
             const option = document.createElement('option');
             option.value = province.name;
             option.textContent = province.name;
-            option.dataset.code = province.code; // Store the code as a data attribute
+            option.dataset.code = province.code;
             select.appendChild(option);
         });
     } catch (error) {
-        console.error('Error loading provinces:', error);
     }
 }
 
+// Tải danh sách quận/huyện theo tỉnh
 async function loadDistricts() {
     const provinceSelect = document.getElementById('province');
     const districtSelect = document.getElementById('district');
     const wardSelect = document.getElementById('ward');
     
-    // Clear existing options
     districtSelect.innerHTML = '<option value="">Chọn quận/huyện</option>';
     wardSelect.innerHTML = '<option value="">Chọn phường/xã</option>';
     
     if (!provinceSelect.value) return;
     
     try {
-        // Use the more reliable direct API for all provinces
         const allProvincesResponse = await fetch('https://provinces.open-api.vn/api/p/');
         const allProvinces = await allProvincesResponse.json();
         
-        // Find the selected province by name
         const selectedProvince = allProvinces.find(p => p.name === provinceSelect.value);
         
         if (selectedProvince) {
@@ -395,36 +315,29 @@ async function loadDistricts() {
                     const option = document.createElement('option');
                     option.value = district.name;
                     option.textContent = district.name;
-                    option.dataset.code = district.code; // Store the code as a data attribute
+                    option.dataset.code = district.code;
                     districtSelect.appendChild(option);
                 });
-            } else {
-                console.error('No districts found for province:', provinceSelect.value);
             }
-        } else {
-            console.error('Province not found:', provinceSelect.value);
         }
     } catch (error) {
-        console.error('Error loading districts:', error);
     }
 }
 
+// Tải danh sách phường/xã theo quận/huyện
 async function loadWards() {
     const provinceSelect = document.getElementById('province');
     const districtSelect = document.getElementById('district');
     const wardSelect = document.getElementById('ward');
     
-    // Clear existing options
     wardSelect.innerHTML = '<option value="">Chọn phường/xã</option>';
     
     if (!districtSelect.value) return;
     
     try {
-        // Get the district code from the selected option's data attribute
         const selectedOption = districtSelect.options[districtSelect.selectedIndex];
         const districtCode = selectedOption.dataset.code;
         
-        // If we have the code from the data attribute, use it directly
         if (districtCode) {
             const wardsResponse = await fetch(`https://provinces.open-api.vn/api/d/${districtCode}?depth=2`);
             const districtData = await wardsResponse.json();
@@ -436,11 +349,8 @@ async function loadWards() {
                     option.textContent = ward.name;
                     wardSelect.appendChild(option);
                 });
-            } else {
-                console.error('No wards found for district:', districtSelect.value);
             }
         } else {
-            // Fallback to search API if code is not available
             const response = await fetch('https://provinces.open-api.vn/api/d/search/?q=' + encodeURIComponent(districtSelect.value));
             const districts = await response.json();
             
@@ -457,24 +367,20 @@ async function loadWards() {
                         wardSelect.appendChild(option);
                     });
                 }
-            } else {
-                console.error('District not found:', districtSelect.value);
             }
         }
     } catch (error) {
-        console.error('Error loading wards:', error);
     }
 }
 
-// This function is deprecated with the new UI but kept for compatibility
+// Thêm ảnh (giữ để tương thích UI cũ)
 function addImageField() {
-    // Use the new upload flow instead
     document.getElementById('fileUpload').click();
 }
 
+// Tải dữ liệu phòng để chỉnh sửa theo ID
 async function loadRoomData(roomId) {
     try {
-        // Get user authentication info
         const userInfo = JSON.parse(localStorage.getItem('userInfo'));
         if (!userInfo || !userInfo.token) {
             alert('Vui lòng đăng nhập để chỉnh sửa tin đăng!');
@@ -482,7 +388,6 @@ async function loadRoomData(roomId) {
             return;
         }
 
-        // Fetch room data from API with auto-refresh token
         const response = await authManager.makeAuthenticatedRequest(`/room/${roomId}`, {
             method: 'GET'
         });
@@ -498,7 +403,6 @@ async function loadRoomData(roomId) {
             throw new Error('Không tìm thấy tin đăng!');
         }
 
-        // Fill form with room data
         document.getElementById('roomId').value = room.id;
         document.getElementById('title').value = room.title || '';
         document.getElementById('description').value = room.description || '';
@@ -506,16 +410,13 @@ async function loadRoomData(roomId) {
         document.getElementById('area').value = room.area || '';
         document.getElementById('address').value = room.address || '';
         
-        // Set coordinates if available
         if (room.latitude) document.getElementById('latitude').value = room.latitude;
         if (room.longitude) document.getElementById('longitude').value = room.longitude;
     
-        // Load location data
         document.getElementById('province').value = room.province || '';
     
-    // Wait for districts to load before setting district value
+    // Chờ load quận/huyện trước khi gán giá trị
     loadDistricts().then(async () => {
-        // Find and select the correct district option
         const districtSelect = document.getElementById('district');
         for (let i = 0; i < districtSelect.options.length; i++) {
             if (districtSelect.options[i].value === room.district) {
@@ -524,10 +425,9 @@ async function loadRoomData(roomId) {
             }
         }
         
-        // Wait for wards to load before setting ward value
+        // Chờ load phường/xã trước khi gán giá trị
         await loadWards();
         
-        // Find and select the correct ward option
         const wardSelect = document.getElementById('ward');
         for (let i = 0; i < wardSelect.options.length; i++) {
             if (wardSelect.options[i].value === room.ward) {
@@ -537,22 +437,20 @@ async function loadRoomData(roomId) {
         }
     });
     
-    // Initialize the uploadedImages array if it doesn't exist
+    // Khởi tạo mảng ảnh tải lên nếu chưa tồn tại
     if (typeof uploadedImages === 'undefined') {
         window.uploadedImages = [];
     } else {
-        // Clear existing uploadedImages
         uploadedImages.length = 0;
     }
     
-    // Load images
+    // Tải ảnh từ dữ liệu phòng
     if (room.images && room.images.length > 0) {
-        imageContainer.innerHTML = ''; // Clear default image field
+        imageContainer.innerHTML = '';
         
         room.images.forEach((image, index) => {
             const imgId = 'img_' + Date.now() + '_' + Math.floor(Math.random() * 1000) + '_' + index;
             
-            // Create image preview element
             const imgDiv = document.createElement('div');
             imgDiv.className = 'image-upload';
             
@@ -566,21 +464,16 @@ async function loadRoomData(roomId) {
                 </div>
             `;
             
-            // Add the image element to container
             imageContainer.appendChild(imgDiv);
             
-            // Store image data in uploadedImages array
             uploadedImages.push({
                 id: imgId,
                 dataUrl: image.url,
                 description: image.description || ''
             });
             
-            // Add event listener for delete button
             imgDiv.querySelector('.delete-image').addEventListener('click', function() {
                 const imageId = this.getAttribute('data-id');
-                
-                // Only allow deletion if there will be at least 3 images left
                 if (document.querySelectorAll('.image-upload').length <= 3) {
                     alert('Phải có ít nhất 3 hình ảnh cho phòng trọ!');
                     return;
@@ -590,35 +483,30 @@ async function loadRoomData(roomId) {
             });
         });
         
-        // Function to remove image (defined here to access variables in this scope)
+        // Hàm xoá ảnh trong phạm vi loadRoomData
         function removeImage(imageId, element) {
-            // Remove element from DOM
             element.remove();
             
-            // Remove from uploadedImages array
             const index = uploadedImages.findIndex(img => img.id === imageId);
             if (index !== -1) {
                 uploadedImages.splice(index, 1);
             }
             
-            // Update numbering
             document.querySelectorAll('.image-upload').forEach((div, index) => {
                 div.querySelector('.image-caption').textContent = `Ảnh ${index + 1}`;
             });
             
-            // Toggle upload zone display after removing image
             toggleUploadZoneDisplay();
         }
         
-        // Handle images from API response
+        // Xử lý thêm ảnh từ API (imageUrls)
         if (room.imageUrls && room.imageUrls.length > 0) {
             const imageContainer = document.getElementById('imageContainer');
-            imageContainer.innerHTML = ''; // Clear default image field
+            imageContainer.innerHTML = '';
             
             room.imageUrls.forEach((imageUrl, index) => {
                 const imgId = 'img_' + Date.now() + '_' + Math.floor(Math.random() * 1000) + '_' + index;
                 
-                // Create image preview element
                 const imgDiv = document.createElement('div');
                 imgDiv.className = 'image-upload';
                 
@@ -634,18 +522,14 @@ async function loadRoomData(roomId) {
 
                 imageContainer.appendChild(imgDiv);
                 
-                // Add to uploadedImages array
                 window.uploadedImages.push({
                     id: imgId,
                     dataUrl: imageUrl,
                     description: ''
                 });
                 
-                // Add event listener for delete button
                 imgDiv.querySelector('.delete-image').addEventListener('click', function() {
                     const imageId = this.getAttribute('data-id');
-                    
-                    // Only allow deletion if there will be at least 3 images left
                     if (document.querySelectorAll('.image-upload').length <= 3) {
                         alert('Phải có ít nhất 3 hình ảnh cho phòng trọ!');
                         return;
@@ -655,39 +539,33 @@ async function loadRoomData(roomId) {
                 });
             });
             
-            // Function to remove image (defined here to access variables in this scope)
+            // Hàm xoá ảnh trong phạm vi loadRoomData (imageUrls)
             function removeImage(imageId, element) {
-                // Remove element from DOM
                 element.remove();
                 
-                // Remove from uploadedImages array
                 const index = window.uploadedImages.findIndex(img => img.id === imageId);
                 if (index !== -1) {
                     window.uploadedImages.splice(index, 1);
                 }
                 
-                // Update numbering
                 document.querySelectorAll('.image-upload').forEach((div, index) => {
                     div.querySelector('.image-caption').textContent = `Ảnh ${index + 1}`;
                 });
                 
-                // Toggle upload zone display after removing image
                 toggleUploadZoneDisplay();
             }
             
-            // Toggle upload zone display after loading images
             toggleUploadZoneDisplay();
         }
     }
         
     } catch (error) {
-        console.error('Error loading room data:', error);
         alert('Có lỗi xảy ra khi tải thông tin tin đăng: ' + error.message);
         window.location.href = 'index.html';
     }
 }
 
-// Thiết lập tìm kiếm địa chỉ với Vietmap API
+// Thiết lập tìm kiếm địa chỉ với Vietmap
 function setupAddressSearch() {
     const addressInput = document.getElementById('address');
     const suggestionContainer = document.createElement('div');
@@ -702,11 +580,9 @@ function setupAddressSearch() {
     suggestionContainer.style.borderRadius = '0.25rem';
     suggestionContainer.style.zIndex = '1000';
     
-    // Chèn suggestion container sau input
     addressInput.parentNode.style.position = 'relative';
     addressInput.parentNode.appendChild(suggestionContainer);
     
-    // Xử lý sự kiện khi gõ vào ô địa chỉ
     let debounceTimer;
     addressInput.addEventListener('input', function() {
         clearTimeout(debounceTimer);
@@ -720,14 +596,12 @@ function setupAddressSearch() {
         }, 500);
     });
     
-    // Ẩn gợi ý khi click ra ngoài
     document.addEventListener('click', function(e) {
         if (e.target !== addressInput && e.target !== suggestionContainer) {
             suggestionContainer.style.display = 'none';
         }
     });
     
-    // Hiện gợi ý khi focus vào input nếu có text
     addressInput.addEventListener('focus', function() {
         if (this.value.trim().length >= 3) {
             searchAddressWithVietmap(this.value.trim(), suggestionContainer);
@@ -735,96 +609,95 @@ function setupAddressSearch() {
     });
 }
 
-// Tìm kiếm địa chỉ với Vietmap API
+// Tìm kiếm địa chỉ bằng Vietmap API
 async function searchAddressWithVietmap(query, suggestionContainer) {
     try {
-        // Hiện spinner
         const loadingSpinner = document.getElementById('addressLoading');
         if (loadingSpinner) loadingSpinner.classList.remove('d-none');
         
-        // Lấy tỉnh/thành phố, quận/huyện, phường/xã hiện tại
         const province = document.getElementById('province').value;
         const district = document.getElementById('district').value;
         const ward = document.getElementById('ward').value;
         
-        // Thêm thông tin địa điểm đã chọn vào query để cải thiện kết quả tìm kiếm
         let searchQuery = query;
         if (ward) searchQuery += `, ${ward}`;
         if (district) searchQuery += `, ${district}`;
         if (province) searchQuery += `, ${province}`;
         searchQuery += ", Việt Nam"; // Thêm Việt Nam để thu hẹp phạm vi tìm kiếm
         
-        // API key của Vietmap - bạn cần đăng ký để lấy key chính thức tại https://vietmap.vn/maps-api
-        // Đây là một API key mẫu, trong thực tế bạn cần thay thế bằng key của riêng bạn
-        const apiKey = 'c3d0f188ff669f89042771a20656579073cffec5a8a69747'; 
+        const url = `${VIETMAP_CONFIG.searchUrl}?text=${encodeURIComponent(searchQuery)}&apikey=${VIETMAP_CONFIG.apiKey}`;
+        const response = await fetch(url);
         
-        // Gọi API Vietmap để tìm kiếm địa chỉ
-        const response = await fetch(`https://maps.vietmap.vn/api/search/v3?text=${encodeURIComponent(searchQuery)}&apikey=${apiKey}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const data = await response.json();
         
-        // Ẩn spinner
         if (loadingSpinner) loadingSpinner.classList.add('d-none');
         
-        // Xóa các gợi ý cũ
         suggestionContainer.innerHTML = '';
         
-        if (data && data.features && data.features.length > 0) {
-            // Hiển thị container gợi ý
+        if (data && Array.isArray(data) && data.length > 0) {
             suggestionContainer.style.display = 'block';
             
-            // Thêm các kết quả tìm kiếm vào container
-            data.features.forEach(feature => {
+            data.slice(0, 10).forEach(place => {
                 const item = document.createElement('div');
                 item.className = 'suggestion-item';
-                item.textContent = feature.properties.name;
+                item.textContent = place.display || place.name;
                 
-                // Lưu tọa độ vào thuộc tính dữ liệu
-                if (feature.geometry && feature.geometry.coordinates) {
-                    item.dataset.longitude = feature.geometry.coordinates[0];
-                    item.dataset.latitude = feature.geometry.coordinates[1];
-                }
+                item.dataset.refId = place.ref_id;
                 
-                // Khi click vào một gợi ý
-                item.addEventListener('click', function() {
-                    document.getElementById('address').value = feature.properties.name;
+                item.addEventListener('click', async function() {
+                    document.getElementById('address').value = place.display || place.name;
                     
-                    // Lưu tọa độ để sử dụng cho bản đồ
-                    if (feature.geometry && feature.geometry.coordinates) {
-                        document.getElementById('longitude').value = feature.geometry.coordinates[0];
-                        document.getElementById('latitude').value = feature.geometry.coordinates[1];
-                        
-                        // Hiển thị button xem bản đồ
-                        const showMapBtn = document.getElementById('showMapBtn');
-                        if (showMapBtn) {
-                            showMapBtn.classList.remove('d-none');
-                        }
-                    }
+                    await getPlaceDetailsFromVietmap(place.ref_id);
                     
-                    // Ẩn container gợi ý
                     suggestionContainer.style.display = 'none';
                 });
                 
                 suggestionContainer.appendChild(item);
             });
         } else {
-            // Ẩn container nếu không có kết quả
             suggestionContainer.style.display = 'none';
         }
     } catch (error) {
-        console.error('Lỗi khi tìm kiếm địa chỉ:', error);
         suggestionContainer.style.display = 'none';
         
-        // Ẩn spinner nếu có lỗi
         const loadingSpinner = document.getElementById('addressLoading');
         if (loadingSpinner) loadingSpinner.classList.add('d-none');
     }
 }
 
-// Cập nhật gợi ý địa chỉ dựa trên tỉnh/quận/phường đã chọn
+// Lấy chi tiết địa điểm theo ref_id (Vietmap)
+async function getPlaceDetailsFromVietmap(refId) {
+    try {
+        const url = `${VIETMAP_CONFIG.placeUrl}?refid=${encodeURIComponent(refId)}&apikey=${VIETMAP_CONFIG.apiKey}`;
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data && data.lat && data.lng) {
+            document.getElementById('latitude').value = data.lat;
+            document.getElementById('longitude').value = data.lng;
+            
+            const showMapBtn = document.getElementById('showMapBtn');
+            if (showMapBtn) {
+                showMapBtn.classList.remove('d-none');
+            }
+        }
+    } catch (error) {
+    }
+}
+
+// Cập nhật gợi ý địa chỉ theo tỉnh/quận/phường đã chọn
 function updateAddressSuggestion() {
     const addressInput = document.getElementById('address');
     if (addressInput.value.trim()) {
-        // Nếu đã có địa chỉ, tìm kiếm lại với thông tin mới
         const suggestionContainer = addressInput.parentNode.querySelector('.address-suggestions');
         if (suggestionContainer) {
             searchAddressWithVietmap(addressInput.value.trim(), suggestionContainer);
@@ -832,30 +705,27 @@ function updateAddressSuggestion() {
     }
 }
 
+// Xử lý submit form đăng tin
 async function handleSubmit(event) {
     event.preventDefault();
     
-    // Show loading state
     const submitBtn = document.querySelector('button[type="submit"]');
     const originalText = submitBtn.innerHTML;
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Đang lưu...';
     submitBtn.disabled = true;
     
     try {
-        // Basic form validation
         if (!event.target.checkValidity()) {
             event.stopPropagation();
             event.target.classList.add('was-validated');
             throw new Error('Vui lòng điền đầy đủ thông tin bắt buộc');
         }
         
-        // Check if we have enough images
         const imageCount = document.querySelectorAll('.image-upload').length;
         if (imageCount < 3) {
             throw new Error('Vui lòng tải lên ít nhất 3 hình ảnh cho phòng trọ.');
         }
         
-        // Validate required location fields
         const province = document.getElementById('province').value;
         const district = document.getElementById('district').value;
         const ward = document.getElementById('ward').value;
@@ -865,7 +735,6 @@ async function handleSubmit(event) {
             throw new Error('Vui lòng điền đầy đủ thông tin địa chỉ (tỉnh/thành phố, quận/huyện, phường/xã và địa chỉ cụ thể)');
         }
         
-        // Validate price and area are positive numbers
         const price = parseInt(document.getElementById('price').value);
         const area = parseFloat(document.getElementById('area').value);
         
@@ -877,17 +746,14 @@ async function handleSubmit(event) {
             throw new Error('Diện tích phải lớn hơn 0');
         }
         
-        // Prepare room data
         const roomId = document.getElementById('roomId').value;
         const isEditMode = !!roomId;
         
-        // Get user authentication info
         const userInfo = JSON.parse(localStorage.getItem('userInfo'));
         if (!userInfo || !userInfo.token) {
             throw new Error('Vui lòng đăng nhập để đăng tin!');
         }
         
-        // Prepare room data for API
         const roomData = {
             title: document.getElementById('title').value.trim(),
             description: document.getElementById('description').value.trim(),
@@ -899,10 +765,9 @@ async function handleSubmit(event) {
             province: document.getElementById('province').value,
             latitude: document.getElementById('latitude')?.value || null,
             longitude: document.getElementById('longitude')?.value || null,
-            status: 'AVAILABLE'
+            status: 'PENDING'
         };
 
-        // Convert images to base64 array for API
         const imageUrls = [];
         if (window.uploadedImages && window.uploadedImages.length > 0) {
             window.uploadedImages.forEach((img) => {
@@ -914,12 +779,10 @@ async function handleSubmit(event) {
             roomData.imageUrls = imageUrls;
         }
 
-        // If editing, add room ID
         if (isEditMode) {
             roomData.id = parseInt(roomId);
         }
 
-        // Make API call
         const apiUrl = isEditMode ? `${API_BASE_URL}/room/update` : `${API_BASE_URL}/room/add`;
         const method = isEditMode ? 'PUT' : 'POST';
         
@@ -938,19 +801,16 @@ async function handleSubmit(event) {
         }
 
         const result = await response.json();
-        console.log('API Response:', result);
 
-        // Show success message
-        alert(isEditMode ? 'Cập nhật tin thành công!' : 'Đăng tin thành công!');
-        
-        // Redirect back to listing page or profile
-        window.location.href = 'profile.html';
+        Utils.showNotification(
+            `Tin đăng đã được ${isEditMode ? 'cập nhật' : 'tạo'} thành công!`,
+            'success'
+        );
+        window.location.href = 'post-management.html';
         
     } catch (error) {
-        console.error('Error submitting form:', error);
         alert(error.message || 'Có lỗi xảy ra khi đăng tin. Vui lòng thử lại.');
     } finally {
-        // Restore button state
         submitBtn.innerHTML = originalText;
         submitBtn.disabled = false;
     }

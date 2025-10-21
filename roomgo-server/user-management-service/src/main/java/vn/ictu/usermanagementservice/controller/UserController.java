@@ -14,9 +14,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import vn.ictu.usermanagementservice.common.response.ApiResponse;
-import vn.ictu.usermanagementservice.dto.request.UpdateInfoRequest;
-import vn.ictu.usermanagementservice.dto.request.UpdateProfileRequest;
-import vn.ictu.usermanagementservice.dto.request.UserPasswordRequest;
+import vn.ictu.usermanagementservice.dto.request.*;
 import vn.ictu.usermanagementservice.service.UserService;
 
 import java.io.IOException;
@@ -85,8 +83,44 @@ public class UserController {
                 .build();
     }
 
+    @PutMapping("/update-avatar")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')" )
+    public ApiResponse updateAvatar(@RequestBody UpdateAvatarRequest request, Authentication authentication) {
+        String email = authentication.getName();
+        log.info("Update avatar of user: {}", email);
+        userService.updateAvatar(request, email);
+        return ApiResponse.builder()
+                .status(HttpStatus.ACCEPTED.value())
+                .message("User avatar updated successfully")
+                .data("")
+                .build();
+    }
 
+    @PutMapping("/update-email")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')" )
+    public ApiResponse updateEmail(@RequestBody UpdateEmailRequest request, Authentication authentication) {
+        String email = authentication.getName();
+        log.info("Update phone of user: {}", email);
+        userService.updateEmail(request, email);
+        return ApiResponse.builder()
+                .status(HttpStatus.ACCEPTED.value())
+                .message("User phone updated successfully")
+                .data("")
+                .build();
+    }
 
+    @PutMapping("/update-phone")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')" )
+    public ApiResponse updatePhone(@RequestBody UpdatePhoneRequest request, Authentication authentication) {
+        String email = authentication.getName();
+        log.info("Update phone of user: {}", email);
+        userService.updatePhone(request, email);
+        return ApiResponse.builder()
+                .status(HttpStatus.ACCEPTED.value())
+                .message("User phone updated successfully")
+                .data("")
+                .build();
+    }
 
 
     @PostMapping("/upload-avatar")

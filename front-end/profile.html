@@ -10,9 +10,24 @@
     <link rel="stylesheet" href="access/css/responsive.css">
     <link rel="stylesheet" href="access/css/profile.css">
     <link rel="stylesheet" href="access/css/favourite.css">
+    <link rel="stylesheet" href="access/css/loading.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    
+    <script>
+        document.documentElement.classList.add('loading');
+    </script>
 </head>
-<body>
+<body class="loading">
+    <div id="initialLoadingOverlay">
+        <div class="loading-content">
+            <div class="spinner-container">
+                <div class="spinner"></div>
+            </div>
+            <h3>Đang tải trang cá nhân</h3>
+            <p>Vui lòng đợi một chút...</p>
+        </div>
+    </div>
+    
     <div class="main-container">
         <div class="profile-container">
             <div class="profile-header">
@@ -36,10 +51,7 @@
                     <button class="tab-btn active" data-tab="info">Thông tin cá nhân</button>
                     <button class="tab-btn" data-tab="settings">Cài đặt</button>
                 </div>
-
-                <!-- Tab Thông tin cá nhân -->
                 <div class="tab-content active" id="info-tab">
-                    <!-- Thông tin cơ bản -->
                     <div class="info-section">
                         <div class="section-header">
                             <h3>Thông tin cơ bản</h3>
@@ -48,7 +60,6 @@
                             </button>
                         </div>
                         
-                        <!-- Display Mode -->
                         <div class="info-display" id="basicInfoDisplay">
                             <div class="info-item">
                                 <label>Họ và tên:</label>
@@ -68,7 +79,6 @@
                             </div>
                         </div>
 
-                        <!-- Edit Mode -->
                         <div class="info-edit" id="basicInfoEdit" style="display: none;">
                             <form class="profile-form" id="basicInfoForm">
                                 <div class="form-group">
@@ -95,13 +105,11 @@
                         </div>
                     </div>
 
-                    <!-- Thông tin liên hệ -->
                     <div class="info-section">
                         <div class="section-header ">
                             <h3>Thông tin liên hệ</h3>
                         </div>
 
-                        <!-- Email Section -->
                         <div class="contact-item">
                             <div class="contact-display" id="emailDisplay">
                                 <div class="contact-info">
@@ -121,7 +129,6 @@
                                 </button>
                             </div>
 
-                            <!-- Email Edit Form -->
                             <div class="contact-edit" id="emailEdit" style="display: none;">
                                 <form class="contact-form" id="emailForm">
                                     <div class="form-group">
@@ -137,7 +144,6 @@
                             </div>
                         </div>
 
-                        <!-- Phone Section -->
                         <div class="contact-item">
                             <div class="contact-display" id="phoneDisplay">
                                 <div class="contact-info">
@@ -157,7 +163,6 @@
                                 </button>
                             </div>
 
-                            <!-- Phone Edit Form -->
                             <div class="contact-edit" id="phoneEdit" style="display: none;">
                                 <form class="contact-form" id="phoneForm">
                                     <div class="form-group">
@@ -174,7 +179,7 @@
                         </div>
                     </div>
                 </div>
-                <!-- Tab Cài đặt -->
+
                 <div class="tab-content" id="settings-tab">
                     <div class="settings-section">
                         <h3 style="margin-bottom: 22px;">Đổi mật khẩu</h3>
@@ -225,7 +230,6 @@
         </div>
     </div>
 
-    <!-- Modal xác nhận xóa tài khoản -->
     <div class="modal" id="deleteModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -244,6 +248,7 @@
     </div>
 
     <script src="js/utils.js"></script>
+    <script src="js/loading.js"></script>
     <script type="module" src="js/header.js"></script>
     <script type="module" src="js/profile.js"></script>
     <script src="js/footer.js"></script>
