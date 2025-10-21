@@ -23,7 +23,6 @@ function removeRoom(id) {
   localStorage.setItem("favouriteRooms", JSON.stringify(favourite));
 }
 
-// Global state
 const state = {
     currentPage: 1,
     roomsPerPage: 9,

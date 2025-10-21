@@ -198,25 +198,25 @@ class StatisticsManager {
     }
 
     loadOverviewStats() {
-        // Calculate stats
+        // Tính toán các số liệu tổng quan
         const totalUsers = this.users.length;
         const totalPosts = this.posts.length;
         const totalViews = this.posts.reduce((sum, post) => sum + post.views, 0);
        
 
-        // Update DOM
+        // Cập nhật giao diện
         document.getElementById('totalUsers').textContent = totalUsers;
         document.getElementById('totalPosts').textContent = totalPosts;
         document.getElementById('totalViews').textContent = this.formatNumber(totalViews);
        
-        // Update trends (mock data)
+        // Cập nhật xu hướng (mock data)
         document.getElementById('userTrend').textContent = '+12%';
         document.getElementById('postTrend').textContent = '+8%';
         
     }
 
     loadDetailStats() {
-        // User details
+        // Thống kê chi tiết người dùng
         const adminCount = this.users.filter(user => user.role === 'admin').length;
         const regularUserCount = this.users.filter(user => user.role === 'user').length;
         const todayUsers = this.getUsersRegisteredToday();
@@ -229,12 +229,12 @@ class StatisticsManager {
         document.getElementById('weekUsers').textContent = weekUsers;
         document.getElementById('activeUsers').textContent = activeUsers;
 
-        // Post details
+        // Thống kê chi tiết bài đăng
         const pendingPosts = this.posts.filter(post => post.status === 'pending').length;
         const approvedPosts = this.posts.filter(post => post.status === 'approved').length;
         const rejectedPosts = this.posts.filter(post => post.status === 'rejected').length;
         const todayPosts = this.getPostsCreatedToday();
-        const avgPostsPerDay = Math.round(this.posts.length / 30); // Assuming 30 days
+        const avgPostsPerDay = Math.round(this.posts.length / 30);
 
         document.getElementById('pendingPosts').textContent = pendingPosts;
         document.getElementById('approvedPosts').textContent = approvedPosts;
@@ -282,7 +282,7 @@ class StatisticsManager {
     createUserChart() {
         const ctx = document.getElementById('userChart').getContext('2d');
         
-        // Generate mock data for 6 months
+        // Tạo dữ liệu mẫu (mock data) cho 6 tháng gần đây
         const months = ['Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10'];
         const userData = [12, 19, 15, 23, 28, 35];
 
@@ -440,12 +440,12 @@ class StatisticsManager {
     }
 
     refreshStats() {
-        // Simulate data refresh
+        // Giả lập làm mới dữ liệu
         this.loadOverviewStats();
         this.loadDetailStats();
         this.loadActivityTimeline();
         
-        // Update charts
+        // Cập nhật lại các biểu đồ
         if (this.userChart) {
             this.userChart.destroy();
         }
@@ -455,12 +455,11 @@ class StatisticsManager {
         
         this.initCharts();
         
-        // Show success message
         this.showToast('Đã làm mới dữ liệu thống kê!', 'success');
     }
 
     exportData() {
-        // Simulate data export
+        // Giả lập xuất dữ liệu
         const data = {
             users: this.users,
             posts: this.posts,
@@ -481,7 +480,7 @@ class StatisticsManager {
     }
 
     showToast(message, type = 'info') {
-        // Create toast element
+        // Tạo phần tử toast
         const toast = document.createElement('div');
         toast.style.cssText = `
             position: fixed;
@@ -502,12 +501,10 @@ class StatisticsManager {
         
         document.body.appendChild(toast);
         
-        // Animate in
         setTimeout(() => {
             toast.style.transform = 'translateX(0)';
         }, 100);
         
-        // Remove after 3 seconds
         setTimeout(() => {
             toast.style.transform = 'translateX(400px)';
             setTimeout(() => {
@@ -517,7 +514,6 @@ class StatisticsManager {
     }
 }
 
-// Global functions
 window.refreshStats = function() {
     if (window.statsManager) {
         window.statsManager.refreshStats();
@@ -530,7 +526,6 @@ window.exportData = function() {
     }
 };
 
-// Initialize statistics when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     window.statsManager = new StatisticsManager();
 });
