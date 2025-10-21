@@ -5,7 +5,6 @@ function getFavouriteRooms() {
     return JSON.parse(localStorage.getItem("favouriteRooms")) || [];
 }
 
-<<<<<<< HEAD
 function removeRoom(id) {
     let favourite = getFavouriteRooms().filter(p => p.id !== id);
     localStorage.setItem("favouriteRooms", JSON.stringify(favourite));
@@ -129,8 +128,6 @@ async function syncFavoriteRooms() {
     return await getAllFavoriteRooms();
 }
 
-=======
->>>>>>> 14cb66c44261ed9f1093861e8b5ba68cc123808e
 function formatPrice(price) {
     if (!price) return '';
     if (price >= 1000000) {
@@ -149,7 +146,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     try {
         const favouriteRooms = await getAllFavoriteRooms();
 
-<<<<<<< HEAD
         if (!favouriteRooms || favouriteRooms.length === 0) {
             container.innerHTML = `
                 <div class="favourite-title">Tin đăng đã lưu (0)</div>
@@ -221,39 +217,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     } finally {
         document.body.classList.remove('loading');
         document.body.classList.add('loaded');
-=======
-    if (favouriteRooms.length === 0) {
-        container.innerHTML = `
-            <div class="favourite-title">Tin đăng đã lưu (${favouriteRooms.length} / 100)</div>
-            <div class="favourite-notification">Bạn chưa lưu tin đăng nào!</div>
-        `
-    } else {
-        container.innerHTML = `
-            <div class="favourite-title">Tin đăng đã lưu (${favouriteRooms.length})</div>
-            ${favouriteRooms.map(room => {
-                // Lấy ảnh chính từ mảng images
-                const mainImage = room.images && room.images.length > 0 
-                    ? room.images[0].url 
-                    : 'https://via.placeholder.com/120x90';
-                
-            return `
-                <div class="post-item" data-id="${room.id}">
-                    <div class="post-image">
-                        <img src="${mainImage}" alt="${room.title}">
-                    </div>
-                <div class="post-info">
-                    <h4 class="post-title">${room.title}</h4>
-                    <div class="post-price">${formatPrice(room.price)}</div>
-                    <div class="post-address">${room.address}</div>
-                    
-                </div>
-                <div class="favourite-remove" onclick="removeFavorite(${room.id})">
-                        <i class="fa-solid fa-heart heart-filled"></i>
-                </div>
-            </div>
-            `}).join('')}
-        `;
->>>>>>> 14cb66c44261ed9f1093861e8b5ba68cc123808e
     }
 });
 

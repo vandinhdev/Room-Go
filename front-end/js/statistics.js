@@ -270,22 +270,10 @@ class StatisticsManager {
         const totalPosts = this.posts.length;
         const totalViews = this.posts.reduce((sum, post) => sum + (post.views || 0), 0);
        
-<<<<<<< HEAD
-        // Update DOM
         const totalUsersEl = document.getElementById('totalUsers');
         const totalPostsEl = document.getElementById('totalPosts');
         const totalViewsEl = document.getElementById('totalViews');
-=======
 
-        // Cập nhật giao diện
-        document.getElementById('totalUsers').textContent = totalUsers;
-        document.getElementById('totalPosts').textContent = totalPosts;
-        document.getElementById('totalViews').textContent = this.formatNumber(totalViews);
-       
-        // Cập nhật xu hướng (mock data)
-        document.getElementById('userTrend').textContent = '+12%';
-        document.getElementById('postTrend').textContent = '+8%';
->>>>>>> 14cb66c44261ed9f1093861e8b5ba68cc123808e
         
         if (totalUsersEl) totalUsersEl.textContent = totalUsers;
         if (totalPostsEl) totalPostsEl.textContent = totalPosts;
@@ -347,15 +335,8 @@ class StatisticsManager {
     }
 
     loadDetailStats() {
-<<<<<<< HEAD
-        // User details
         const adminCount = this.users.filter(user => user.role === 'ADMIN').length;
         const regularUserCount = this.users.filter(user => user.role === 'USER').length;
-=======
-        // Thống kê chi tiết người dùng
-        const adminCount = this.users.filter(user => user.role === 'admin').length;
-        const regularUserCount = this.users.filter(user => user.role === 'user').length;
->>>>>>> 14cb66c44261ed9f1093861e8b5ba68cc123808e
         const todayUsers = this.getUsersRegisteredToday();
         const weekUsers = this.getUsersRegisteredThisWeek();
         const activeUsers = this.users.filter(user => user.isActive || user.status === 'ACTIVE').length;
@@ -372,7 +353,6 @@ class StatisticsManager {
         if (weekUsersEl) weekUsersEl.textContent = weekUsers;
         if (activeUsersEl) activeUsersEl.textContent = activeUsers;
 
-<<<<<<< HEAD
         // Post details
         const pendingPosts = this.posts.filter(post => post.status === 'PENDING').length;
         const approvedPosts = this.posts.filter(post => post.status === 'APPROVED').length;
@@ -381,14 +361,6 @@ class StatisticsManager {
         
         // Calculate average posts per day based on data timespan
         const avgPostsPerDay = this.calculateAvgPostsPerDay();
-=======
-        // Thống kê chi tiết bài đăng
-        const pendingPosts = this.posts.filter(post => post.status === 'pending').length;
-        const approvedPosts = this.posts.filter(post => post.status === 'approved').length;
-        const rejectedPosts = this.posts.filter(post => post.status === 'rejected').length;
-        const todayPosts = this.getPostsCreatedToday();
-        const avgPostsPerDay = Math.round(this.posts.length / 30);
->>>>>>> 14cb66c44261ed9f1093861e8b5ba68cc123808e
 
         const pendingPostsEl = document.getElementById('pendingPosts');
         const approvedPostsEl = document.getElementById('approvedPosts');

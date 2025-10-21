@@ -243,7 +243,6 @@ async function toggleUserStatus(userId) {
     const user = allUsers.find(u => u.id === userId);
     if (!user) return;
     
-<<<<<<< HEAD
     const newStatus = user.status === 'active' ? 'inactive' : 'active';
     
     try {
@@ -280,16 +279,6 @@ async function toggleUserStatus(userId) {
             showNotification('Không thể cập nhật trạng thái. Vui lòng thử lại!', 'error');
         }
     }
-=======
-    // Đổi trạng thái người dùng giữa "active" và "inactive"
-    user.status = user.status === 'active' ? 'inactive' : 'active';
-    currentUsers = [...testUsers];
-    loadUsers();
-    
-    // Hiển thị thông báo khi đổi trạng thái
-    const status = user.status === 'active' ? 'kích hoạt' : 'tắt';
-    showNotification(`Đã ${status} tài khoản thành công!`, 'success');
->>>>>>> 14cb66c44261ed9f1093861e8b5ba68cc123808e
 }
 
 // Mở modal thêm người dùng
@@ -319,31 +308,20 @@ function editUser(userId) {
 
 // Lưu thông tin người dùng (tạm thời)
 function saveUser() {
-<<<<<<< HEAD
-=======
-    console.log('Saving user');
-    // Xử lý lưu thông tin người dùng (chưa được triển khai)
->>>>>>> 14cb66c44261ed9f1093861e8b5ba68cc123808e
     closeUserModal();
 }
 
 // Đóng modal người dùng
 function closeUserModal() {
-<<<<<<< HEAD
     const modal = document.getElementById('userModal');
     if (modal) {
         modal.style.display = 'none';
     }
-=======
-    // Đóng cửa sổ modal người dùng
-    document.getElementById('userModal').style.display = 'none';
->>>>>>> 14cb66c44261ed9f1093861e8b5ba68cc123808e
     editingUserId = null;
 }
 
 // Hiển thị thông báo (fallback khi thiếu Utils)
 function showNotification(message, type = 'success') {
-<<<<<<< HEAD
     if (window.Utils && typeof Utils.showNotification === 'function') {
         Utils.showNotification(message, type);
     } else {
@@ -351,22 +329,11 @@ function showNotification(message, type = 'success') {
     }
 }
 
-=======
-    console.log('Notification:', message);
-    // Hiển thị thông báo đơn giản bằng alert (có thể thay bằng UI sau)
-    alert(message);
-}
 
-// Gắn các hàm vào phạm vi toàn cục để gọi từ HTML (onclick)
->>>>>>> 14cb66c44261ed9f1093861e8b5ba68cc123808e
 window.openAddUserModal = openAddUserModal;
 window.editUser = editUser;
 window.deleteUser = deleteUser;
 window.toggleUserStatus = toggleUserStatus;
 window.closeUserModal = closeUserModal;
-<<<<<<< HEAD
 window.filterUsers = filterUsers;
-=======
 
-console.log('user-management-simple.js đã tải hoàn tất');
->>>>>>> 14cb66c44261ed9f1093861e8b5ba68cc123808e
