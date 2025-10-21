@@ -78,16 +78,39 @@ class ChatSystem {
             
             // Find the conversation
             const convId = parseInt(openConversationId);
-            const conversation = this.chats.find(c => c.id === convId);
+            let conversation = this.chats.find(c => c.id === convId);
             
             if (conversation) {
                 await this.selectChat(convId);
                 this.showNotification('Đã mở cuộc trò chuyện', 'success');
             } else {
-                console.warn('Conversation not found in loaded chats:', convId);
-                // Still try to select first chat as fallback
-                if (this.chats.length > 0) {
-                    await this.selectChat(this.chats[0].id);
+                console.warn('⚠️ Conversation not found in loaded chats:', convId);
+                console.log('🔄 Trying to load conversation directly from API...');
+                
+                // Try to load the conversation directly from API
+                try {
+                    const conversationDetail = await this.loadConversationDetails(convId);
+                    if (conversationDetail) {
+                        console.log('✅ Loaded conversation from API:', conversationDetail);
+                        
+                        // Add to chats list
+                        this.chats.unshift(conversationDetail);
+                        this.loadChatList();
+                        
+                        // Select it
+                        await this.selectChat(convId);
+                        this.showNotification('Đã mở cuộc trò chuyện', 'success');
+                    } else {
+                        throw new Error('Conversation detail is null');
+                    }
+                } catch (error) {
+                    console.error('❌ Failed to load conversation:', error);
+                    this.showNotification('Không tìm thấy cuộc trò chuyện', 'error');
+                    
+                    // Fallback to first chat
+                    if (this.chats.length > 0) {
+                        await this.selectChat(this.chats[0].id);
+                    }
                 }
             }
         } else {
@@ -198,14 +221,19 @@ class ChatSystem {
 
             const result = await response.json();
             console.log('API Response:', result);
+            console.log('result.data type:', typeof result.data);
+            console.log('result.data:', result.data);
+            console.log('Array.isArray(result.data):', Array.isArray(result.data));
             
-            if (result.status === 200 && result.data) {
+            // Check if data exists and is an array with items
+            if (result.status === 200 && result.data && Array.isArray(result.data) && result.data.length > 0) {
                 this.conversationsData = result.data;
                 this.transformConversationsData();
                 this.loadChatList();
-                console.log('Loaded conversations:', this.chats.length);
+                console.log('✅ Loaded conversations:', this.chats.length);
             } else {
-                console.warn('No conversations found');
+                console.warn('⚠️ No conversations found or empty data');
+                console.log('Setting empty chats array');
                 this.chats = [];
                 this.loadChatList();
             }
@@ -274,7 +302,9 @@ class ChatSystem {
 
     // Transform conversation detail from API
     transformConversationDetail(detail) {
-        const messages = detail.messages.map(msg => ({
+        console.log('🔄 Transforming conversation detail:', detail);
+        
+        const messages = detail.messages ? detail.messages.map(msg => ({
             id: msg.id,
             senderId: msg.senderId,
             senderName: msg.senderName,
@@ -282,13 +312,33 @@ class ChatSystem {
             timestamp: new Date(msg.createdAt),
             type: msg.messageType === 'TEXT' ? 'text' : 'image',
             read: msg.isRead
-        }));
+        })) : [];
+
+        // Get other user info (the one who is not current user)
+        const otherUserId = detail.ownerId === this.currentUser.id ? detail.currentUserId : detail.ownerId;
+        
+        // Try to find other user's name from messages
+        let otherUserName = 'User';
+        if (messages.length > 0) {
+            const otherUserMessage = messages.find(m => m.senderId === otherUserId);
+            if (otherUserMessage) {
+                otherUserName = otherUserMessage.senderName;
+            }
+        }
+
+        // Get last message
+        const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
 
         return {
-            conversationId: detail.conversationId,
-            currentUserId: detail.currentUserId,
-            ownerId: detail.ownerId,
-            messages: messages
+            id: detail.conversationId,
+            roomId: detail.roomId || null,
+            otherUserId: otherUserId,
+            otherUserName: otherUserName,
+            otherUserAvatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(otherUserName)}&background=random`,
+            participants: [this.currentUser.id, otherUserId],
+            messages: messages,
+            lastMessage: lastMessage,
+            unreadCount: 0
         };
     }
 

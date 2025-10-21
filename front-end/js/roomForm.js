@@ -41,6 +41,14 @@ function setupImageUpload() {
         }
     });
     
+    if (smallUploadZone) {
+        smallUploadZone.addEventListener('click', function(e) {
+            if (e.target !== smallFileInput) {
+                smallFileInput.click();
+            }
+        });
+    }
+    
     if (smallFileInput) {
         smallFileInput.addEventListener('change', function(e) {
             if (e.target.files.length > 0) {

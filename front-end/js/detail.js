@@ -432,7 +432,12 @@ function renderRoomDetail(room) {
                             <h4>${ownerName}</h4>
                         </div>
                     </div>
-                    <button id="closeChat" class="chat-popup-close">×</button>
+                    <div class="chat-popup-header-actions">
+                        <button id="openFullChat" class="chat-popup-action-btn" title="Mở trang chat">
+                            <i class="fas fa-external-link-alt"></i>
+                        </button>
+                        <button id="closeChat" class="chat-popup-close">×</button>
+                    </div>
                 </div>
                 
                 <div id="chatMessages" class="chat-popup-messages">
@@ -772,6 +777,9 @@ function initChatPopup(room) {
                 if (conversation) {
                     chatPopup.dataset.conversationId = conversation.id;
                     
+                    // Lưu conversationId để trang chat có thể mở
+                    sessionStorage.setItem('openConversationId', conversation.id.toString());
+                    
                     await loadConversationMessages(conversation.id, chatMessages);
                     
                 } else {
@@ -779,6 +787,9 @@ function initChatPopup(room) {
                     
                     if (conversation && conversation.id) {
                         chatPopup.dataset.conversationId = conversation.id;
+                        
+                        // Lưu conversationId để trang chat có thể mở
+                        sessionStorage.setItem('openConversationId', conversation.id.toString());
                         
                         chatMessages.innerHTML = '';
                         
@@ -810,6 +821,24 @@ function initChatPopup(room) {
         chatPopup.classList.remove('show');
         setTimeout(() => chatPopup.style.display = 'none', 300);
     };
+
+    // Mở trang chat đầy đủ
+    const openFullChat = document.getElementById('openFullChat');
+    if (openFullChat) {
+        openFullChat.onclick = () => {
+            const conversationId = chatPopup.dataset.conversationId;
+            if (conversationId) {
+                // Lưu conversationId để trang chat có thể mở
+                sessionStorage.setItem('openConversationId', conversationId);
+                // Chuyển sang trang chat
+                window.location.href = 'chat.html';
+            } else {
+                if (window.Utils && typeof Utils.showNotification === 'function') {
+                    Utils.showNotification('Vui lòng tạo cuộc trò chuyện trước', 'warning');
+                }
+            }
+        };
+    }
 
     chatInput.addEventListener('input', function() {
         this.style.height = 'auto';
