@@ -27,6 +27,7 @@ function removeRoom(id) {
   localStorage.setItem("favouriteRooms", JSON.stringify(favourite));
 }
 
+<<<<<<< HEAD
 // Thêm phòng vào yêu thích qua API
 async function addFavoriteRoomAPI(roomId) {
   try {
@@ -38,6 +39,44 @@ async function addFavoriteRoomAPI(roomId) {
         alert('Vui lòng đăng nhập để thêm vào yêu thích!');
       }
       return false;
+=======
+const state = {
+    currentPage: 1,
+    roomsPerPage: 9,
+    filteredRooms: [...rooms]
+};
+
+function formatPrice(price) {
+    if (!price) return '';
+    if (price >= 1000000) {
+        return (price / 1000000).toFixed(1).replace(/\.0$/, '') + ' triệu/tháng';
+    }
+    return price.toLocaleString('vi-VN') + ' đ/tháng';
+}
+
+function renderPagination(totalRooms) {
+    const totalPages = Math.ceil(totalRooms / state.roomsPerPage);
+    const container = document.getElementById('paginationContainer');
+    if (!container) return;
+
+    let paginationHTML = `
+        <button class="pagination-button" onclick="window.app.changePage(${state.currentPage - 1})" ${state.currentPage === 1 ? 'disabled' : ''}>
+            <i class="fas fa-chevron-left"></i>
+        </button>
+    `;
+
+    for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= state.currentPage - 1 && i <= state.currentPage + 1)) {
+            paginationHTML += `
+                <button class="pagination-button ${i === state.currentPage ? 'active' : ''}" 
+                        onclick="window.app.changePage(${i})">
+                    ${i}
+                </button>
+            `;
+        } else if (i === state.currentPage - 2 || i === state.currentPage + 2) {
+            paginationHTML += `<span class="pagination-info">...</span>`;
+        }
+>>>>>>> 14cb66c44261ed9f1093861e8b5ba68cc123808e
     }
 
     // Use authManager with auto-refresh token

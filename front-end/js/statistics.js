@@ -265,15 +265,27 @@ class StatisticsManager {
     }
 
     loadOverviewStats() {
-        // Calculate stats
+        // Tính toán các số liệu tổng quan
         const totalUsers = this.users.length;
         const totalPosts = this.posts.length;
         const totalViews = this.posts.reduce((sum, post) => sum + (post.views || 0), 0);
        
+<<<<<<< HEAD
         // Update DOM
         const totalUsersEl = document.getElementById('totalUsers');
         const totalPostsEl = document.getElementById('totalPosts');
         const totalViewsEl = document.getElementById('totalViews');
+=======
+
+        // Cập nhật giao diện
+        document.getElementById('totalUsers').textContent = totalUsers;
+        document.getElementById('totalPosts').textContent = totalPosts;
+        document.getElementById('totalViews').textContent = this.formatNumber(totalViews);
+       
+        // Cập nhật xu hướng (mock data)
+        document.getElementById('userTrend').textContent = '+12%';
+        document.getElementById('postTrend').textContent = '+8%';
+>>>>>>> 14cb66c44261ed9f1093861e8b5ba68cc123808e
         
         if (totalUsersEl) totalUsersEl.textContent = totalUsers;
         if (totalPostsEl) totalPostsEl.textContent = totalPosts;
@@ -335,9 +347,15 @@ class StatisticsManager {
     }
 
     loadDetailStats() {
+<<<<<<< HEAD
         // User details
         const adminCount = this.users.filter(user => user.role === 'ADMIN').length;
         const regularUserCount = this.users.filter(user => user.role === 'USER').length;
+=======
+        // Thống kê chi tiết người dùng
+        const adminCount = this.users.filter(user => user.role === 'admin').length;
+        const regularUserCount = this.users.filter(user => user.role === 'user').length;
+>>>>>>> 14cb66c44261ed9f1093861e8b5ba68cc123808e
         const todayUsers = this.getUsersRegisteredToday();
         const weekUsers = this.getUsersRegisteredThisWeek();
         const activeUsers = this.users.filter(user => user.isActive || user.status === 'ACTIVE').length;
@@ -354,6 +372,7 @@ class StatisticsManager {
         if (weekUsersEl) weekUsersEl.textContent = weekUsers;
         if (activeUsersEl) activeUsersEl.textContent = activeUsers;
 
+<<<<<<< HEAD
         // Post details
         const pendingPosts = this.posts.filter(post => post.status === 'PENDING').length;
         const approvedPosts = this.posts.filter(post => post.status === 'APPROVED').length;
@@ -362,6 +381,14 @@ class StatisticsManager {
         
         // Calculate average posts per day based on data timespan
         const avgPostsPerDay = this.calculateAvgPostsPerDay();
+=======
+        // Thống kê chi tiết bài đăng
+        const pendingPosts = this.posts.filter(post => post.status === 'pending').length;
+        const approvedPosts = this.posts.filter(post => post.status === 'approved').length;
+        const rejectedPosts = this.posts.filter(post => post.status === 'rejected').length;
+        const todayPosts = this.getPostsCreatedToday();
+        const avgPostsPerDay = Math.round(this.posts.length / 30);
+>>>>>>> 14cb66c44261ed9f1093861e8b5ba68cc123808e
 
         const pendingPostsEl = document.getElementById('pendingPosts');
         const approvedPostsEl = document.getElementById('approvedPosts');
@@ -429,7 +456,7 @@ class StatisticsManager {
     createUserChart() {
         const ctx = document.getElementById('userChart').getContext('2d');
         
-        // Generate mock data for 6 months
+        // Tạo dữ liệu mẫu (mock data) cho 6 tháng gần đây
         const months = ['Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10'];
         const userData = [12, 19, 15, 23, 28, 35];
 
@@ -587,12 +614,12 @@ class StatisticsManager {
     }
 
     refreshStats() {
-        // Simulate data refresh
+        // Giả lập làm mới dữ liệu
         this.loadOverviewStats();
         this.loadDetailStats();
         this.loadActivityTimeline();
         
-        // Update charts
+        // Cập nhật lại các biểu đồ
         if (this.userChart) {
             this.userChart.destroy();
         }
@@ -602,12 +629,11 @@ class StatisticsManager {
         
         this.initCharts();
         
-        // Show success message
         this.showToast('Đã làm mới dữ liệu thống kê!', 'success');
     }
 
     exportData() {
-        // Simulate data export
+        // Giả lập xuất dữ liệu
         const data = {
             users: this.users,
             posts: this.posts,
@@ -628,7 +654,7 @@ class StatisticsManager {
     }
 
     showToast(message, type = 'info') {
-        // Create toast element
+        // Tạo phần tử toast
         const toast = document.createElement('div');
         toast.style.cssText = `
             position: fixed;
@@ -649,12 +675,10 @@ class StatisticsManager {
         
         document.body.appendChild(toast);
         
-        // Animate in
         setTimeout(() => {
             toast.style.transform = 'translateX(0)';
         }, 100);
         
-        // Remove after 3 seconds
         setTimeout(() => {
             toast.style.transform = 'translateX(400px)';
             setTimeout(() => {
@@ -664,7 +688,6 @@ class StatisticsManager {
     }
 }
 
-// Global functions
 window.refreshStats = function() {
     if (window.statsManager) {
         window.statsManager.refreshStats();
@@ -677,7 +700,6 @@ window.exportData = function() {
     }
 };
 
-// Initialize statistics when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     window.statsManager = new StatisticsManager();
 });
