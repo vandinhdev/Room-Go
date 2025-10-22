@@ -16,29 +16,24 @@ export class AuthManager {
         }
     }
 
-    // Lưu thông tin người dùng vào localStorage
     saveUserInfo(userInfo) {
         localStorage.setItem(this.storageKey, JSON.stringify(userInfo));
     }
 
-    // Xóa thông tin người dùng khỏi localStorage
     clearUserInfo() {
         localStorage.removeItem(this.storageKey);
     }
 
-    // Kiểm tra người dùng đã xác thực chưa
     isAuthenticated() {
         const userInfo = this.getCurrentUser();
         return userInfo && userInfo.token;
     }
 
-    // Lấy access token từ người dùng hiện tại
     getAccessToken() {
         const userInfo = this.getCurrentUser();
         return userInfo?.token;
     }
 
-    // Lấy refresh token từ người dùng hiện tại
     getRefreshToken() {
         const userInfo = this.getCurrentUser();
         return userInfo?.refreshToken;
@@ -214,7 +209,6 @@ export class AuthManager {
         }
     }
 
-    // Đăng xuất người dùng
     logout() {
         this.clearUserInfo();
     }

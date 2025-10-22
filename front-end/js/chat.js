@@ -1,7 +1,6 @@
-// Import API configuration
 import { API_BASE_URL } from './config.js';
 
-// API endpoints
+// Các endpoint của API
 const CHAT_API = {
     GET_CONVERSATIONS: `${API_BASE_URL}/chat/get-all-user-conversations`,
     GET_CONVERSATION_DETAIL: (conversationId) => `${API_BASE_URL}/chat/conversation/${conversationId}`,
@@ -17,15 +16,15 @@ class ChatSystem {
         this.chats = [];
         this.activeChat = null;
         this.searchTerm = '';
-        this.filter = 'all'; // 'all' or 'unread'
-        this.selectedImages = []; // For storing selected images
-        this.conversationsData = []; // Store raw API data
+        this.filter = 'all';
+        this.selectedImages = [];
+        this.conversationsData = [];
         
         this.init();
     }
 
     getCurrentUser() {
-        // Get current user from localStorage or default to user 1
+        // Lấy thông tin người dùng hiện tại từ localStorage
         const userInfo = JSON.parse(localStorage.getItem('userInfo')) || 
                         JSON.parse(localStorage.getItem('currentUser'));
         
@@ -46,8 +45,8 @@ class ChatSystem {
         };
     }
 
+    // Khởi tạo
     async init() {
-        // Debug localStorage
         console.log('=== Authentication Debug ===');
         const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
         console.log('userInfo.token:', userInfo.token ? 'EXISTS' : 'MISSING');
@@ -56,7 +55,7 @@ class ChatSystem {
         console.log('Current user object:', this.currentUser);
         console.log('===========================');
 
-        // Check authentication first
+        // Kiểm tra xác thực trước
         if (!this.isAuthenticated()) {
             console.warn('User not authenticated. Redirecting to login...');
             this.showNotification('Vui lòng đăng nhập để sử dụng chat', 'warning');
@@ -70,13 +69,13 @@ class ChatSystem {
         this.setupEventListeners();
         this.setupImageUpload();
         
-        // Check if there's a conversation to auto-open from detail page
+        // Kiểm tra xem có cuộc trò chuyện cần tự động mở từ trang chi tiết không
         const openConversationId = sessionStorage.getItem('openConversationId');
         if (openConversationId) {
-            console.log('📬 Auto-opening conversation from detail page:', openConversationId);
-            sessionStorage.removeItem('openConversationId'); // Clear after reading
+            console.log('Auto-opening conversation from detail page:', openConversationId);
+            sessionStorage.removeItem('openConversationId');
             
-            // Find the conversation
+            // Tìm cuộc trò chuyện
             const convId = parseInt(openConversationId);
             let conversation = this.chats.find(c => c.id === convId);
             
@@ -84,95 +83,92 @@ class ChatSystem {
                 await this.selectChat(convId);
                 this.showNotification('Đã mở cuộc trò chuyện', 'success');
             } else {
-                console.warn('⚠️ Conversation not found in loaded chats:', convId);
-                console.log('🔄 Trying to load conversation directly from API...');
+                console.warn('Conversation not found in loaded chats:', convId);
+                console.log('Trying to load conversation directly from API...');
                 
-                // Try to load the conversation directly from API
+                // Thử tải trực tiếp từ API
                 try {
                     const conversationDetail = await this.loadConversationDetails(convId);
                     if (conversationDetail) {
-                        console.log('✅ Loaded conversation from API:', conversationDetail);
+                        console.log('Loaded conversation from API:', conversationDetail);
                         
-                        // Add to chats list
+                        // Thêm vào danh sách chats
                         this.chats.unshift(conversationDetail);
                         this.loadChatList();
                         
-                        // Select it
                         await this.selectChat(convId);
                         this.showNotification('Đã mở cuộc trò chuyện', 'success');
                     } else {
                         throw new Error('Conversation detail is null');
                     }
                 } catch (error) {
-                    console.error('❌ Failed to load conversation:', error);
+                    console.error('Failed to load conversation:', error);
                     this.showNotification('Không tìm thấy cuộc trò chuyện', 'error');
-                    
-                    // Fallback to first chat
+
                     if (this.chats.length > 0) {
                         await this.selectChat(this.chats[0].id);
                     }
                 }
             }
         } else {
-            // Auto-select first chat if available (default behavior)
+            // Tự động chọn cuộc trò chuyện đầu tiên
             if (this.chats.length > 0) {
                 await this.selectChat(this.chats[0].id);
             }
         }
     }
 
-    // Check if user is authenticated
+    // Kiểm tra xem người dùng đã xác thực chưa
     isAuthenticated() {
-        // Đọc token từ userInfo (nơi login.js lưu trữ)
+        // Đọc token từ userInfo
         const userInfoRaw = localStorage.getItem('userInfo');
         const userInfo = userInfoRaw ? JSON.parse(userInfoRaw) : {};
         const token = userInfo.token;
         const email = userInfo.email || this.currentUser.email;
         
-        console.log('🔐 Auth check - Token:', token ? 'Present' : 'Missing');
-        console.log('🔐 Auth check - UserInfo raw:', userInfoRaw);
-        console.log('🔐 Auth check - Email:', email);
+        console.log('Auth check - Token:', token ? 'Present' : 'Missing');
+        console.log('Auth check - UserInfo raw:', userInfoRaw);
+        console.log('Auth check - Email:', email);
         
         if (!token) {
-            console.error('❌ No access token found in userInfo.token');
+            console.error('No access token found in userInfo.token');
             return false;
         }
         
         if (!userInfoRaw) {
-            console.error('❌ No userInfo in localStorage');
+            console.error('No userInfo in localStorage');
             return false;
         }
         
         if (!email) {
-            console.error('❌ No user email found in userInfo');
+            console.error('No user email found in userInfo');
             console.error('UserInfo structure:', userInfo);
             return false;
         }
         
-        // Optional: Check if token is expired (if JWT)
+        // Kiểm tra token đã hết hạn hay chưa
         try {
             const payload = JSON.parse(atob(token.split('.')[1]));
             if (payload.exp && payload.exp * 1000 < Date.now()) {
-                console.error('❌ Token expired');
+                console.error('Token expired');
                 return false;
             }
         } catch (e) {
-            // Not a JWT or cannot parse, assume valid for now
-            console.warn('⚠️ Cannot validate token expiry');
+            console.warn('Cannot validate token expiry');
         }
         
-        console.log('✅ Authentication successful');
+        console.log('Authentication successful');
         return true;
     }
 
-    // Get authentication headers
+    // Lấy header xác thực
     getAuthHeaders() {
-        // Đọc token từ userInfo (nơi login.js lưu trữ)
+        // Đọc token từ userInfo
         const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
         const token = userInfo.token;
         const email = userInfo.email || this.currentUser.email;
         
-        console.log('🔑 Getting auth headers - Token:', token ? 'Present' : 'Missing', 'Email:', email);
+        console.log('Getting auth headers - Token:', token ? 'Present' : 'Missing', 'Email:', email);
         
         return {
             'Content-Type': 'application/json',
@@ -181,15 +177,15 @@ class ChatSystem {
         };
     }
 
-    // Load conversations from API
+    // Tải danh sách cuộc trò chuyện từ API
     async loadConversationsFromAPI() {
         try {
-            console.log('✅ Loading conversations from API...');
-            console.log('📧 Email:', this.currentUser.email);
+            console.log('Loading conversations from API...');
+            console.log('Email:', this.currentUser.email);
             
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
             const token = userInfo.token;
-            console.log('🔑 Token:', token ? (token.substring(0, 20) + '...') : 'MISSING');
+            console.log('Token:', token ? (token.substring(0, 20) + '...') : 'MISSING');
             
             const response = await fetch(CHAT_API.GET_CONVERSATIONS, {
                 method: 'GET',
@@ -198,6 +194,7 @@ class ChatSystem {
 
             console.log('Response status:', response.status);
 
+            // Xử lý khi gọi API thất bại
             if (!response.ok) {
                 const errorText = await response.text();
                 console.error('API Error Response:', errorText);
@@ -225,14 +222,14 @@ class ChatSystem {
             console.log('result.data:', result.data);
             console.log('Array.isArray(result.data):', Array.isArray(result.data));
             
-            // Check if data exists and is an array with items
+            // Kiểm tra dữ liệu có tồn tại
             if (result.status === 200 && result.data && Array.isArray(result.data) && result.data.length > 0) {
                 this.conversationsData = result.data;
                 this.transformConversationsData();
                 this.loadChatList();
-                console.log('✅ Loaded conversations:', this.chats.length);
+                console.log('Loaded conversations:', this.chats.length);
             } else {
-                console.warn('⚠️ No conversations found or empty data');
+                console.warn('No conversations found or empty data');
                 console.log('Setting empty chats array');
                 this.chats = [];
                 this.loadChatList();
@@ -241,7 +238,7 @@ class ChatSystem {
             console.error('Error loading conversations:', error);
             console.error('Error stack:', error.stack);
             
-            // Check if it's a network error
+            // Kiểm tra nếu là lỗi mạng
             if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
                 this.showNotification('Không thể kết nối đến server. Vui lòng kiểm tra kết nối.', 'error');
             } else {
@@ -253,31 +250,28 @@ class ChatSystem {
         }
     }
 
-    // Transform API data to match internal format
+    // Chuyển đổi dữ liệu API sang định dạng nội bộ
     transformConversationsData() {
-        console.log('🔄 Transforming conversations data:', this.conversationsData);
+        console.log('Transforming conversations data:', this.conversationsData);
         
         this.chats = this.conversationsData.map(conv => {
             return {
                 id: conv.id,
                 roomId: conv.roomId,
-                // Thông tin người chat kia
                 otherUserId: conv.otherUserId,
                 otherUserName: conv.otherUserName,
                 otherUserAvatar: conv.otherUserAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(conv.otherUserName)}&background=random`,
-                // Participants
                 participants: [this.currentUser.id, conv.otherUserId],
-                // Messages will be loaded when chat is selected
                 messages: [],
                 lastMessage: null,
                 unreadCount: 0
             };
         });
         
-        console.log('✅ Transformed chats:', this.chats);
+        console.log('Transformed chats:', this.chats);
     }
 
-    // Load conversation details with messages
+    // Tải chi tiết cuộc trò chuyện
     async loadConversationDetails(conversationId) {
         try {
             const response = await fetch(CHAT_API.GET_CONVERSATION_DETAIL(conversationId), {
@@ -300,9 +294,9 @@ class ChatSystem {
         }
     }
 
-    // Transform conversation detail from API
+    // Chuyển đổi chi tiết cuộc trò chuyện từ API
     transformConversationDetail(detail) {
-        console.log('🔄 Transforming conversation detail:', detail);
+        console.log('Transforming conversation detail:', detail);
         
         const messages = detail.messages ? detail.messages.map(msg => ({
             id: msg.id,
@@ -314,10 +308,10 @@ class ChatSystem {
             read: msg.isRead
         })) : [];
 
-        // Get other user info (the one who is not current user)
+        // Lấy thông tin user khác (không phải current user)
         const otherUserId = detail.ownerId === this.currentUser.id ? detail.currentUserId : detail.ownerId;
         
-        // Try to find other user's name from messages
+        // Lấy tên người kia từ tin nhắn
         let otherUserName = 'User';
         if (messages.length > 0) {
             const otherUserMessage = messages.find(m => m.senderId === otherUserId);
@@ -326,7 +320,7 @@ class ChatSystem {
             }
         }
 
-        // Get last message
+        // Lấy tin nhắn cuối cùng
         const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
 
         return {
@@ -343,7 +337,7 @@ class ChatSystem {
     }
 
     setupEventListeners() {
-        // Search functionality
+        // Tìm kiếm
         const searchInput = document.querySelector('.chat-search-input input');
         if (searchInput) {
             searchInput.addEventListener('input', (e) => {
@@ -352,7 +346,7 @@ class ChatSystem {
             });
         }
 
-        // Filter buttons
+        // Nút lọc
         const allMessagesBtn = document.querySelector('.chat-all-message');
         const unreadMessagesBtn = document.querySelector('.chat-unread-message');
         
@@ -374,7 +368,7 @@ class ChatSystem {
             });
         }
 
-        // Send message
+        // Gửi tin nhắn
         const sendButton = document.getElementById('send-button');
         const messageInput = document.getElementById('message-input');
         
@@ -393,25 +387,26 @@ class ChatSystem {
         }
     }
 
+    // Thiết lập tải anh lên trong khung chat
     setupImageUpload() {
         const imageBtn = document.getElementById('image-btn');
         const imageInput = document.getElementById('image-input');
         const clearImagesBtn = document.getElementById('clear-images-btn');
 
-        // Click image button to open file dialog
+        // Click nút ảnh để mở dialog chọn file
         if (imageBtn && imageInput) {
             imageBtn.addEventListener('click', () => {
                 imageInput.click();
             });
 
-            // Handle file selection
+            // Xử lý khi chọn file
             imageInput.addEventListener('change', (e) => {
                 const files = Array.from(e.target.files);
                 this.handleImageSelection(files);
             });
         }
 
-        // Clear all selected images
+        // Xóa tất cả ảnh đã chọn
         if (clearImagesBtn) {
             clearImagesBtn.addEventListener('click', () => {
                 this.clearSelectedImages();
@@ -419,6 +414,7 @@ class ChatSystem {
         }
     }
 
+    // Xử lý ảnh người dùng chọn
     handleImageSelection(files) {
         files.forEach(file => {
             if (file.type.startsWith('image/')) {
@@ -438,6 +434,7 @@ class ChatSystem {
         });
     }
 
+    // Cập nhật giao diện xem trước ảnh
     updateImagePreview() {
         const previewContainer = document.getElementById('image-preview-container');
         const previewList = document.getElementById('image-preview-list');
@@ -470,13 +467,14 @@ class ChatSystem {
         document.getElementById('image-input').value = '';
     }
 
+    // Hiển thị danh sách các cuộc trò chuyện
     loadChatList() {
         const chatListContainer = document.getElementById('chat-list');
         if (!chatListContainer) return;
 
         let filteredChats = this.chats;
 
-        // Apply search filter
+        // Áp dụng bộ lọc tìm kiếm
         if (this.searchTerm) {
             filteredChats = filteredChats.filter(chat => {
                 const chatName = chat.otherUserName || '';
@@ -484,12 +482,12 @@ class ChatSystem {
             });
         }
 
-        // Apply unread filter
+        // Áp dụng bộ lọc chưa đọc
         if (this.filter === 'unread') {
             filteredChats = filteredChats.filter(chat => chat.unreadCount > 0);
         }
 
-        // Sort by last message timestamp
+        // Sắp xếp theo thời gian tin nhắn cuối cùng
         filteredChats.sort((a, b) => {
             const timeA = a.lastMessage ? new Date(a.lastMessage.timestamp) : new Date(0);
             const timeB = b.lastMessage ? new Date(b.lastMessage.timestamp) : new Date(0);
@@ -533,10 +531,9 @@ class ChatSystem {
             `;
         }).join('');
 
-        // Add click listeners to chat items
         document.querySelectorAll('.chat-item').forEach(item => {
             item.addEventListener('click', (e) => {
-                // Don't select chat if clicking on options button or menu
+                // Không chọn chat nếu click vào phần options
                 if (e.target.closest('.chat-options')) {
                     return;
                 }
@@ -545,7 +542,6 @@ class ChatSystem {
             });
         });
 
-        // Add click listeners to options buttons
         document.querySelectorAll('.chat-options-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -554,7 +550,6 @@ class ChatSystem {
             });
         });
 
-        // Add click listeners to menu items
         document.querySelectorAll('.chat-options-menu-item').forEach(item => {
             item.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -565,26 +560,26 @@ class ChatSystem {
                     this.deleteChat(chatId);
                 }
                 
-                // Hide all menus
                 this.hideAllChatMenus();
             });
         });
 
-        // Close menus when clicking outside
+        // Đóng menu khi click ra ngoài
         document.addEventListener('click', () => {
             this.hideAllChatMenus();
         });
     }
 
+    // Chọn một cuộc trò chuyện và hiển thị nội dung
     async selectChat(chatId) {
         const chat = this.chats.find(c => c.id === chatId);
         if (!chat) return;
 
-        // Load conversation details from API
+        // Tải chi tiết cuộc trò chuyện từ API
         try {
             const details = await this.loadConversationDetails(chatId);
             
-            // Update chat with loaded messages
+            // Cập nhật messages cho chat
             chat.messages = details.messages;
             if (details.messages.length > 0) {
                 chat.lastMessage = details.messages[details.messages.length - 1];
@@ -592,18 +587,19 @@ class ChatSystem {
             
             this.activeChat = chat;
             
-            // Mark messages as read
+            // Đánh dấu là đã đọc
             this.markChatAsRead(chatId);
             
             this.loadChatHeader();
             this.loadMessages();
-            this.loadChatList(); // Refresh to update unread counts
+            this.loadChatList(); // Tải lại để cập nhật số chưa đọc
         } catch (error) {
             console.error('Error selecting chat:', error);
             this.showNotification('Không thể tải tin nhắn', 'error');
         }
     }
 
+    // Tải và hiển thị thông tin người trò chuyện
     loadChatHeader() {
         const chatHeader = document.getElementById('chat-header');
         if (!chatHeader || !this.activeChat) return;
@@ -625,6 +621,7 @@ class ChatSystem {
         `;
     }
 
+    // Tải và hiện thị tin nhắn
     loadMessages() {
         const messagesContainer = document.getElementById('chat-messages');
         if (!messagesContainer || !this.activeChat) return;
@@ -664,7 +661,7 @@ class ChatSystem {
             `;
         }).join('');
 
-        // Scroll to bottom
+        // Cuộn xuống cuối
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 
@@ -675,10 +672,9 @@ class ChatSystem {
         const content = messageInput.value.trim();
         const hasImages = this.selectedImages.length > 0;
 
-        // Must have either content or images
         if (!content && !hasImages) return;
 
-        // Send text message if there's content
+        // Gửi tin nhắn dạng text nếu có nội dung
         if (content) {
             try {
                 const messageData = {
@@ -700,7 +696,7 @@ class ChatSystem {
                 const result = await response.json();
                 
                 if (result.status === 201) {
-                    // Add message to local state
+                    // Thêm message vào trạng thái local
                     const textMessage = {
                         id: result.data,
                         senderId: this.currentUser.id,
@@ -714,10 +710,8 @@ class ChatSystem {
                     this.activeChat.messages.push(textMessage);
                     this.activeChat.lastMessage = textMessage;
                     
-                    // Clear input
                     messageInput.value = '';
                     
-                    // Reload messages
                     this.loadMessages();
                     this.loadChatList();
                 } else {
@@ -729,26 +723,17 @@ class ChatSystem {
             }
         }
 
-        // Send image messages (TODO: Implement image upload)
         if (hasImages) {
-            // TODO: Implement image upload to server
             console.log('Image upload not yet implemented');
             this.showNotification('Tính năng gửi ảnh đang được phát triển', 'info');
         }
 
-        // Clear input and images
         messageInput.value = '';
         this.clearSelectedImages();
 
-        // Clear selected images
         this.clearSelectedImages();
     }
-
-    // TODO: Implement WebSocket for real-time messages
-    // simulateRealTimeMessages() {
-    //     // This will be replaced with WebSocket implementation
-    // }
-
+    // Đánh dấu cuộc trò chuyện là đã đọc
     markChatAsRead(chatId) {
         const chat = this.chats.find(c => c.id === chatId);
         if (!chat) return;
@@ -790,10 +775,8 @@ class ChatSystem {
     }
 
     toggleChatMenu(chatId) {
-        // Hide all other menus first
         this.hideAllChatMenus();
         
-        // Show the clicked menu
         const menu = document.getElementById(`chat-menu-${chatId}`);
         if (menu) {
             menu.classList.add('show');
@@ -849,7 +832,7 @@ class ChatSystem {
         }
     }
 
-    // Hàm tạo cuộc trò chuyện mới với phòng
+    // Tạo cuộc trò chuyện mới
     async createChatWithRoom(roomId) {
         try {
             const response = await fetch(CHAT_API.CREATE_CONVERSATION(roomId), {
@@ -866,10 +849,10 @@ class ChatSystem {
             if (result.status === 201 && result.data) {
                 const conversationId = result.data;
                 
-                // Reload all conversations to get the new one
+                // Tải lại danh sách cuộc trò chuyện để lấy cuộc mới
                 await this.loadConversationsFromAPI();
                 
-                // Select the new conversation
+                // Chọn cuộc trò chuyện mới
                 await this.selectChat(conversationId);
                 
                 this.showNotification('Đã tạo cuộc trò chuyện mới', 'success');
@@ -885,7 +868,7 @@ class ChatSystem {
         }
     }
 
-    // Hàm tìm cuộc trò chuyện theo tên
+    // Tìm cuộc trò chuyện theo tên
     async searchConversationByName(conversationName) {
         try {
             const response = await fetch(`${CHAT_API.SEARCH_BY_NAME}?name=${encodeURIComponent(conversationName)}`, {
@@ -911,7 +894,6 @@ class ChatSystem {
     }
 
     showNotification(message, type = 'info') {
-        // Create notification element
         const notification = document.createElement('div');
         notification.className = `notification ${type}`;
         notification.textContent = message;
@@ -941,13 +923,13 @@ class ChatSystem {
     }
 
     formatMessageContent(content) {
-        // Check if this is a room intro message (new format with image)
+        // Kiểm tra nếu là tin giới thiệu phòng (định dạng mới có ảnh)
         if (content.startsWith('ROOM_INTRO|')) {
             const parts = content.split('|');
             if (parts.length >= 7) {
                 const [, imageUrl, title, price, area, district, roomId] = parts;
                 
-                // Create clickable room card with image
+                // Tạo card phòng có thể nhấn được kèm ảnh
                 return `
                     <div class="room-intro-card" data-room-id="${roomId}" onclick="window.location.href='detail.html?id=${roomId}'" style="cursor: pointer;">
                         <div class="room-intro-image">
@@ -967,7 +949,7 @@ class ChatSystem {
             }
         }
         
-        // Check for old format (backward compatibility)
+        // Kiểm tra định dạng cũ 
         const oldRoomIntroPattern = /^Xin chào! Tôi quan tâm đến phòng: "(.+?)" - (.+?) - (\d+)m² tại (.+)$/;
         const oldMatch = content.match(oldRoomIntroPattern);
         
@@ -975,7 +957,7 @@ class ChatSystem {
             const [, title, price, area, district] = oldMatch;
             const roomId = this.activeChat?.roomId || '';
             
-            // Create clickable room card (without image for old format)
+            // Tạo card phòng có thể nhấn (không có ảnh cho định dạng cũ)
             return `
                 <div class="room-intro-card" data-room-id="${roomId}" onclick="window.location.href='detail.html?id=${roomId}'" style="cursor: pointer;">
                     <div class="room-intro-details">
@@ -990,7 +972,7 @@ class ChatSystem {
             `;
         }
         
-        // Regular message formatting
+        // Định dạng tin nhắn bình thường
         return content
             .replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>')
             .replace(/:\)/g, '😊')

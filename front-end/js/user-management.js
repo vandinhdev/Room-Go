@@ -5,6 +5,7 @@ let allUsers = [];
 let currentUsers = [];
 let editingUserId = null;
 
+// Kiểm tra quyền Admin
 document.addEventListener('DOMContentLoaded', async function() {
     const userInfo = authManager.getCurrentUser();
     if (!userInfo || userInfo.role !== 'ADMIN') {
@@ -104,11 +105,9 @@ async function fetchUsers() {
     }
 }
 
-// Hiển thị trạng thái đang tải
 function showLoading() {
 }
 
-// Ẩn trạng thái đang tải
 function hideLoading() {
     document.body.classList.remove('loading');
     document.body.classList.add('loaded');
@@ -194,8 +193,6 @@ function filterUsers(searchTerm) {
     renderUsers();
 }
 
-
-// Xoá người dùng theo ID
 async function deleteUser(userId) {
     const user = allUsers.find(u => u.id === userId);
     if (!user) return;
@@ -306,7 +303,6 @@ function editUser(userId) {
     }
 }
 
-// Lưu thông tin người dùng (tạm thời)
 function saveUser() {
     closeUserModal();
 }
@@ -320,7 +316,6 @@ function closeUserModal() {
     editingUserId = null;
 }
 
-// Hiển thị thông báo (fallback khi thiếu Utils)
 function showNotification(message, type = 'success') {
     if (window.Utils && typeof Utils.showNotification === 'function') {
         Utils.showNotification(message, type);

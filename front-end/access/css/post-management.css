@@ -1,5 +1,5 @@
 .main-container {
-    padding-top: 80px; /* Account for fixed header */
+    padding-top: 80px;
     min-height: 100vh;
     background: #f5f5f5;
 }
@@ -263,7 +263,6 @@
     display: inline-block;
 }
 
-/* User info in table */
 .user-info-table {
     display: flex;
     align-items: center;

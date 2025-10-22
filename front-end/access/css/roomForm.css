@@ -1,4 +1,3 @@
-/* Room Form Styles */
 :root {
     --primary-color: #4b6cb7;
     --secondary-color: #182848;
@@ -349,7 +348,7 @@ body {
     background-color: rgba(75, 108, 183, 0.1);
 }
 
-/* Responsive adjustments */
+/* Responsive */
 @media (max-width: 768px) {
     .form-container {
         padding: 1.5rem;

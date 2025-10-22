@@ -109,7 +109,6 @@ function setupForms() {
         });
     }
 
-    // Email Form
     const emailForm = document.getElementById('emailForm');
     const editEmailBtn = document.getElementById('editEmailBtn');
     const cancelEmailBtn = document.getElementById('cancelEmailBtn');
@@ -133,7 +132,6 @@ function setupForms() {
         });
     }
 
-    // Phone Form
     const phoneForm = document.getElementById('phoneForm');
     const editPhoneBtn = document.getElementById('editPhoneBtn');
     const cancelPhoneBtn = document.getElementById('cancelPhoneBtn');
@@ -157,7 +155,6 @@ function setupForms() {
         });
     }
 
-    // Change password form
     const changePasswordForm = document.getElementById('changePasswordForm');
     if (changePasswordForm) {
         changePasswordForm.addEventListener('submit', function(e) {
@@ -166,11 +163,9 @@ function setupForms() {
         });
     }
 
-    // Avatar change
     const changeAvatarBtn = document.getElementById('changeAvatarBtn');
     if (changeAvatarBtn) {
         changeAvatarBtn.addEventListener('click', function() {
-            // Tạo input file để chọn ảnh
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = 'image/*';
@@ -179,7 +174,6 @@ function setupForms() {
         });
     }
 
-    // Notification settings
     const emailNotifications = document.getElementById('emailNotifications');
     const smsNotifications = document.getElementById('smsNotifications');
     
@@ -299,6 +293,7 @@ function toggleBasicInfoEdit(showEdit) {
     }
 }
 
+// Hiển thị/ẩn form chỉnh sửa email
 function toggleEmailEdit(showEdit) {
     const display = document.getElementById('emailDisplay');
     const edit = document.getElementById('emailEdit');
@@ -312,6 +307,7 @@ function toggleEmailEdit(showEdit) {
     }
 }
 
+// Hiển thị/ẩn form chỉnh sửa số điện thoại
 function togglePhoneEdit(showEdit) {
     const display = document.getElementById('phoneDisplay');
     const edit = document.getElementById('phoneEdit');
@@ -384,7 +380,6 @@ async function updateEmail() {
             return;
         }
 
-        // Validate email format
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(newEmail)) {
             Utils.showNotification('Email không hợp lệ!', 'error');
@@ -434,7 +429,6 @@ async function updatePhone() {
             return;
         }
 
-        // Validate phone number format
         const phoneRegex = /^[0-9]{10,11}$/;
         if (!phoneRegex.test(newPhone)) {
             Utils.showNotification('Số điện thoại không hợp lệ!', 'error');
@@ -566,7 +560,7 @@ async function uploadAvatarToCloudinary(file) {
     }
 }
 
-// Xử lý thay đổi avatar: upload trước rồi cập nhật profile
+// Xử lý thay đổi avatar
 async function handleAvatarChange(event) {
     window.showFullScreenLoading('Đang tải ảnh lên');
     
@@ -647,7 +641,7 @@ async function deleteAccount() {
     alert('Tài khoản đã được xóa thành công!');
     window.location.href = 'index.html';
 }
-// Hàm toàn cục mở trang chỉnh sửa tin đăng
+
 window.editPost = function(postId) {
     window.location.href = `roomForm.html?edit=${postId}`;
 };

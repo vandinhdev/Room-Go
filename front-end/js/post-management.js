@@ -2,7 +2,6 @@ import { API_BASE_URL } from './config.js';
 import { authManager } from './auth.js';
 
 class PostManagement {
-    // Khởi tạo đối tượng quản lý bài đăng
     constructor() {
         this.allPosts = [];
         this.myPosts = []; 
@@ -54,7 +53,7 @@ class PostManagement {
         }
     }
 
-    // Lấy danh sách bài đăng (admin/người dùng)
+    // Lấy danh sách bài đăng
     async fetchPosts() {
         try {
             if (!this.currentUser || !this.currentUser.token) {
@@ -88,7 +87,7 @@ class PostManagement {
         }
     }
 
-    // Lấy tất cả bài đăng (Admin)
+    // Lấy tất cả bài đăng
     async fetchAllPosts() {
         try {
             const response = await authManager.makeAuthenticatedRequest('/room/list', {
@@ -197,7 +196,7 @@ class PostManagement {
         }));
     }
 
-    // Lấy thông tin người dùng và cache
+    // Lấy thông tin người dùng
     async getUserInfo(userId) {
         if (this.usersCache[userId]) {
             return this.usersCache[userId];
@@ -228,11 +227,9 @@ class PostManagement {
         return null;
     }
 
-    // Hiển thị trạng thái đang tải
     showLoading() {
     }
 
-    // Ẩn trạng thái đang tải
     hideLoading() {
         document.body.classList.remove('loading');
         document.body.classList.add('loaded');
@@ -653,7 +650,6 @@ class PostManagement {
         document.getElementById('postDetailModal').style.display = 'block';
     }
 
-    // Đóng modal chi tiết bài đăng
     closePostDetailModal() {
         document.getElementById('postDetailModal').style.display = 'none';
     }
@@ -790,7 +786,6 @@ class PostManagement {
         }
     }
 
-    // Chuyển đến trang chỉnh sửa bài đăng
     editPost(postId) {
         window.location.href = `roomForm.html?id=${postId}`;
     }
@@ -840,7 +835,6 @@ class PostManagement {
         }
     }
 
-    // Định dạng giá tiền
     formatPrice(price) {
         return new Intl.NumberFormat('vi-VN', {
             style: 'currency',
@@ -872,7 +866,6 @@ class PostManagement {
     }
 }
 
-// Hàm global đóng modal chi tiết bài đăng
 window.closePostDetailModal = function() {
     postManager.closePostDetailModal();
 };

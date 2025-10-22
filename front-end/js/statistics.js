@@ -1,7 +1,5 @@
-// Import API configuration
 import { API_BASE_URL } from './config.js';
 
-// API endpoints
 const API_ENDPOINTS = {
     users: `${API_BASE_URL}/user/list`,
     rooms: `${API_BASE_URL}/room/list`,
@@ -13,8 +11,7 @@ class StatisticsManager {
         this.users = [];
         this.posts = [];
         this.activities = [];
-        
-        // Lấy thông tin user từ localStorage
+
         const userInfoStr = localStorage.getItem('userInfo');
         this.currentUser = userInfoStr ? JSON.parse(userInfoStr) : null;
         this.isAdmin = this.currentUser && this.currentUser.role === 'ADMIN';
@@ -25,12 +22,12 @@ class StatisticsManager {
         this.init();
     }
 
+    // Khởi tạo
     async init() {
         if (!this.checkAdminPermission()) {
             return;
         }
         
-        // Kiểm tra đăng nhập - token nằm trong userInfo
         const userInfo = this.currentUser;
         const token = userInfo?.token;
         
@@ -42,7 +39,7 @@ class StatisticsManager {
         this.showLoading();
         
         const loadingTimeout = setTimeout(() => {
-            console.log('⚠️ Loading timeout reached - forcing hide loading');
+            console.log('Loading timeout reached - forcing hide loading');
             this.hideLoading();
         }, 10000);
         
@@ -60,7 +57,7 @@ class StatisticsManager {
             this.loadActivityTimeline();
             this.initCharts();
             
-            console.log('✅ Statistics loaded successfully');
+            console.log('Statistics loaded successfully');
             
         } catch (error) {
             this.showError('Không thể tải dữ liệu thống kê. Vui lòng thử lại sau.');
@@ -70,6 +67,7 @@ class StatisticsManager {
         }
     }
 
+    // Hiển thị thông báo yêu cầu đăng nhập
     showLoginRequired() {
         const container = document.querySelector('.stats-container');
         if (container) {
@@ -88,11 +86,10 @@ class StatisticsManager {
     }
 
     showLoading() {
-        // Không cần làm gì - CSS đã xử lý
+
     }
 
     hideLoading() {
-        // Thêm class 'loaded' để ẩn loading và hiện nội dung
         document.body.classList.remove('loading');
         document.body.classList.add('loaded');
         document.documentElement.classList.remove('loading');
@@ -118,12 +115,11 @@ class StatisticsManager {
         }
     }
 
+    // Lấy danh sách người dùng từ API (dành cho admin hoặc user có token)
     async fetchUsers() {
         try {
-            // Lấy token từ userInfo
             const token = this.currentUser?.token;
-            
-            // Kiểm tra token (không cần log nữa vì đã check ở init)
+
             if (!token) {
                 this.users = [];
                 return;
@@ -131,7 +127,6 @@ class StatisticsManager {
             
             const userEmail = this.currentUser?.email || '';
             
-            // Không cần phân trang cho statistics, lấy tất cả
             const url = new URL(`${API_ENDPOINTS.users}`);
             url.searchParams.append('page', '0');
             url.searchParams.append('size', '1000');
@@ -151,7 +146,6 @@ class StatisticsManager {
             }
 
             const result = await response.json();
-            // API trả về { status, message, data: { users: [], ... } }
             console.log('Users API Response:', result);
             
             this.users = result.data?.users || [];
@@ -161,20 +155,19 @@ class StatisticsManager {
             this.users = [];
         }
     }
+
+    // Lấy danh sách bài đăng
     async fetchPosts() {
         try {
-            // Lấy token từ userInfo
             const token = this.currentUser?.token;
             
-            // Kiểm tra token (không cần log nữa vì đã check ở init)
             if (!token) {
                 this.posts = [];
                 return;
             }
             
             const userEmail = this.currentUser?.email || '';
-            
-            // Lấy tất cả rooms cho statistics
+   
             const url = new URL(`${API_ENDPOINTS.rooms}`);
             url.searchParams.append('page', '1');
             url.searchParams.append('size', '1000');
@@ -195,7 +188,6 @@ class StatisticsManager {
             }
 
             const result = await response.json();
-            // API trả về { status, message, data: { rooms: [], ... } }
             console.log('Rooms API Response:', result);
             
             this.posts = result.data?.rooms || [];
@@ -206,10 +198,11 @@ class StatisticsManager {
         }
     }
 
+    // Tạo danh sách hoạt động
     generateActivitiesFromData() {
         const activities = [];
         
-        // Add recent posts as activities
+        // Thêm 10 bài đăng gần đây vào activities
         const recentPosts = [...this.posts]
             .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
             .slice(0, 10);
@@ -223,7 +216,7 @@ class StatisticsManager {
             });
         });
 
-        // Add recent users as activities
+        // Thêm 10 người dùng mới đăng ký vào activities
         const recentUsers = [...this.users]
             .sort((a, b) => new Date(b.createdAt || b.registeredAt) - new Date(a.createdAt || a.registeredAt))
             .slice(0, 10);
@@ -237,12 +230,12 @@ class StatisticsManager {
             });
         });
 
-        // Sort by time (newest first)
         this.activities = activities.sort((a, b) => new Date(b.time) - new Date(a.time));
         
-        console.log('✅ Generated activities from data:', this.activities.length);
+        console.log('Generated activities from data:', this.activities.length);
     }
 
+    // Kiểm tra quyền Admin
     checkAdminPermission() {
         if (!this.currentUser || this.currentUser.role !== 'ADMIN') {
             const container = document.querySelector('.stats-container');
@@ -264,8 +257,8 @@ class StatisticsManager {
         return true;
     }
 
+    // Tải và hiển thị số liệu tổng quan
     loadOverviewStats() {
-        // Tính toán các số liệu tổng quan
         const totalUsers = this.users.length;
         const totalPosts = this.posts.length;
         const totalViews = this.posts.reduce((sum, post) => sum + (post.views || 0), 0);
@@ -279,7 +272,6 @@ class StatisticsManager {
         if (totalPostsEl) totalPostsEl.textContent = totalPosts;
         if (totalViewsEl) totalViewsEl.textContent = this.formatNumber(totalViews);
        
-        // Calculate trends (comparing with previous period)
         const userTrend = this.calculateUserTrend();
         const postTrend = this.calculatePostTrend();
         
@@ -290,17 +282,20 @@ class StatisticsManager {
         if (postTrendEl) postTrendEl.textContent = postTrend;
     }
 
+    // Tính xu hướng tăng/giảm người dùng
     calculateUserTrend() {
         // Calculate users registered in last 7 days vs previous 7 days
         const now = new Date();
         const last7Days = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
         const previous7Days = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
         
+        // Số người dùng đăng ký trong 7 ngày gần nhất
         const recentUsers = this.users.filter(user => {
             const date = new Date(user.createdAt || user.registeredAt);
             return date >= last7Days;
         }).length;
         
+        // Số người dùng đăng ký trong 7 ngày trước đó
         const previousUsers = this.users.filter(user => {
             const date = new Date(user.createdAt || user.registeredAt);
             return date >= previous7Days && date < last7Days;
@@ -312,17 +307,19 @@ class StatisticsManager {
         return trend > 0 ? `+${trend}%` : `${trend}%`;
     }
 
+    // Tính xu hướng tăng/giảm số bài đăng
     calculatePostTrend() {
-        // Calculate posts in last 7 days vs previous 7 days
         const now = new Date();
         const last7Days = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
         const previous7Days = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
         
+        // Số bài đăng trong 7 ngày gần nhất
         const recentPosts = this.posts.filter(post => {
             const date = new Date(post.createdAt);
             return date >= last7Days;
         }).length;
         
+        // Số bài đăng trong 7 ngày trước đó
         const previousPosts = this.posts.filter(post => {
             const date = new Date(post.createdAt);
             return date >= previous7Days && date < last7Days;
@@ -334,7 +331,9 @@ class StatisticsManager {
         return trend > 0 ? `+${trend}%` : `${trend}%`;
     }
 
+    // Hiển thị chi tiết thống kê người dùng và bài đăng
     loadDetailStats() {
+        // Người dùng
         const adminCount = this.users.filter(user => user.role === 'ADMIN').length;
         const regularUserCount = this.users.filter(user => user.role === 'USER').length;
         const todayUsers = this.getUsersRegisteredToday();
@@ -353,13 +352,12 @@ class StatisticsManager {
         if (weekUsersEl) weekUsersEl.textContent = weekUsers;
         if (activeUsersEl) activeUsersEl.textContent = activeUsers;
 
-        // Post details
+        // Bài đăng
         const pendingPosts = this.posts.filter(post => post.status === 'PENDING').length;
         const approvedPosts = this.posts.filter(post => post.status === 'APPROVED').length;
         const rejectedPosts = this.posts.filter(post => post.status === 'REJECTED').length;
         const todayPosts = this.getPostsCreatedToday();
         
-        // Calculate average posts per day based on data timespan
         const avgPostsPerDay = this.calculateAvgPostsPerDay();
 
         const pendingPostsEl = document.getElementById('pendingPosts');
@@ -375,20 +373,22 @@ class StatisticsManager {
         if (avgPostsPerDayEl) avgPostsPerDayEl.textContent = avgPostsPerDay;
     }
 
+    // Tính số bài đăng trung bình mỗi ngày
     calculateAvgPostsPerDay() {
         if (this.posts.length === 0) return 0;
         
-        // Find oldest and newest post
+        // Lấy timestamp cũ nhất và mới nhất
         const dates = this.posts.map(post => new Date(post.createdAt).getTime());
         const oldestDate = Math.min(...dates);
         const newestDate = Math.max(...dates);
         
-        // Calculate days between
+        // Tính số ngày giữa các bài đăng
         const daysDiff = Math.max(1, Math.ceil((newestDate - oldestDate) / (1000 * 60 * 60 * 24)));
         
         return Math.round(this.posts.length / daysDiff);
     }
 
+    // Hiển thị dòng thời gian các hoạt động
     loadActivityTimeline() {
         const timelineContainer = document.getElementById('activityTimeline');
         
@@ -586,12 +586,10 @@ class StatisticsManager {
     }
 
     refreshStats() {
-        // Giả lập làm mới dữ liệu
         this.loadOverviewStats();
         this.loadDetailStats();
         this.loadActivityTimeline();
-        
-        // Cập nhật lại các biểu đồ
+
         if (this.userChart) {
             this.userChart.destroy();
         }
@@ -605,7 +603,6 @@ class StatisticsManager {
     }
 
     exportData() {
-        // Giả lập xuất dữ liệu
         const data = {
             users: this.users,
             posts: this.posts,
@@ -626,7 +623,6 @@ class StatisticsManager {
     }
 
     showToast(message, type = 'info') {
-        // Tạo phần tử toast
         const toast = document.createElement('div');
         toast.style.cssText = `
             position: fixed;

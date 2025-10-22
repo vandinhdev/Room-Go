@@ -5,11 +5,6 @@ function getFavouriteRooms() {
     return JSON.parse(localStorage.getItem("favouriteRooms")) || [];
 }
 
-function removeRoom(id) {
-    let favourite = getFavouriteRooms().filter(p => p.id !== id);
-    localStorage.setItem("favouriteRooms", JSON.stringify(favourite));
-}
-
 // Xóa phòng khỏi yêu thích qua API
 async function removeFavoriteRoomAPI(roomId) {
     try {
@@ -140,6 +135,7 @@ function viewDetail(id) {
     window.location.href = `detail.html?id=${id}`;
 }
 
+// Hiển thị danh sách tin yêu thích
 document.addEventListener("DOMContentLoaded", async () => {
     const container = document.querySelector(".favourite-container");
     
@@ -220,6 +216,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 });
 
+// Xóa tin yêu thích
 window.removeFavorite = async function(roomId) {
     const success = await removeFavoriteRoomAPI(roomId);
     

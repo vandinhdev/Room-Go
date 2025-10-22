@@ -40,7 +40,6 @@ async function addFavoriteRoomAPI(roomId) {
       return false;
     }
 
-    // Use authManager with auto-refresh token
     const response = await authManager.makeAuthenticatedRequest(`/favorite-rooms/${roomId}`, {
       method: 'POST'
     });
@@ -113,7 +112,6 @@ async function syncFavoriteRooms() {
   try {
     const userInfo = authManager.getCurrentUser();
     if (!userInfo || !userInfo.token) {
-      // Nếu chưa đăng nhập, chỉ dùng localStorage
       return;
     }
 
@@ -134,7 +132,6 @@ async function syncFavoriteRooms() {
       favoriteRooms = data;
     }
 
-    // Cập nhật localStorage với dữ liệu từ server
     localStorage.setItem('favouriteRooms', JSON.stringify(favoriteRooms));
     console.log('Đã đồng bộ danh sách yêu thích từ server:', favoriteRooms.length);
   } catch (error) {
@@ -151,7 +148,8 @@ function formatPrice(price) {
   return price.toLocaleString('vi-VN') + ' đ/tháng';
 }
 
-// ================== PAGINATION ==================
+// ----------------- Pagination -----------------
+// Tạo thanh phân trang
 function renderPagination(totalRooms) {
   const totalPages = Math.ceil(totalRooms / state.roomsPerPage);
   const container = document.getElementById('paginationContainer');
@@ -198,6 +196,7 @@ window.app = {
   },
 };
 
+// Tải danh sách phòng từ API
 async function fetchRooms() {
   try {
     await syncFavoriteRooms();
@@ -298,7 +297,7 @@ async function fetchRooms() {
   }
 }
 
-
+// Hiển thị danh sách phòng
 function renderRooms(roomList) {
   const grid = document.getElementById('listingsGrid');
   if (!grid) return;
@@ -390,6 +389,7 @@ function renderRooms(roomList) {
   });
 }
 
+// Lọc danh sách phòng
 function getFilteredRooms() {
   let filtered = rooms;
   const provinceSelect = document.getElementById('provinceSelect');
@@ -422,7 +422,7 @@ function getFilteredRooms() {
 
 function updateRooms() {
   const filtered = getFilteredRooms();
-  console.log('📊 Filtered rooms:', filtered.length, 'from total:', rooms.length);
+  console.log('Filtered rooms:', filtered.length, 'from total:', rooms.length);
   window.app.updateFilteredRooms(filtered);
 }
 
@@ -441,11 +441,14 @@ function initializeFiltersAndTabs() {
   });
 }
 
+// Khởi tạo các phần tử
 function initializeHeaderDependentElements() {
     const provinceSelect = document.getElementById('provinceSelect');
     const districtSelect = document.getElementById('districtSelect');
     const wardSelect = document.getElementById('wardSelect');
     const logoutBtn = document.getElementById('logoutButton');
+
+    // Xử lý nút đăng xuất
     if (logoutBtn) {
         logoutBtn.addEventListener('click', async (e) => {
             e.preventDefault();
@@ -462,12 +465,14 @@ function initializeHeaderDependentElements() {
     let districtMap = {};
     let wardMap = {};
 
+    // Lấy danh sách tỉnh
     fetch('https://provinces.open-api.vn/api/p/')
         .then(res => res.json())
         .then(data => {
             provinceList = data;
         });
-
+    
+    // Thay đổi tỉnh => tải quận/huyện
     if (provinceSelect) provinceSelect.addEventListener('change', function () {
         const selectedProvince = provinceList.find(p => p.name === provinceSelect.value);
         if (selectedProvince && districtSelect) {
@@ -490,6 +495,7 @@ function initializeHeaderDependentElements() {
         updateRooms();
     });
 
+    // Thay đổi quận/huyện => tải phường/xã
     if (districtSelect) districtSelect.addEventListener('change', function () {
         const selectedDistrictCode = districtMap[districtSelect.value];
         if (selectedDistrictCode && wardSelect) {
@@ -512,7 +518,7 @@ function initializeHeaderDependentElements() {
 
     if (wardSelect) wardSelect.addEventListener('change', updateRooms);
 
-    // Setup price and area filters
+    // Bộ lọc giá và diện tích
     const priceFilter = document.getElementById('priceFilter');
     const areaFilter = document.getElementById('areaFilter');
     const clearBtn = document.querySelector('.clear-filters');
@@ -528,6 +534,7 @@ function initializeHeaderDependentElements() {
         updateRooms();
     });
 
+    // Thanh tìm kiếm
     const searchBox = document.querySelector('.search-box');
     if (searchBox) {
         const runSearch = () => {

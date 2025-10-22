@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(error => {});
 });
 
+// Lấy thông tin người dùng từ API
 async function fetchUserProfile(token) {
     if (!token) return null;
 
@@ -41,6 +42,7 @@ function buildFullName(user) {
     return candidate || user.fullName || user.userName || '';
 }
 
+// Cập nhật ảnh đại diện
 function updateAvatarDisplay(avatarUrl) {
     const fallback = 'https://cdn-icons-png.freepik.com/128/3135/3135715.png';
     const finalUrl = avatarUrl || fallback;
@@ -59,6 +61,7 @@ function updateAvatarDisplay(avatarUrl) {
     });
 }
 
+// Hiển thị thông tin người dùng
 function renderUserInfo(userInfo) {
     if (!userInfo) return;
 
@@ -76,6 +79,7 @@ function renderUserInfo(userInfo) {
     updateAvatarDisplay(avatarUrl);
 }
 
+// Cập nhật và hiển thị thông tin người dùng
 async function refreshHeaderUserInfo() {
     const stored = JSON.parse(localStorage.getItem('userInfo'));
     if (!stored || !stored.token) return;
@@ -93,7 +97,7 @@ async function refreshHeaderUserInfo() {
         fullName: buildFullName({ ...stored, ...latestProfile }),
         email: latestProfile.email ?? stored.email,
         role: latestProfile.role ?? stored.role,
-    avatarUrl: latestProfile.avatarUrl ?? latestProfile.avatar ?? stored.avatarUrl ?? stored.avatar,
+        avatarUrl: latestProfile.avatarUrl ?? latestProfile.avatar ?? stored.avatarUrl ?? stored.avatar,
         phone: latestProfile.phone ?? stored.phone,
         address: latestProfile.address ?? stored.address,
         bio: latestProfile.bio ?? stored.bio
@@ -113,6 +117,7 @@ document.addEventListener('avatarUpdated', () => {
 
 window.refreshUserHeader = refreshHeaderUserInfo;
 
+// Kiểm tra người dùng có đang đăng nhập không
 function isUserAuthenticated() {
     try {
         import('./auth.js').then(({ authManager }) => {
@@ -126,6 +131,7 @@ function isUserAuthenticated() {
     }
 }
 
+// Xử lý đăng xuất
 async function handleLogout() {
     try {
         const { authManager } = await import('./auth.js');
@@ -165,11 +171,13 @@ function setupProvinceSelectorUI(provinces) {
         focusedIndex: -1
     };
 
+    // Lấy tất cả option trong dropdown
     const ensureOptions = () => {
         optionElements = Array.from(customDropdown.querySelectorAll('.custom-select-option'));
         return optionElements;
     };
 
+    // Đánh dấu option đang được chọn
     const markActiveOption = (value) => {
         ensureOptions().forEach((el, index) => {
             const isActive = el.dataset.value === value;
@@ -180,6 +188,7 @@ function setupProvinceSelectorUI(provinces) {
         });
     };
 
+    // Cập nhật hiển thị nhãn theo giá trị đã chọn
     const syncDisplay = (value) => {
         const currentValue = value ?? '';
         const matchingOption = Array.from(provinceSelect.options).find(opt => opt.value === currentValue && currentValue !== '');
@@ -222,6 +231,7 @@ function setupProvinceSelectorUI(provinces) {
         clearFocusedOption();
     };
 
+    // Focus vào option theo index
     const focusOption = (index) => {
         const options = ensureOptions();
         if (!options.length) return;
@@ -258,6 +268,7 @@ function setupProvinceSelectorUI(provinces) {
         }
     };
 
+    // Khi rê chuột lên option
     const onOptionPointer = (event) => {
         const optionEl = event.target.closest('.custom-select-option');
         if (!optionEl) return;
@@ -268,6 +279,7 @@ function setupProvinceSelectorUI(provinces) {
         }
     };
 
+    // Khi click chọn option
     const onOptionClick = (event) => {
         event.preventDefault();
         event.stopPropagation();
@@ -275,6 +287,7 @@ function setupProvinceSelectorUI(provinces) {
         selectOption(optionEl);
     };
 
+    // Điều khiển bằng bàn phím
     const handleKeydown = (event) => {
         const options = ensureOptions();
         if (!options.length) return;
@@ -315,11 +328,13 @@ function setupProvinceSelectorUI(provinces) {
         }
     };
 
+    // Tạo danh sách option
     const mountOptions = () => {
         const existingValue = provinceSelect.value;
         provinceSelect.innerHTML = '';
         customDropdown.innerHTML = '';
 
+        // Thêm option placeholder
         const placeholderOption = document.createElement('option');
         placeholderOption.value = '';
         placeholderOption.textContent = placeholder;
@@ -333,6 +348,7 @@ function setupProvinceSelectorUI(provinces) {
         placeholderEl.textContent = placeholder;
         customDropdown.appendChild(placeholderEl);
 
+        // Thêm các tỉnh vào select gốc và dropdown
         provinces.forEach(province => {
             const option = document.createElement('option');
             option.value = province.name;
@@ -355,6 +371,7 @@ function setupProvinceSelectorUI(provinces) {
             el.addEventListener('mousemove', onOptionPointer);
         });
 
+        // Giữ nguyên giá trị đã chọn trước đó nếu có
         if (existingValue) {
             const matchByName = provinces.find(p => p.name === existingValue);
             if (matchByName) {
@@ -420,6 +437,7 @@ function setupProvinceSelectorUI(provinces) {
     window.addEventListener('resize', closeDropdown);
 }
 
+// khởi tạo và điều khiển phần header của trang
 async function initializeHeader() {
     const logo = document.querySelector('.logo');
     if (logo) {
@@ -666,6 +684,7 @@ const mockNotifications = [
     }
 ];
 
+// Thông báo
 function initializeNotifications() {
     const notificationBtn = document.getElementById('notification-btn');
     const notificationDropdown = document.getElementById('notification-dropdown');
@@ -744,6 +763,7 @@ function loadNotifications() {
     `).join('');
 }
 
+// Hiển thị danh sách thông báo
 function updateNotificationBadge() {
     const notificationBadge = document.getElementById('notification-badge');
     if (!notificationBadge) return;
@@ -759,6 +779,7 @@ function updateNotificationBadge() {
     }
 }
 
+// Đánh dấu 1 thông báo là đã đọc
 function markNotificationAsRead(notificationId) {
     let notifications = JSON.parse(localStorage.getItem('notifications')) || mockNotifications;
     
@@ -771,6 +792,7 @@ function markNotificationAsRead(notificationId) {
     }
 }
 
+// Đánh dấu tất cả thông báo là đã đọc
 function markAllNotificationsAsRead() {
     let notifications = JSON.parse(localStorage.getItem('notifications')) || mockNotifications;
     
@@ -783,6 +805,7 @@ function markAllNotificationsAsRead() {
     updateNotificationBadge();
 }
 
+// Thêm một thông báo mới
 function addNotification(type, title, message, icon = null) {
     let notifications = JSON.parse(localStorage.getItem('notifications')) || mockNotifications;
     
@@ -818,6 +841,7 @@ function addNotification(type, title, message, icon = null) {
     updateNotificationBadge();
 }
 
+// Chuyển đổi thời gian cụ thể thành chuỗi thời gian tương đối
 function formatRelativeTime(date) {
     const now = new Date();
     const diffInSeconds = Math.floor((now - new Date(date)) / 1000);

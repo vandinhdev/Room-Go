@@ -224,7 +224,7 @@ const Utils = {
         }
     },
 
-    // Lấy guest token từ API (ưu tiên dùng authManager.getGuestToken)
+    // Lấy guest token từ API
     async getGuestToken() {
         try {
             const { authManager } = await import('./auth.js');

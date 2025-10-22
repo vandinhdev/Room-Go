@@ -25,6 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// Thiết lập khu vực tải ảnh
 function setupImageUpload() {
     const uploadZone = document.getElementById('uploadZone');
     const smallUploadZone = document.getElementById('smallUploadZone');
@@ -102,6 +103,7 @@ function setupImageUpload() {
     }
 }
 
+// Hiển thị/ẩn vùng tải ảnh
 function toggleUploadZoneDisplay() {
     const uploadZone = document.getElementById('uploadZone');
     const smallUploadZone = document.getElementById('smallUploadZone');
@@ -135,7 +137,6 @@ async function handleFiles(files) {
     const smallFileInput = document.getElementById('smallFileUpload');
     
     for (let i = 0; i < filesToProcess; i++) {
-        // Bỏ qua nếu không phải file ảnh
         if (!files[i].type.match('image.*')) {
             continue;
         }
@@ -234,7 +235,6 @@ function removeImage(imageId, element) {
     toggleUploadZoneDisplay();
 }
 
-// Cập nhật lại chú thích thứ tự ảnh
 function updateImageCaptions() {
     document.querySelectorAll('.image-upload').forEach((div, index) => {
         div.querySelector('.image-caption').textContent = `Ảnh ${index + 1}`;
@@ -371,12 +371,11 @@ async function loadWards() {
     }
 }
 
-// Thêm ảnh (giữ để tương thích UI cũ)
 function addImageField() {
     document.getElementById('fileUpload').click();
 }
 
-// Tải dữ liệu phòng để chỉnh sửa theo ID
+// Tải dữ liệu phòng
 async function loadRoomData(roomId) {
     try {
         const userInfo = JSON.parse(localStorage.getItem('userInfo'));
@@ -479,7 +478,6 @@ async function loadRoomData(roomId) {
             });
         });
 
-        // Hàm xóa ảnh trong phạm vi loadRoomData
         function removeImage(imageId, element) {
             element.remove();
             
@@ -488,7 +486,6 @@ async function loadRoomData(roomId) {
                 uploadedImages.splice(index, 1);
             }
             
-            // Cập nhật lại số thứ tự trên từng ảnh
             document.querySelectorAll('.image-upload').forEach((div, index) => {
                 div.querySelector('.image-caption').textContent = `Ảnh ${index + 1}`;
             });
@@ -496,7 +493,7 @@ async function loadRoomData(roomId) {
             toggleUploadZoneDisplay();
         }
         
-        // Xử lý thêm ảnh từ API (imageUrls)
+        // Xử lý thêm ảnh từ API
         if (room.imageUrls && room.imageUrls.length > 0) {
             const imageContainer = document.getElementById('imageContainer');
             imageContainer.innerHTML = '';
@@ -536,7 +533,6 @@ async function loadRoomData(roomId) {
                 });
             });
             
-            // Hàm xoá ảnh trong phạm vi loadRoomData (imageUrls)
             function removeImage(imageId, element) {
                 element.remove();
                 
@@ -562,6 +558,7 @@ async function loadRoomData(roomId) {
     }
 }
 
+// Thiết lập ô tìm kiếm địa chỉ với gợi ý tự động
 function setupAddressSearch() {
     const addressInput = document.getElementById('address');
     const suggestionContainer = document.createElement('div');
@@ -665,7 +662,7 @@ async function searchAddressWithVietmap(query, suggestionContainer) {
     }
 }
 
-// Lấy chi tiết địa điểm theo ref_id (Vietmap)
+// Lấy chi tiết địa điểm
 async function getPlaceDetailsFromVietmap(refId) {
     try {
         const url = `${VIETMAP_CONFIG.placeUrl}?refid=${encodeURIComponent(refId)}&apikey=${VIETMAP_CONFIG.apiKey}`;

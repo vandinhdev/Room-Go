@@ -37,13 +37,12 @@ function toggleAuthForm() {
     }
 }
 
-// Xử lý sự kiện chuyển đổi form
 document.getElementById('switchBtn').addEventListener('click', function(e) {
     e.preventDefault();
     toggleAuthForm();
 });
 
-// ✅ Xử lý form đăng nhập
+// Xử lý form đăng nhập
 document.getElementById('loginForm').addEventListener('submit', async function (e) {
     e.preventDefault();
 
@@ -92,11 +91,11 @@ document.getElementById('loginForm').addEventListener('submit', async function (
                 }
             });
 
-            console.log('🔹 Profile fetch status:', profileRes.status);
+            console.log('Profile fetch status:', profileRes.status);
 
             if (profileRes.ok) {
                 const response = await profileRes.json();
-                console.log('🔹 Profile fetch body:', response);
+                console.log('Profile fetch body:', response);
                 
                 const userData = response.data || response;
                 const fullName = `${userData.lastName || ''} ${userData.firstName || ''}`.trim();
@@ -144,11 +143,10 @@ document.getElementById('loginForm').addEventListener('submit', async function (
             window.location.href = 'index.html';
         }, 1000);
     } catch (error) {
-        console.error('🚨 Lỗi kết nối khi đăng nhập:', error);
+        console.error('Lỗi kết nối khi đăng nhập:', error);
         Utils.showNotification('Mất kết nối đến máy chủ. Vui lòng thử lại sau.', 'error');
     }
 });
-
 
 // Xử lý form đăng ký
 document.getElementById('registerForm').addEventListener('submit', async function(e) {
@@ -182,11 +180,11 @@ document.getElementById('registerForm').addEventListener('submit', async functio
         
         const data = await response.json();
 
-        console.log('🔹 Register request body:', { name, email, password });
-        console.log('🔹 Register status:', response.status);
-        console.log('🔹 Register response:', data);
+        console.log('Register request body:', { name, email, password });
+        console.log('Register status:', response.status);
+        console.log('Register response:', data);
 
-        // Handle API response structure
+        // Xử lý cấu trúc phản hồi từ API
         if (!response.ok) {
             const msg =
                 data.message ||
@@ -197,7 +195,6 @@ document.getElementById('registerForm').addEventListener('submit', async functio
             return;
         }
 
-        // Check if registration was successful
         if (data.status && data.status !== 200) {
             Utils.showNotification(data.message || 'Đăng ký không thành công. Vui lòng thử lại.', 'error');
             return;
@@ -210,7 +207,7 @@ document.getElementById('registerForm').addEventListener('submit', async functio
             toggleAuthForm();
         }, 2000);
     } catch (error) {
-        console.error('🚨 Lỗi khi đăng ký:', error);
+        console.error('Lỗi khi đăng ký:', error);
         Utils.showNotification('Đăng ký không thành công. Vui lòng thử lại sau.', 'error');
     }
 });
@@ -239,12 +236,10 @@ function togglePassword(inputId) {
     }
 }
 
-// Xử lý quên mật khẩu
 function showForgotPassword() {
     Utils.showNotification('Tính năng quên mật khẩu sẽ được tích hợp sớm!', 'info');
 }
 
-// Xử lý đăng nhập social
 function loginWithGoogle() {
     Utils.showNotification('Tính năng đăng nhập Google sẽ được tích hợp sớm!', 'success');
 }

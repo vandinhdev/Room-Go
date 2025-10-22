@@ -8,12 +8,10 @@ const UserProfile = {
     currentFilter: 'all',
     currentSort: 'newest',
 
-    // Khởi tạo trang hồ sơ người dùng
     init() {
         this.bindEvents();
     },
 
-    // Gắn các sự kiện tương tác cho trang
     bindEvents() {
         document.getElementById('sortRooms')?.addEventListener('change', (e) => {
             this.setSorting(e.target.value);
@@ -169,7 +167,6 @@ const UserProfile = {
         }
     },
 
-    // Hiển thị danh sách phòng của người dùng
     displayUserRooms(rooms) {
         this.userRooms = rooms || [];
         this.filteredRooms = [...this.userRooms];
@@ -241,7 +238,6 @@ const UserProfile = {
         this.applyFiltersAndSort();
     },
 
-    // Thiết lập sắp xếp danh sách phòng
     setSorting(sortOption) {
         this.currentSort = sortOption;
         this.applyFiltersAndSort();
@@ -277,46 +273,37 @@ const UserProfile = {
         this.renderRooms();
     },
 
-    // Chuyển chuỗi giá về số để sắp xếp
     parsePrice(priceStr) {
         if (!priceStr) return 0;
         return parseInt(priceStr.replace(/[^\d]/g, '')) || 0;
     },
 
-    // Hiển thị thông báo liên hệ (tạm thời)
     showContactModal() {
         Utils.showNotification('Tính năng liên hệ sẽ được cập nhật trong phiên bản tiếp theo.', 'info');
     },
 
-    // Mở trang chi tiết phòng
     viewRoom(roomId) {
         window.open(`detail.html?id=${roomId}`);
     },
 
-    // Hiển thị thông báo lỗi
     showError(message) {
         window.showError(message);
     },
 
-    // Hiển thị trạng thái đang tải
     showLoading() {
         window.showLoading();
     },
 
-    // Ẩn trạng thái đang tải
     hideLoading() {
         window.hideLoading();
     },
 
-    // Hiển thị nội dung trang hồ sơ
     showProfileContent() {
         const profileContainer = document.getElementById('userProfileContainer');
         if (profileContainer) {
             profileContainer.style.display = 'block';
         }
     }
-
-   
 };
 
 document.addEventListener('DOMContentLoaded', function() {

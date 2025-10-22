@@ -1,14 +1,8 @@
-/**
- * Loading CSS - Initial page loading styles
- * Hiển thị loading overlay khi trang đang tải
- */
 
-/* Ẩn nội dung khi đang loading */
 body.loading .main-container {
     display: none;
 }
 
-/* Loading overlay */
 #initialLoadingOverlay {
     position: fixed;
     top: 0;
@@ -22,12 +16,10 @@ body.loading .main-container {
     z-index: 99999;
 }
 
-/* Ẩn loading khi trang đã load xong */
 body.loaded #initialLoadingOverlay {
     display: none;
 }
 
-/* Animation cho spinner */
 @keyframes initialSpin {
     0% { 
         transform: rotate(0deg); 
@@ -37,7 +29,6 @@ body.loaded #initialLoadingOverlay {
     }
 }
 
-/* Loading spinner */
 #initialLoadingOverlay .spinner {
     width: 100px;
     height: 100px;
@@ -47,7 +38,6 @@ body.loaded #initialLoadingOverlay {
     animation: initialSpin 1s linear infinite;
 }
 
-/* Loading content */
 #initialLoadingOverlay .loading-content {
     text-align: center;
 }

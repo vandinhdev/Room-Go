@@ -1,6 +1,3 @@
-/* ==========================================================================
-   FAVOURITE STYLES - Room-Go Application
-   ========================================================================== */
 * {
     margin: 0;
     padding: 0;
@@ -251,14 +248,12 @@ body {
     color: #ff6b35;
 }
 
-/* Location Icon */
 .location-icon {
     color: #ff6b35;
     margin-right: 8px;
     font-size: 22px;
 }
 
-/* Heart Icon for Cards */
 .heart-icon {
     position: absolute;
     top: 8px;
@@ -273,7 +268,6 @@ body {
     transform: scale(1.1);
 }
 
-/* Empty State */
 .favourite-empty {
     text-align: center;
     padding: 40px 20px;

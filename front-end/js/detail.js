@@ -236,7 +236,6 @@ function getRoomIdFromUrl() {
     return parseInt(params.get('id'), 10);
 }
 
-
 // Định dạng giá tiền
 function formatPrice(price) {
     if (!price) return '';
@@ -331,7 +330,7 @@ function renderRoomDetail(room) {
             </div>
         `;
     }
-    // Danh sách ảnh - xử lý cả imageUrls (từ API) và images (format cũ)
+    // Danh sách ảnh
     const images = room.imageUrls && room.imageUrls.length > 0
         ? room.imageUrls
         : (room.images && room.images.length > 0
@@ -601,7 +600,6 @@ function getSimilarRooms(currentRoom, allRooms) {
     .slice(0, 6);
 }
 
-
 // Hiển thị danh sách phòng tương tự
 function renderSimilarRoom(rooms) {
     const saved = getFavouriteRooms();
@@ -697,17 +695,15 @@ function renderSimilarRoom(rooms) {
     }, 100);
 }
 
-
-
 // Cập nhật slider phòng tương tự
 let currentPage = 0;
-const visible = 3; // số phòng hiển thị cùng lúc
+const visible = 3;
 function updateSlider(total) {
   const track = document.getElementById('similarRoom');
   const translate = currentPage * 100; 
   track.style.transform = `translateX(-${translate}%)`;
 
-  // ẩn/hiện nút
+  // Ẩn/hiện nút
   document.querySelector('.prev').style.display = currentPage === 0 ? 'none' : 'inline-block';
   document.querySelector('.next').style.display = 'inline-block';
 }
@@ -734,7 +730,7 @@ function setupSliderNavigation() {
       if (currentPage < totalPages - 1) {
         currentPage++;
       } else {
-        currentPage = 0; // quay lại đầu khi bấm Next ở cuối
+        currentPage = 0;
       }
       updateSlider(total);
     });
@@ -776,8 +772,7 @@ function initChatPopup(room) {
                 
                 if (conversation) {
                     chatPopup.dataset.conversationId = conversation.id;
-                    
-                    // Lưu conversationId để trang chat có thể mở
+
                     sessionStorage.setItem('openConversationId', conversation.id.toString());
                     
                     await loadConversationMessages(conversation.id, chatMessages);
@@ -787,8 +782,7 @@ function initChatPopup(room) {
                     
                     if (conversation && conversation.id) {
                         chatPopup.dataset.conversationId = conversation.id;
-                        
-                        // Lưu conversationId để trang chat có thể mở
+
                         sessionStorage.setItem('openConversationId', conversation.id.toString());
                         
                         chatMessages.innerHTML = '';
@@ -828,9 +822,7 @@ function initChatPopup(room) {
         openFullChat.onclick = () => {
             const conversationId = chatPopup.dataset.conversationId;
             if (conversationId) {
-                // Lưu conversationId để trang chat có thể mở
                 sessionStorage.setItem('openConversationId', conversationId);
-                // Chuyển sang trang chat
                 window.location.href = 'chat.html';
             } else {
                 if (window.Utils && typeof Utils.showNotification === 'function') {
@@ -1060,7 +1052,6 @@ function initChatPopup(room) {
     sendChat.disabled = true;
 }
 
-
 // Lấy headers xác thực cho chat
 function getChatAuthHeaders() {
     const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
@@ -1138,7 +1129,6 @@ async function createConversation(roomId) {
         throw error;
     }
 }
-
 
 // Tải tin nhắn của cuộc trò chuyện
 async function loadConversationMessages(conversationId, chatMessagesContainer) {
