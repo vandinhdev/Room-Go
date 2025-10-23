@@ -34,7 +34,7 @@ class ChatSystem {
                 id: userInfo.id || 1,
                 name: userInfo.fullName || userInfo.name || 'User',
                 email: userInfo.email || '',
-                avatar: userInfo.avatar || 'https://i.pravatar.cc/40?img=1'
+                avatar: userInfo.avatarUrl || 'https://i.pravatar.cc/40?img=1'
             };
         }
         
@@ -59,7 +59,7 @@ class ChatSystem {
         // Check authentication first
         if (!this.isAuthenticated()) {
             console.warn('User not authenticated. Redirecting to login...');
-            this.showNotification('Vui lòng đăng nhập để sử dụng chat', 'warning');
+            Utils.showNotification('Vui lòng đăng nhập để sử dụng chat', 'warning');
             setTimeout(() => {
                 window.location.href = 'auth.html';
             }, 1500);
@@ -82,7 +82,7 @@ class ChatSystem {
             
             if (conversation) {
                 await this.selectChat(convId);
-                this.showNotification('Đã mở cuộc trò chuyện', 'success');
+                Utils.showNotification('Đã mở cuộc trò chuyện', 'success');
             } else {
                 console.warn('⚠️ Conversation not found in loaded chats:', convId);
                 console.log('🔄 Trying to load conversation directly from API...');
@@ -99,13 +99,13 @@ class ChatSystem {
                         
                         // Select it
                         await this.selectChat(convId);
-                        this.showNotification('Đã mở cuộc trò chuyện', 'success');
+                        Utils.showNotification('Đã mở cuộc trò chuyện', 'success');
                     } else {
                         throw new Error('Conversation detail is null');
                     }
                 } catch (error) {
                     console.error('❌ Failed to load conversation:', error);
-                    this.showNotification('Không tìm thấy cuộc trò chuyện', 'error');
+                    Utils.showNotification('Không tìm thấy cuộc trò chuyện', 'error');
                     
                     // Fallback to first chat
                     if (this.chats.length > 0) {
@@ -173,6 +173,7 @@ class ChatSystem {
         const email = userInfo.email || this.currentUser.email;
         
         console.log('🔑 Getting auth headers - Token:', token ? 'Present' : 'Missing', 'Email:', email);
+        console.log('UserInfo structure:', token);
         
         return {
             'Content-Type': 'application/json',
@@ -203,15 +204,15 @@ class ChatSystem {
                 console.error('API Error Response:', errorText);
                 
                 if (response.status === 401 || response.status === 403) {
-                    this.showNotification('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.', 'error');
+                    Utils.showNotification('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.', 'error');
                     setTimeout(() => {
                         window.location.href = 'auth.html';
                     }, 2000);
                     return;
                 } else if (response.status === 500) {
-                    this.showNotification('Lỗi server. Vui lòng thử lại sau.', 'error');
+                    Utils.showNotification('Lỗi server. Vui lòng thử lại sau.', 'error');
                 } else {
-                    this.showNotification(`Lỗi ${response.status}: Không thể tải danh sách hội thoại.`, 'error');
+                    Utils.showNotification(`Lỗi ${response.status}: Không thể tải danh sách hội thoại.`, 'error');
                 }
                 
                 this.chats = [];
@@ -243,9 +244,9 @@ class ChatSystem {
             
             // Check if it's a network error
             if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
-                this.showNotification('Không thể kết nối đến server. Vui lòng kiểm tra kết nối.', 'error');
+                Utils.showNotification('Không thể kết nối đến server. Vui lòng kiểm tra kết nối.', 'error');
             } else {
-                this.showNotification('Không thể tải danh sách hội thoại. Vui lòng đăng nhập lại.', 'error');
+                Utils.showNotification('Không thể tải danh sách hội thoại. Vui lòng đăng nhập lại.', 'error');
             }
             
             this.chats = [];
@@ -600,7 +601,7 @@ class ChatSystem {
             this.loadChatList(); // Refresh to update unread counts
         } catch (error) {
             console.error('Error selecting chat:', error);
-            this.showNotification('Không thể tải tin nhắn', 'error');
+            Utils.showNotification('Không thể tải tin nhắn', 'error');
         }
     }
 
@@ -630,13 +631,13 @@ class ChatSystem {
         if (!messagesContainer || !this.activeChat) return;
 
         const messages = this.activeChat.messages || [];
+        const senderAvatar = this.activeChat.otherUserAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(this.activeChat.otherUserName)}&background=random`;
         
         messagesContainer.innerHTML = messages.map(message => {
             const isOwn = message.senderId === this.currentUser.id;
             const messageTime = this.formatTime(message.timestamp);
             const senderName = message.senderName || 'User';
-            const senderAvatar = 'https://i.pravatar.cc/40?img=' + (message.senderId % 10);
-
+            const senderAvatar = isOwn ? this.currentUser.avatar : this.activeChat.otherUserAvatar;
             let messageContent = '';
             if (message.type === 'image') {
                 messageContent = `<div class="message-image">
@@ -698,6 +699,7 @@ class ChatSystem {
                 }
 
                 const result = await response.json();
+                console.log('Send message response:', result);
                 
                 if (result.status === 201) {
                     // Add message to local state
@@ -725,7 +727,7 @@ class ChatSystem {
                 }
             } catch (error) {
                 console.error('Error sending message:', error);
-                this.showNotification('Không thể gửi tin nhắn', 'error');
+                Utils.showNotification('Không thể gửi tin nhắn', 'error');
             }
         }
 
@@ -733,7 +735,7 @@ class ChatSystem {
         if (hasImages) {
             // TODO: Implement image upload to server
             console.log('Image upload not yet implemented');
-            this.showNotification('Tính năng gửi ảnh đang được phát triển', 'info');
+            Utils.showNotification('Tính năng gửi ảnh đang được phát triển', 'info');
         }
 
         // Clear input and images
@@ -837,14 +839,14 @@ class ChatSystem {
                         }
                         
                         this.loadChatList();
-                        this.showNotification('Đã xóa cuộc trò chuyện', 'success');
+                        Utils.showNotification('Đã xóa cuộc trò chuyện', 'success');
                     }
                 } else {
                     throw new Error(result.message || 'Failed to delete conversation');
                 }
             } catch (error) {
                 console.error('Error deleting conversation:', error);
-                this.showNotification('Không thể xóa cuộc trò chuyện', 'error');
+                Utils.showNotification('Không thể xóa cuộc trò chuyện', 'error');
             }
         }
     }
@@ -872,7 +874,7 @@ class ChatSystem {
                 // Select the new conversation
                 await this.selectChat(conversationId);
                 
-                this.showNotification('Đã tạo cuộc trò chuyện mới', 'success');
+                Utils.showNotification('Đã tạo cuộc trò chuyện mới', 'success');
                 
                 return conversationId;
             } else {
@@ -880,7 +882,7 @@ class ChatSystem {
             }
         } catch (error) {
             console.error('Error creating conversation:', error);
-            this.showNotification('Không thể tạo cuộc trò chuyện', 'error');
+            Utils.showNotification('Không thể tạo cuộc trò chuyện', 'error');
             return null;
         }
     }
@@ -908,36 +910,6 @@ class ChatSystem {
             console.error('Error searching conversation:', error);
             return null;
         }
-    }
-
-    showNotification(message, type = 'info') {
-        // Create notification element
-        const notification = document.createElement('div');
-        notification.className = `notification ${type}`;
-        notification.textContent = message;
-        notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: ${type === 'success' ? '#4CAF50' : '#2196F3'};
-            color: white;
-            padding: 12px 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            z-index: 10000;
-            animation: slideInRight 0.3s ease-out;
-        `;
-        
-        document.body.appendChild(notification);
-        
-        setTimeout(() => {
-            notification.style.animation = 'slideOutRight 0.3s ease-out';
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.parentNode.removeChild(notification);
-                }
-            }, 300);
-        }, 3000);
     }
 
     formatMessageContent(content) {
