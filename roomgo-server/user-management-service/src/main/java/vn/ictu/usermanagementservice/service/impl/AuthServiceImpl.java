@@ -51,7 +51,7 @@ public class AuthServiceImpl implements AuthService {
                     new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
             );
 
-            log.info("✅ Login success for email={}", request.getEmail());
+            log.info("Login success for email={}", request.getEmail());
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
             List<String> authorities = authentication.getAuthorities()
@@ -68,18 +68,16 @@ public class AuthServiceImpl implements AuthService {
                     .build();
 
         } catch (BadCredentialsException e) {
-            log.warn("❌ Sai mật khẩu cho email={}", request.getEmail());
+            log.warn("Sai mật khẩu cho email={}", request.getEmail());
             throw new BadCredentialsException("Sai email hoặc mật khẩu");
 
         } catch (InternalAuthenticationServiceException e) {
-            log.warn("⚠️ User không tồn tại: {}", request.getEmail());
+            log.warn("User không tồn tại: {}", request.getEmail());
 
-            // Nếu root cause là UsernameNotFoundException → login sai
             if (e.getCause() instanceof UsernameNotFoundException) {
                 throw new BadCredentialsException("Sai email hoặc mật khẩu");
             }
 
-            // Nếu lỗi khác → hệ thống
             throw new RuntimeException("Lỗi hệ thống khi xác thực", e);
         } catch (DisabledException e) {
             throw new DisabledException("Tài khoản bị vô hiệu hóa");
@@ -96,7 +94,7 @@ public class AuthServiceImpl implements AuthService {
 
         long periodCount = refreshToken.chars().filter(ch -> ch == '.').count();
         if (periodCount != 2) {
-            log.error("❌ Invalid JWT format. Expected 2 periods, found: {}. Token length: {}, Token preview: {}",
+            log.error("Invalid JWT format. Expected 2 periods, found: {}. Token length: {}, Token preview: {}",
                     periodCount, refreshToken.length(),
                     refreshToken.length() > 50 ? refreshToken.substring(0, 50) + "..." : refreshToken);
             throw new InvalidDataException("Invalid refresh token format. JWT must contain exactly 2 period characters.");
@@ -117,16 +115,16 @@ public class AuthServiceImpl implements AuthService {
 
             String accessToken = jwtService.generateAccessToken(userEmail.getEmail(), authorities);
 
-            log.info("✅ Successfully refreshed token for email: {}", email);
+            log.info("Successfully refreshed token for email: {}", email);
             return TokenResponse.builder().accessToken(accessToken).refreshToken(refreshToken).build();
         } catch (org.springframework.security.access.AccessDeniedException e) {
-            log.error("❌ Access denied during token refresh: {}", e.getMessage());
+            log.error("Access denied during token refresh: {}", e.getMessage());
             throw new ForBiddenException("Invalid or expired refresh token: " + e.getMessage());
         } catch (InvalidDataException e) {
-            log.error("❌ Invalid data during token refresh: {}", e.getMessage());
+            log.error("Invalid data during token refresh: {}", e.getMessage());
             throw e;
         } catch (Exception e) {
-            log.error("❌ Unexpected error during token refresh: {}", e.getMessage(), e);
+            log.error("Unexpected error during token refresh: {}", e.getMessage(), e);
             throw new ForBiddenException("Failed to refresh token: " + e.getMessage());
         }
     }
@@ -139,10 +137,10 @@ public class AuthServiceImpl implements AuthService {
         String accessToken = jwtService.generateAccessToken(guestUsername, roles);
 
 
-        log.info("✅ Created guest token for username: {}", guestUsername);
+        log.info("Created guest token for username: {}", guestUsername);
         return TokenResponse.builder()
                 .accessToken(accessToken)
-                .refreshToken(null) // Không trả về refresh token cho guest
+                .refreshToken(null)
                 .build();
 
     }

@@ -123,20 +123,6 @@ public class UserController {
     }
 
 
-    @PostMapping("/upload-avatar")
-    public ApiResponse uploadAvatar(
-            @RequestPart("avatar") MultipartFile avatar,
-            @RequestParam("email") String email) throws IOException {
-
-        userService.uploadAvatar(avatar, email);
-        return ApiResponse.builder()
-                .status(HttpStatus.OK.value())
-                .message("Avatar uploaded successfully")
-                .data(Map.of("avatarUrl", userService.getUserByEmail(email).getAvatarUrl()))
-                .build();
-    }
-
-
     @Operation(summary = "Update User Status", description = "API update user status to database")
     @PatchMapping("/update-status/{id}")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')" )
@@ -181,9 +167,6 @@ public class UserController {
                 .build();
     }
 
-
-
-    @Operation(summary = "Delete User", description = "API delete user from database")
     @DeleteMapping("/delete/{userId}")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')" )
     public ApiResponse deleteUser(@PathVariable @Min(value = 1, message = "userId must be equals or greater than 1") Long userId) {

@@ -15,7 +15,7 @@ import java.util.Map;
 public class GeocodingClient {
     private final RestTemplate restTemplate;
 
-    @Value("${serpapi.key}")
+    @Value("${serpApi.key}")
     private String apiKey;
 
     public GeoLocation getLocation(String address) {

@@ -20,7 +20,6 @@ public interface UserService {
     void updateEmail(UpdateEmailRequest req, String email);
     void updatePhone(UpdatePhoneRequest req, String email);
     void updateInfo(UpdateInfoRequest req, String email);
-    void uploadAvatar(MultipartFile avatar, String email) throws IOException;
     void deleteUser(long id);
 
 }

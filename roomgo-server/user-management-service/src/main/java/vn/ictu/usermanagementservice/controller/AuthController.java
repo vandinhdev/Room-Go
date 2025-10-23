@@ -41,7 +41,6 @@ public class AuthController {
             refreshToken = request.get("refresh_token");
         }
 
-        // Trim whitespace and remove any surrounding quotes
         if (refreshToken != null) {
             refreshToken = refreshToken.trim();
             if (refreshToken.startsWith("\"") && refreshToken.endsWith("\"")) {

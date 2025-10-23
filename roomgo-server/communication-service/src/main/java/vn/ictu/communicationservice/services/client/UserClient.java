@@ -25,15 +25,14 @@ public class UserClient {
     private String esbUrl;
 
     public Long getUserIdByEmail(String email, String bearerToken) {
-        log.info("Preparing to request user id for email: {}", email);      // log email
-        log.info("Using bearer token: {}", bearerToken);                    // log token (cẩn thận khi log ở môi trường prod)
+        log.info("Preparing to request user id for email: {}", email);
 
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", bearerToken);
         HttpEntity<Void> entity = new HttpEntity<>(headers);
 
         String url = esbUrl  + "/user/email?email=" + email;
-        log.info("Request URL: {}", url);                                   // log URL
+        log.info("Request URL: {}", url);
         ResponseEntity<ApiResponse> response =
                 restTemplate.exchange(url, HttpMethod.GET, entity, ApiResponse.class);
 
@@ -99,7 +98,7 @@ public class UserClient {
         log.info("Raw JSON from user-service: {}", apiResponse);
         UserRespone userResponse = objectMapper.convertValue(apiResponse.getData(), UserRespone.class);
 
-        log.info("Avatar URL for user {} is {}", userId, userResponse.getAvatar());
-        return userResponse.getAvatar();
+        log.info("Avatar URL for user {} is {}", userId, userResponse.getAvatarUrl());
+        return userResponse.getAvatarUrl();
     }
 }

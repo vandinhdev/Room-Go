@@ -23,6 +23,20 @@ public class AppUtils {
     }
 
     public static String buildAddress(String address, String ward, String district, String province) {
-        return String.format("%s, %s, %s, %s", address, ward, district, province);
+        String result = address == null ? "" : address.trim();
+
+        if (ward != null && !result.toLowerCase().contains(ward.toLowerCase())) {
+            result += ", " + ward;
+        }
+        if (district != null && !result.toLowerCase().contains(district.toLowerCase())) {
+            result += ", " + district;
+        }
+        if (province != null && !result.toLowerCase().contains(province.toLowerCase())) {
+            result += ", " + province;
+        }
+
+        return result.replaceAll("(,\\s*)+", ", ").trim();
     }
+
+
 }

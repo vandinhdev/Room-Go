@@ -19,7 +19,6 @@ import vn.ictu.usermanagementservice.exception.ResourceNotFoundException;
 import vn.ictu.usermanagementservice.mapper.UserMapper;
 import vn.ictu.usermanagementservice.model.UserEntity;
 import vn.ictu.usermanagementservice.repository.UserRepository;
-import vn.ictu.usermanagementservice.service.FileStorageService;
 import vn.ictu.usermanagementservice.service.UserService;
 import vn.ictu.usermanagementservice.utils.AppUtils;
 import vn.ictu.usermanagementservice.utils.NameUtils;
@@ -34,7 +33,6 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final AppUtils appUtils;
-    private final FileStorageService fileStorageService;
 
 
     @Override
@@ -167,21 +165,6 @@ public class UserServiceImpl implements UserService {
         userRepository.save(userEntity);
     }
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void uploadAvatar(MultipartFile avatar, String email) throws IOException, java.io.IOException {
-        UserEntity user = userRepository.findByEmail(email);
-        if (user == null) {
-            throw new ResourceNotFoundException("User not found with email: " + email);
-        }
-
-        if (avatar != null && !avatar.isEmpty()) {
-            String avatarUrl = fileStorageService.uploadAvatar(avatar);
-            user.setAvatarUrl(avatarUrl);
-        }
-
-        userRepository.save(user);
-    }
 
 
     @Override

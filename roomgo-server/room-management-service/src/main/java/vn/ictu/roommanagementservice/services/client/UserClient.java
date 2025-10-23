@@ -15,15 +15,13 @@ import vn.ictu.roommanagementservice.dto.response.UserRespone;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j(topic = "USER-CLIENT")   // ✅ thêm log
+@Slf4j(topic = "USER-CLIENT")
 public class UserClient {
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
 
     public Long getUserIdByEmail(String email, String bearerToken) {
-        log.info("Preparing to request user id for email: {}", email);      // log email
-        log.info("Using bearer token: {}", bearerToken);                    // log token (cẩn thận khi log ở môi trường prod)
-
+        log.info("Preparing to request user id for email: {}", email);
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", bearerToken);
         HttpEntity<Void> entity = new HttpEntity<>(headers);
@@ -43,7 +41,7 @@ public class UserClient {
         }
 
         Long id = user.getId();
-        log.info("User id resolved for email {}: {}", email, id);           // log id nhận được
+        log.info("User id resolved for email {}: {}", email, id);
         return id;
     }
 }

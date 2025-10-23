@@ -17,7 +17,7 @@ spring:
         register: true
         prefer-ip-address: true
         health-check-path: /actuator/health
-        health-check-interval: 3600s
+        health-check-interval: 10s
         instance-id: ${spring.application.name}:${server.port}
   servlet:
     multipart:

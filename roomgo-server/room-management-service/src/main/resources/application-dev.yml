@@ -35,5 +35,5 @@ openapi:
     title: User Service
     version: 1.0.0
 
-serpapi:
-  key: ${SERPAPI_KEY:97e3683e14aefa3ff09f9298658544a33eac184154bc0c2a2049a48ea4bb6ef8}
+serpApi:
+  key: ${SERP_API_KEY:152ae3413709265363839e9bacc99c6fe8f472ecead8f6f7ffe6bed159136f71}

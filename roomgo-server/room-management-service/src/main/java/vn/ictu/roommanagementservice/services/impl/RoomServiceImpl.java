@@ -79,7 +79,7 @@ public class RoomServiceImpl implements RoomService {
                             sort, page, size, userId);
                 }
             } catch (Exception e) {
-                log.warn("⚠️ Failed to save search history for email: {}", email, e);
+                log.warn("Failed to save search history for email: {}", email, e);
             }
         }
 
@@ -228,7 +228,7 @@ public class RoomServiceImpl implements RoomService {
 
         if (lastHistoryOpt.isPresent() &&
                 query.equals(lastHistoryOpt.get().getSearchQuery())) {
-            log.debug("🔁 Skip saving duplicate search query for user {}", userId);
+            log.debug("Skip saving duplicate search query for user {}", userId);
             return;
         }
 
@@ -254,7 +254,7 @@ public class RoomServiceImpl implements RoomService {
             searchHistoryRepository.deleteAll(toDelete);
         }
 
-        log.info("✅ Saved search history for user {} | query={}", userId, query);
+        log.info("Saved search history for user {} | query={}", userId, query);
     }
 
 

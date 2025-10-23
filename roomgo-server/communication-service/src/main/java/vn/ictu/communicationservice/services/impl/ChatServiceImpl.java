@@ -85,7 +85,6 @@ public class ChatServiceImpl implements ChatService {
         if (existing.isPresent()) {
             Conversation conv = existing.get();
             log.info("Conversation already exists with id {}", existing.get().getId());
-            // Nếu trước đó 1 trong 2 user xoá, thì khôi phục
             if (Boolean.TRUE.equals(conv.getDeletedByUser1()) && conv.getUser1Id().equals(currentUserId)) {
                 conv.setDeletedByUser1(false);
                 conversationRepository.save(conv);
@@ -163,7 +162,6 @@ public class ChatServiceImpl implements ChatService {
                 .messageType(request.getMessageType())
                 .build();
 
-        // 3️⃣ Phát (broadcast) tin nhắn đến topic tương ứng
         messagingTemplate.convertAndSend(
                 "/topic/conversation." + request.getConversationId(),
                 msgResponse

@@ -17,12 +17,12 @@ import vn.ictu.communicationservice.services.ChatService;
 @RequiredArgsConstructor
 public class ChatWebSocketController {
 
-    private final ChatService chatService;
-
-    @MessageMapping("/chat.send")
-    public void sendMessage(@Payload SendMessageRequest request) {
-        log.info("Received WebSocket message: {}", request);
-        chatService.sendMessageViaWebSocket(request, request.getSenderEmail(), request.getBearerToken());
-    }
+//    private final ChatService chatService;
+//
+//    @MessageMapping("/chat.send")
+//    public void sendMessage(@Payload SendMessageRequest request) {
+//        log.info("Received WebSocket message: {}", request);
+//        chatService.sendMessageViaWebSocket(request, request.getSenderEmail(), request.getBearerToken());
+//    }
 }
 

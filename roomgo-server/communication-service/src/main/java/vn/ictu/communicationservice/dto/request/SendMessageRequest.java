@@ -17,9 +17,4 @@ public class SendMessageRequest implements Serializable {
     private String content;
 
     private MessageType messageType = MessageType.TEXT;
-
-    @NotBlank(message = "Sender email is required")
-    private String senderEmail;
-    @NotBlank(message = "Bearer token is required")
-    private String bearerToken;
 }
