@@ -1,6 +1,6 @@
 # Room-Go
 
-Hệ thống tìm kiếm trọ trực tuyến sử dụng kiến trúc hướng dịch vụ (SOA - Service Oriented Architecture).
+Bài tập lớn - Hệ thống tìm kiếm trọ trực tuyến sử dụng kiến trúc hướng dịch vụ (SOA - Service Oriented Architecture).
 
 ## Giới thiệu
 
