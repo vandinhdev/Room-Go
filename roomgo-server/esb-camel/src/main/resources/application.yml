@@ -1,0 +1,39 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: esb-camel
+  cloud:
+    consul:
+      host: ${SPRING_CLOUD_CONSUL_HOST:consul-server}
+      port: ${SPRING_CLOUD_CONSUL_PORT:8500}
+      discovery:
+        enabled: true
+        register: true
+        prefer-ip-address: true
+        health-check-path: /actuator/health
+        health-check-interval: 10s
+        instance-id: ${spring.application.name}:${server.port}
+      config:
+        enabled: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,env,metrics
+  endpoint:
+    health:
+      show-details: always
+
+camel:
+  springboot:
+    name: esb-camel
+  servlet:
+    mapping:
+      context-path: /api/esb/*
+  component:
+    servlet:
+      mapping:
+        enabled: true

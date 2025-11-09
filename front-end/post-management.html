@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản Lý Tin Đăng - ROOM GO</title>
+    <link rel="stylesheet" href="access/css/styles.css">
+    <link rel="stylesheet" href="access/css/post-management.css">
+    <link rel="stylesheet" href="access/css/user.css">
+    <link rel="stylesheet" href="access/css/footer.css">
+    <link rel="stylesheet" href="access/css/responsive.css">
+    <link rel="stylesheet" href="access/css/auth.css">
+    <link rel="stylesheet" href="access/css/favourite.css">
+    <link rel="stylesheet" href="access/css/loading.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    
+    <script>
+        document.documentElement.classList.add('loading');
+    </script>
+</head>
+<body class="loading">
+    <div id="initialLoadingOverlay">
+        <div class="loading-content">
+            <div class="spinner-container">
+                <div class="spinner"></div>
+            </div>
+            <h3>Đang tải danh sách tin đăng</h3>
+            <p>Vui lòng đợi một chút...</p>
+        </div>
+    </div>
+    
+    
+    <div class="main-container">
+        <div class="admin-container">
+            <div class="admin-header">
+                <h1 class="admin-title">Quản Lý Tin Đăng</h1>
+                <p class="admin-subtitle">Quản lý và duyệt các tin đăng trong hệ thống</p>
+            </div>
+
+            <div class="stats-container">
+                <div class="stat-card">
+                    <div class="stat-icon pending">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-number" id="pendingCount">0</div>
+                    <div class="stat-label">Chờ Duyệt</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon approved">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-number" id="approvedCount">0</div>
+                    <div class="stat-label">Đã Duyệt</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon rejected">
+                        <i class="fas fa-times-circle"></i>
+                    </div>
+                    <div class="stat-number" id="rejectedCount">0</div>
+                    <div class="stat-label">Đã Từ Chối</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon total">
+                        <i class="fas fa-list"></i>
+                    </div>
+                    <div class="stat-number" id="totalCount">0</div>
+                    <div class="stat-label">Tổng Tin</div>
+                </div>
+            </div>
+
+            <div class="tabs-container">
+                <div class="tabs-header">
+                    <button class="tab-btn active" data-tab="all">Tất Cả Tin</button>
+                    <button class="tab-btn" data-tab="pending">Chờ Duyệt</button>
+                    <button class="tab-btn" data-tab="approved">Đã Duyệt</button>
+                    <button class="tab-btn" data-tab="rejected">Đã Từ Chối</button>
+                    <button class="tab-btn" data-tab="my-posts">Tin Của Tôi</button>
+                </div>
+
+                <div class="tab-content active" id="all-tab">
+                    <div class="posts-table-container">
+                        <div class="posts-table-header">
+                            <h2 class="posts-table-title">Tất Cả Tin Đăng</h2>
+                        </div>
+                        <div class="search-bar">
+                            <input type="text" class="search-input" placeholder="Tìm kiếm tin đăng..." id="searchAllInput">
+                        </div>
+                        <table class="posts-table">
+                            <thead>
+                                <tr>
+                                    <th>Tin Đăng</th>
+                                    <th>Người Đăng</th>
+                                    <th>Giá</th>
+                                    <th>Trạng Thái</th>
+                                    <th>Ngày Đăng</th>
+                                    <th>Thao Tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="allPostsTableBody">
+                                <tr><td colspan="6" style="text-align: center; padding: 20px;">Đang tải...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="pending-tab">
+                    <div class="posts-table-container">
+                        <div class="posts-table-header">
+                            <h2 class="posts-table-title">Tin Chờ Duyệt</h2>
+                        </div>
+                        <div class="search-bar">
+                            <input type="text" class="search-input" placeholder="Tìm kiếm tin chờ duyệt..." id="searchPendingInput">
+                        </div>
+                        <table class="posts-table">
+                            <thead>
+                                <tr>
+                                    <th>Tin Đăng</th>
+                                    <th>Người Đăng</th>
+                                    <th>Giá</th>
+                                    <th>Ngày Đăng</th>
+                                    <th>Thao Tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pendingPostsTableBody">
+                                <tr><td colspan="5" style="text-align: center; padding: 20px;">Đang tải...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="approved-tab">
+                    <div class="posts-table-container">
+                        <div class="posts-table-header">
+                            <h2 class="posts-table-title">Tin Đã Duyệt</h2>
+                        </div>
+                        <div class="search-bar">
+                            <input type="text" class="search-input" placeholder="Tìm kiếm tin đã duyệt..." id="searchApprovedInput">
+                        </div>
+                        <table class="posts-table">
+                            <thead>
+                                <tr>
+                                    <th>Tin Đăng</th>
+                                    <th>Người Đăng</th>
+                                    <th>Giá</th>
+                                    <th>Ngày Duyệt</th>
+                                    <th>Thao Tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="approvedPostsTableBody">
+                                <tr><td colspan="5" style="text-align: center; padding: 20px;">Đang tải...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="rejected-tab">
+                    <div class="posts-table-container">
+                        <div class="posts-table-header">
+                            <h2 class="posts-table-title">Tin Đã Từ Chối</h2>
+                        </div>
+                        <div class="search-bar">
+                            <input type="text" class="search-input" placeholder="Tìm kiếm tin đã từ chối..." id="searchRejectedInput">
+                        </div>
+                        <table class="posts-table">
+                            <thead>
+                                <tr>
+                                    <th>Tin Đăng</th>
+                                    <th>Người Đăng</th>
+                                    <th>Giá</th>
+                                    <th>Lý Do Từ Chối</th>
+                                    <th>Thao Tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rejectedPostsTableBody">
+                                <tr><td colspan="5" style="text-align: center; padding: 20px;">Đang tải...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="my-posts-tab">
+                    <div class="posts-table-container">
+                        <div class="posts-table-header">
+                            <h2 class="posts-table-title">Tin Đăng Của Tôi</h2>
+                        </div>
+                        <div class="search-bar">
+                            <input type="text" class="search-input" placeholder="Tìm kiếm tin của tôi..." id="searchMyPostsInput">
+                        </div>
+                        <table class="posts-table">
+                            <thead>
+                                <tr>
+                                    <th>Tin Đăng</th>
+                                    <th>Giá</th>
+                                    <th>Trạng Thái</th>
+                                    <th>Ngày Đăng</th>
+                                    <th>Lượt Xem</th>
+                                    <th>Thao Tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="myPostsTableBody">
+                                <tr><td colspan="6" style="text-align: center; padding: 20px;">Đang tải...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="postDetailModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Chi Tiết Tin Đăng</h3>
+                <button class="close-btn" onclick="closePostDetailModal()">&times;</button>
+            </div>
+            <div id="postDetailContent">
+            </div>
+        </div>
+    </div>
+    
+    <script type="module" src="js/header.js"></script>
+    <script src="js/footer.js"></script>
+    <script src="js/loading.js"></script>
+    <script type="module" src="js/post-management.js"></script>
+</body>
+</html>

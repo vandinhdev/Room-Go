@@ -8,6 +8,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <link rel="stylesheet" href="access/css/styles.css">
     <link rel="stylesheet" href="access/css/roomForm.css">
+    <link rel="stylesheet" href="access/css/responsive.css">
+    <link rel="stylesheet" href="access/css/auth.css">
+    <link rel="stylesheet" href="access/css/user.css">
+    <link rel="stylesheet" href="access/css/favourite.css">
+
 </head>
 <body>
     <div class="container">
@@ -33,17 +38,17 @@
                     <div class="col-md-6 mb-3">
                         <label for="price" class="form-label">Giá thuê (VNĐ/tháng)</label>
                         <div class="input-group">
-                            <input type="number" class="form-control" id="price" required>
+                            <input type="number" class="form-control" id="price" min="1" required>
                             <span class="input-group-text">VNĐ</span>
-                            <div class="invalid-feedback">Vui lòng nhập giá thuê</div>
+                            <div class="invalid-feedback">Vui lòng nhập giá thuê hợp lệ (lớn hơn 0)</div>
                         </div>
                     </div>
                     <div class="col-md-6 mb-3">
                         <label for="area" class="form-label">Diện tích (m²)</label>
                         <div class="input-group">
-                            <input type="number" step="0.1" class="form-control" id="area" required>
+                            <input type="number" step="0.1" class="form-control" id="area" min="0.1" required>
                             <span class="input-group-text">m²</span>
-                            <div class="invalid-feedback">Vui lòng nhập diện tích</div>
+                            <div class="invalid-feedback">Vui lòng nhập diện tích hợp lệ (lớn hơn 0)</div>
                         </div>
                     </div>
                 </div>
@@ -86,13 +91,19 @@
                     </label>
                     <input type="text" class="form-control" id="address" required placeholder="Số nhà, tên đường...">
                     <div class="invalid-feedback">Vui lòng nhập địa chỉ cụ thể</div>
+                    
+                    <input type="hidden" id="latitude">
+                    <input type="hidden" id="longitude">
+                    
+                    <div id="addressLoading" class="d-none mt-2">
+                        <i class="fas fa-spinner fa-spin"></i> Đang tìm kiếm...
+                    </div>
                 </div>
 
                 <div class="section-title">Hình ảnh phòng trọ</div>
                 <div class="mb-3">
                     <div class="image-dropzone-container">
                         <div id="imageContainer" class="image-upload-container mb-3">
-                            <!-- Images will be displayed here -->
                         </div>
                         <div id="uploadZone" class="image-upload-dropzone">
                             <div class="upload-icon">
@@ -126,26 +137,26 @@
         </form>
     </div>
 
-    <!-- Navigation button to return to main page -->
     <div class="container text-center mb-4">
         <a href="index.html" class="btn btn-link text-decoration-none">
             <i class="fas fa-arrow-left me-1"></i> Quay lại trang chủ
         </a>
     </div>
 
+   
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script src="js/utils.js"></script>
+    
+    <script type="module" src="js/header.js"></script>
     <script type="module" src="js/roomForm.js"></script>
     
-    <!-- Form validation script -->
     <script>
-    // Enable Bootstrap validation
     (() => {
         'use strict'
         
-        // Fetch all forms we want to apply validation styles to
         const forms = document.querySelectorAll('.needs-validation')
         
-        // Loop over them and prevent submission
         Array.from(forms).forEach(form => {
             form.addEventListener('submit', event => {
                 if (!form.checkValidity()) {

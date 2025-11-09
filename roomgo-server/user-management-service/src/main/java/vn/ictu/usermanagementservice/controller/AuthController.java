@@ -13,6 +13,8 @@ import vn.ictu.usermanagementservice.dto.request.SignInRequest;
 import vn.ictu.usermanagementservice.dto.request.SignUpRequest;
 import vn.ictu.usermanagementservice.service.AuthService;
 
+import java.util.Map;
+
 
 @RestController
 @RequestMapping("/api/user/auth")
@@ -32,8 +34,24 @@ public class AuthController {
 
     @Operation(summary = "Refresh token", description = "Get access token by refresh token")
     @PostMapping("/refresh-token")
-    public TokenResponse refreshToken(@RequestBody String refreshToken) {
-        log.info("Refresh token request");
+    public TokenResponse refreshToken(@RequestBody Map<String, String> request) {
+        log.info("Refresh token request - Raw request: {}", request);
+        String refreshToken = request.get("refreshToken");
+        if (refreshToken == null) {
+            refreshToken = request.get("refresh_token");
+        }
+
+        if (refreshToken != null) {
+            refreshToken = refreshToken.trim();
+            if (refreshToken.startsWith("\"") && refreshToken.endsWith("\"")) {
+                refreshToken = refreshToken.substring(1, refreshToken.length() - 1);
+            }
+        }
+
+        log.info("Refresh token after cleanup - Length: {}, First 20 chars: {}",
+                refreshToken != null ? refreshToken.length() : 0,
+                refreshToken != null && refreshToken.length() > 20 ? refreshToken.substring(0, 20) + "..." : refreshToken);
+
         return authService.getRefreshToken(refreshToken);
     }
 
@@ -49,6 +67,13 @@ public class AuthController {
                 .build();
     }
 
+    @PostMapping("/guest-token")
+    @Operation(summary = "Guest token", description = "Create token for guest user")
+    public TokenResponse createTokenGuest() {
+        log.info("Create token for guest user");
+        return authService.createTokenGuest();
+    }
+
     @Operation(summary = "Verify email", description = "Verify email after register")
     @GetMapping("/verify-email")
     public ApiResponse verifyEmail(@RequestParam String email) {
@@ -60,4 +85,6 @@ public class AuthController {
                 .data(null)
                 .build();
     }
+
+
 }

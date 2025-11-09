@@ -2,14 +2,13 @@ package vn.ictu.usermanagementservice.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.DisabledException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import vn.ictu.usermanagementservice.common.enums.UserStatus;
 import vn.ictu.usermanagementservice.common.response.TokenResponse;
@@ -52,9 +51,7 @@ public class AuthServiceImpl implements AuthService {
                     new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
             );
 
-            log.info("✅ Login success for email={}", request.getEmail());
-            log.info(request.getPassword());
-
+            log.info("Login success for email={}", request.getEmail());
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
             List<String> authorities = authentication.getAuthorities()
@@ -71,36 +68,85 @@ public class AuthServiceImpl implements AuthService {
                     .build();
 
         } catch (BadCredentialsException e) {
+            log.warn("Sai mật khẩu cho email={}", request.getEmail());
             throw new BadCredentialsException("Sai email hoặc mật khẩu");
+
+        } catch (InternalAuthenticationServiceException e) {
+            log.warn("User không tồn tại: {}", request.getEmail());
+
+            if (e.getCause() instanceof UsernameNotFoundException) {
+                throw new BadCredentialsException("Sai email hoặc mật khẩu");
+            }
+
+            throw new RuntimeException("Lỗi hệ thống khi xác thực", e);
         } catch (DisabledException e) {
             throw new DisabledException("Tài khoản bị vô hiệu hóa");
         }
     }
 
 
+
     @Override
     public TokenResponse getRefreshToken(String refreshToken) {
         if (!StringUtils.hasLength(refreshToken)) {
-            throw new InvalidDataException("Token must be not blank");
+            throw new InvalidDataException("Refresh token must not be blank");
+        }
+
+        long periodCount = refreshToken.chars().filter(ch -> ch == '.').count();
+        if (periodCount != 2) {
+            log.error("Invalid JWT format. Expected 2 periods, found: {}. Token length: {}, Token preview: {}",
+                    periodCount, refreshToken.length(),
+                    refreshToken.length() > 50 ? refreshToken.substring(0, 50) + "..." : refreshToken);
+            throw new InvalidDataException("Invalid refresh token format. JWT must contain exactly 2 period characters.");
         }
 
         try {
             String email = jwtService.extractEmail(refreshToken, REFRESH_TOKEN);
+            log.info("Extracted email from refresh token: {}", email);
 
             UserEntity userEmail = userRepository.findByEmail(email);
+
+            if (userEmail == null) {
+                throw new InvalidDataException("User not found for email: " + email);
+            }
 
             List<String> authorities = new ArrayList<>();
             userEmail.getAuthorities().forEach(authority -> authorities.add(authority.getAuthority()));
 
             String accessToken = jwtService.generateAccessToken(userEmail.getEmail(), authorities);
 
+            log.info("Successfully refreshed token for email: {}", email);
             return TokenResponse.builder().accessToken(accessToken).refreshToken(refreshToken).build();
+        } catch (org.springframework.security.access.AccessDeniedException e) {
+            log.error("Access denied during token refresh: {}", e.getMessage());
+            throw new ForBiddenException("Invalid or expired refresh token: " + e.getMessage());
+        } catch (InvalidDataException e) {
+            log.error("Invalid data during token refresh: {}", e.getMessage());
+            throw e;
         } catch (Exception e) {
-            throw new ForBiddenException(e.getMessage());
+            log.error("Unexpected error during token refresh: {}", e.getMessage(), e);
+            throw new ForBiddenException("Failed to refresh token: " + e.getMessage());
         }
     }
 
     @Override
+    public TokenResponse createTokenGuest() {
+        String guestUsername = "guest_" + UUID.randomUUID().toString().substring(0, 8);
+        List<String> roles = List.of("ROLE_GUEST");
+
+        String accessToken = jwtService.generateAccessToken(guestUsername, roles);
+
+
+        log.info("Created guest token for username: {}", guestUsername);
+        return TokenResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(null)
+                .build();
+
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
     public void register(SignUpRequest request) {
         if (userRepository.findByEmail(request.getEmail()) != null) {
             throw new InvalidDataException("Email is already in use");
@@ -122,7 +168,7 @@ public class AuthServiceImpl implements AuthService {
                 .firstName(firstName)
                 .lastName(lastName)
                 .role(role)
-                .status(UserStatus.PENDING)
+                .status(UserStatus.ACTIVE)
                 .build();
 
         userRepository.save(user);

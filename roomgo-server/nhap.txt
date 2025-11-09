@@ -1,0 +1,95 @@
+// User routes
+        rest("/user")
+                .get("/list").to("direct:getUserList")
+                .get("/{id}").to("direct:getUserById")
+                .get("/email/{email}").to("direct:getUserByEmail")
+                .get("/profile").to("direct:getUserProfile")
+                .put("/update-status/{userId}").to("direct:updateUserStatus")
+                .put("/update-profile").to("direct:updateUserProfile")
+                .delete("/{userId}").to("direct:deleteUser")
+                .patch("/change-password").to("direct:changePassword")
+                .post("/forgot-password").to("direct:forgotPassword")
+                .post("/reset-password").to("direct:resetPassword");
+
+        from("direct:getUserList")
+                .routeId("get-user-list-route")
+                .log("👉 [ESB] Forwarding get user list request")
+                .process(jwtProcessor)
+                .setHeader(Exchange.CONTENT_TYPE, constant("application/json"))
+                .to("http://user-management-service:8080/api/user/list?bridgeEndpoint=true&httpMethod=GET")
+                .unmarshal().json(JsonLibrary.Jackson);
+
+        from("direct:getUserById")
+                .routeId("get-user-by-id-route")
+                .log("👉 [ESB] Forwarding get user by id request: ${header.id}")
+                .process(jwtProcessor)
+                .setHeader(Exchange.CONTENT_TYPE, constant("application/json"))
+                .toD("http://user-management-service:8080/api/user/${header.id}?bridgeEndpoint=true&httpMethod=GET")
+                .unmarshal().json(JsonLibrary.Jackson);
+
+        from("direct:getUserByEmail")
+                .routeId("get-user-by-email-route")
+                .log("👉 [ESB] Forwarding get user by email request: ${header.email}")
+                .process(jwtProcessor)
+                .setHeader(Exchange.CONTENT_TYPE, constant("application/json"))
+                .toD("http://user-management-service:8080/api/user/email/${header.email}?bridgeEndpoint=true&httpMethod=GET")
+                .unmarshal().json(JsonLibrary.Jackson);
+
+        from("direct:getUserProfile")
+                .routeId("get-user-profile-route")
+                .log("👉 [ESB] Forwarding get user profile request")
+                .process(jwtProcessor)
+                .setHeader(Exchange.CONTENT_TYPE, constant("application/json"))
+                .to("http://user-management-service:8080/api/user/profile?bridgeEndpoint=true&httpMethod=GET")
+                .unmarshal().json(JsonLibrary.Jackson);
+
+        from("direct:updateUserStatus")
+                .routeId("update-user-status-route")
+                .log("👉 [ESB] Forwarding update user status request: ${header.userId} with body: ${body}")
+                .process(jwtProcessor)
+                .setHeader(Exchange.CONTENT_TYPE, constant("application/json"))
+                .marshal().json(JsonLibrary.Jackson)
+                .toD("http://user-management-service:8080/api/user/update-status/${header.userId}?bridgeEndpoint=true&httpMethod=PUT")
+                .unmarshal().json(JsonLibrary.Jackson);
+
+        from("direct:updateUserProfile")
+                .routeId("update-user-profile-route")
+                .log("👉 [ESB] Forwarding update user profile request with body: ${body}")
+                .process(jwtProcessor)
+                .setHeader(Exchange.CONTENT_TYPE, constant("application/json"))
+                .marshal().json(JsonLibrary.Jackson)
+                .to("http://user-management-service:8080/api/user/update-profile?bridgeEndpoint=true&httpMethod=PUT")
+                .unmarshal().json(JsonLibrary.Jackson);
+
+        from("direct:deleteUser")
+                .routeId("delete-user-route")
+                .log("👉 [ESB] Forwarding delete user request: ${header.userId}")
+                .process(jwtProcessor)
+                .setHeader(Exchange.CONTENT_TYPE, constant("application/json"))
+                .toD("http://user-management-service:8080/api/user/delete/${header.userId}?bridgeEndpoint=true&httpMethod=DELETE")
+                .unmarshal().json(JsonLibrary.Jackson);
+
+        from("direct:changePassword")
+                .routeId("change-password-route")
+                .log("👉 [ESB] Forwarding change password request with body: ${body}")
+                .process(jwtProcessor)
+                .setHeader(Exchange.CONTENT_TYPE, constant("application/json"))
+                .marshal().json(JsonLibrary.Jackson)
+                .to("http://user-management-service:8080/api/user/change-password?bridgeEndpoint=true&httpMethod=PATCH")
+                .unmarshal().json(JsonLibrary.Jackson);
+
+        from("direct:forgotPassword")
+                .routeId("forgot-password-route")
+                .log("👉 [ESB] Forwarding forgot password request: ${body}")
+                .setHeader(Exchange.CONTENT_TYPE, constant("application/json"))
+                .marshal().json(JsonLibrary.Jackson)
+                .to("http://user-management-service:8080/api/user/forgot-password?bridgeEndpoint=true&httpMethod=POST")
+                .unmarshal().json(JsonLibrary.Jackson);
+
+        from("direct:resetPassword")
+                .routeId("reset-password-route")
+                .log("👉 [ESB] Forwarding reset password request with body: ${body}")
+                .setHeader(Exchange.CONTENT_TYPE, constant("application/json"))
+                .marshal().json(JsonLibrary.Jackson)
+                .to("http://user-management-service:8080/api/user/reset-password?bridgeEndpoint=true&httpMethod=POST")
+                .unmarshal().json(JsonLibrary.Jackson);

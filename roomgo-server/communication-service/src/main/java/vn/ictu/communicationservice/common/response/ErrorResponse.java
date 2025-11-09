@@ -1,5 +1,6 @@
 package vn.ictu.communicationservice.common.response;
 
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 

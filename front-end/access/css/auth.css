@@ -1,0 +1,46 @@
+/* User menu và authentication CSS */
+.auth-buttons {
+    display: block; /* Mặc định hiển thị nút đăng nhập */
+}
+
+.user-avatar, .user-avatar-large {
+    background-size: cover;
+    background-position: center;
+    color: white;
+    font-weight: bold;
+    text-align: center;
+    line-height: 1;
+}
+
+/* Cập nhật responsive cho user-menu */
+@media screen and (max-width: 768px) {
+    .user-menu {
+        margin-left: auto;
+    }
+    
+    .dropdown-menu {
+        right: 0;
+        left: auto;
+    }
+    
+    .auth-buttons .header-btn {
+        padding: 6px 12px;
+        font-size: 14px;
+    }
+}
+
+@media screen and (max-width: 576px) {
+    .dropdown-menu {
+        width: 280px;
+    }
+    
+    .user-avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 16px;
+    }
+    
+    .user-name {
+        font-size: 14px;
+    }
+}

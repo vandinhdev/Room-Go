@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thống Kê - ROOM GO</title>
+    <link rel="stylesheet" href="access/css/styles.css">
+    <link rel="stylesheet" href="access/css/user.css">
+    <link rel="stylesheet" href="access/css/footer.css">
+    <link rel="stylesheet" href="access/css/statistics.css">
+    <link rel="stylesheet" href="access/css/responsive.css">
+    <link rel="stylesheet" href="access/css/auth.css">
+    <link rel="stylesheet" href="access/css/loading.css">
+    <link rel="stylesheet" href="access/css/favourite.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script>
+        document.documentElement.classList.add('loading');
+    </script>
+</head>
+<body class="loading">
+    <div id="initialLoadingOverlay">
+        <div class="loading-content">
+            <div class="spinner-container">
+                <div class="spinner"></div>
+            </div>
+            <h3>Đang tải thống kê</h3>
+            <p>Vui lòng đợi một chút...</p>
+            
+        </div>
+    </div>
+    
+    <script>
+        document.getElementById('stopLoadingBtn').addEventListener('click', function() {
+            document.body.classList.remove('loading');
+            document.body.classList.add('loaded');
+            document.documentElement.classList.remove('loading');
+        });
+    </script>
+    
+    
+    <div class="main-container">
+        <div class="stats-container">
+            <div class="stats-header">
+                <h1 class="stats-title">
+                    <i class="fas fa-chart-line" style="color: #ff6b35; margin-right: 10px;"></i>
+                    Thống Kê Hệ Thống
+                </h1>
+                <p class="stats-subtitle">Tổng quan và phân tích dữ liệu ROOM GO</p>
+            </div>
+
+            <div class="overview-cards">
+                <div class="overview-card users">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                    </div>
+                    <div class="card-label">Tổng Người Dùng</div>
+                    <div class="card-value" id="totalUsers">...</div>
+                    <div class="card-trend trend-up">
+                        <i class="fas fa-arrow-up"></i>
+                        <span id="userTrend">+12%</span> so với tháng trước
+                    </div>
+                </div>
+
+                <div class="overview-card posts">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <i class="fas fa-home"></i>
+                        </div>
+                    </div>
+                    <div class="card-label">Tổng Tin Đăng</div>
+                    <div class="card-value" id="totalPosts">...</div>
+                    <div class="card-trend trend-up">
+                        <i class="fas fa-arrow-up"></i>
+                        <span id="postTrend">+8%</span> so với tháng trước
+                    </div>
+                </div>
+
+                
+
+                <div class="overview-card views">
+                    <div class="card-header">
+                        <div class="card-icon">
+                            <i class="fas fa-eye"></i>
+                        </div>
+                    </div>
+                    <div class="card-label">Lượt Xem</div>
+                    <div class="card-value" id="totalViews">...</div>
+                    <div class="card-trend trend-up">
+                        <i class="fas fa-arrow-up"></i>
+                        <span id="viewTrend">+22%</span> so với tháng trước
+                    </div>
+                </div>
+            </div>
+
+            <div class="charts-section">
+                <div class="chart-container">
+                    <h3 class="chart-title">Người Dùng Mới Theo Tháng</h3>
+                    <div class="chart-canvas">
+                        <canvas id="userChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <h3 class="chart-title">Tin Đăng Theo Trạng Thái</h3>
+                    <div class="chart-canvas">
+                        <canvas id="postStatusChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="details-section">
+                <div class="details-card">
+                    <div class="details-header">
+                        <i class="fas fa-users"></i>
+                        Chi Tiết Người Dùng
+                    </div>
+                    <div class="details-content">
+                        <div class="detail-item">
+                            <span class="detail-label">Admin</span>
+                            <span class="detail-value" id="adminCount">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Người dùng thường</span>
+                            <span class="detail-value" id="regularUserCount">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Đăng ký hôm nay</span>
+                            <span class="detail-value" id="todayUsers">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Đăng ký tuần này</span>
+                            <span class="detail-value" id="weekUsers">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Người dùng hoạt động</span>
+                            <span class="detail-value" id="activeUsers">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="details-card">
+                    <div class="details-header">
+                        <i class="fas fa-home"></i>
+                        Chi Tiết Tin Đăng
+                    </div>
+                    <div class="details-content">
+                        <div class="detail-item">
+                            <span class="detail-label">Chờ duyệt</span>
+                            <span class="detail-value" id="pendingPosts">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Đã duyệt</span>
+                            <span class="detail-value" id="approvedPosts">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Đã từ chối</span>
+                            <span class="detail-value" id="rejectedPosts">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Đăng hôm nay</span>
+                            <span class="detail-value" id="todayPosts">-</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Trung bình/ngày</span>
+                            <span class="detail-value" id="avgPostsPerDay">-</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="activity-timeline">
+                <div class="timeline-header">
+                    <i class="fas fa-history"></i>
+                    Hoạt Động Gần Đây
+                </div>
+                <div class="timeline-content" id="activityTimeline">
+                </div>
+            </div>
+
+            <div class="quick-actions">
+                <h3>Thao Tác Nhanh</h3>
+                <div class="action-buttons">
+                    <a href="user-management.html" class="action-btn primary">
+                        <i class="fas fa-users"></i>
+                        Quản Lý Người Dùng
+                    </a>
+                    <a href="post-management.html" class="action-btn primary">
+                        <i class="fas fa-home"></i>
+                        Quản Lý Tin Đăng
+                    </a>
+                    <button class="action-btn secondary" onclick="exportData()">
+                        <i class="fas fa-download"></i>
+                        Xuất Báo Cáo
+                    </button>
+                    <button class="action-btn secondary" onclick="refreshStats()">
+                        <i class="fas fa-refresh"></i>
+                        Làm Mới
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+    <script type="module" src="js/header.js"></script>
+    <script src="js/footer.js"></script>
+    <script src="js/loading.js"></script>
+    <script type="module" src="js/statistics.js"></script>
+</body>
+</html>

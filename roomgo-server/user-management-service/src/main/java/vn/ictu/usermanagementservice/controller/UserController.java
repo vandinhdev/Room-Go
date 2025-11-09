@@ -7,14 +7,18 @@ import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import vn.ictu.usermanagementservice.common.response.ApiResponse;
-import vn.ictu.usermanagementservice.dto.request.UpdateProfileRequest;
-import vn.ictu.usermanagementservice.dto.request.UserPasswordRequest;
+import vn.ictu.usermanagementservice.dto.request.*;
 import vn.ictu.usermanagementservice.service.UserService;
+
+import java.io.IOException;
+import java.util.Map;
 
 @RestController
 @RequestMapping("api/user")
@@ -26,7 +30,6 @@ public class UserController {
     private final UserService userService;
     private final PasswordEncoder passwordService;
 
-    @Operation(summary = "Get user list", description = "API retrieve user from database")
     @GetMapping("/list")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
     public ApiResponse getList(@RequestParam(required = false) String keyword,
@@ -43,19 +46,20 @@ public class UserController {
     }
 
     @Operation(summary = "Get user detail", description = "API retrieve user detail by ID from database")
-    @GetMapping("detail/{userId}")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
+    @GetMapping("/{userId}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER','ROLE_GUEST')")
     public ApiResponse getUserDetail(@PathVariable @Min(value = 1, message = "userId must be equals or greater than 1") Long userId) {
         log.info("Get user detail by ID: {}", userId);
-
         return ApiResponse.builder()
                 .status(HttpStatus.OK.value())
                 .message("user")
                 .data(userService.getUserById(userId))
                 .build();
     }
+
+
     @Operation(summary = "Get user detail", description = "API retrieve user detail by ID from database")
-    @GetMapping("by-email")
+    @GetMapping("/email")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
     public ApiResponse getUserDetailByEmail(@RequestParam String email) {
         log.info("Get user detail by email: {}", email);
@@ -75,12 +79,52 @@ public class UserController {
         return ApiResponse.builder()
                 .status(HttpStatus.OK.value())
                 .message("user")
-                .data(userService.getUserByEmail(email))
+                .data(userService.getProfile(email))
                 .build();
     }
 
+    @PutMapping("/update-avatar")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')" )
+    public ApiResponse updateAvatar(@RequestBody UpdateAvatarRequest request, Authentication authentication) {
+        String email = authentication.getName();
+        log.info("Update avatar of user: {}", email);
+        userService.updateAvatar(request, email);
+        return ApiResponse.builder()
+                .status(HttpStatus.ACCEPTED.value())
+                .message("User avatar updated successfully")
+                .data("")
+                .build();
+    }
+
+    @PutMapping("/update-email")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')" )
+    public ApiResponse updateEmail(@RequestBody UpdateEmailRequest request, Authentication authentication) {
+        String email = authentication.getName();
+        log.info("Update phone of user: {}", email);
+        userService.updateEmail(request, email);
+        return ApiResponse.builder()
+                .status(HttpStatus.ACCEPTED.value())
+                .message("User phone updated successfully")
+                .data("")
+                .build();
+    }
+
+    @PutMapping("/update-phone")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')" )
+    public ApiResponse updatePhone(@RequestBody UpdatePhoneRequest request, Authentication authentication) {
+        String email = authentication.getName();
+        log.info("Update phone of user: {}", email);
+        userService.updatePhone(request, email);
+        return ApiResponse.builder()
+                .status(HttpStatus.ACCEPTED.value())
+                .message("User phone updated successfully")
+                .data("")
+                .build();
+    }
+
+
     @Operation(summary = "Update User Status", description = "API update user status to database")
-    @PatchMapping("/update-status/{userId}")
+    @PatchMapping("/update-status/{id}")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')" )
     public ApiResponse updateStatus(@PathVariable @Min(value = 1, message = "userId must be equals or greater than 1") Long userId,
                                     @RequestParam String status) {
@@ -96,6 +140,7 @@ public class UserController {
 
     @Operation(summary = "Update User", description = "API update user to database")
     @PutMapping("/update-profile")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')" )
     public ApiResponse updateProfile(@RequestBody @Valid UpdateProfileRequest request, Authentication authentication) {
         String email = authentication.getName();
         log.info("Update user profile: {}", email);
@@ -108,7 +153,20 @@ public class UserController {
                 .build();
     }
 
-    @Operation(summary = "Delete User", description = "API delete user from database")
+    @PutMapping("/update-info")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')" )
+    public ApiResponse updateInfo(@RequestBody @Valid UpdateInfoRequest request, Authentication authentication) {
+        String email = authentication.getName();
+        log.info("Update user info: {}", email);
+        userService.updateInfo(request, email);
+
+        return ApiResponse.builder()
+                .status(HttpStatus.ACCEPTED.value())
+                .message("User updated successfully")
+                .data("")
+                .build();
+    }
+
     @DeleteMapping("/delete/{userId}")
     @PreAuthorize("hasAuthority('ROLE_ADMIN')" )
     public ApiResponse deleteUser(@PathVariable @Min(value = 1, message = "userId must be equals or greater than 1") Long userId) {
@@ -120,41 +178,5 @@ public class UserController {
                 .build();
     }
 
-    @Operation(summary = "Change Password", description = "API change password for user to database")
-    @PatchMapping("/change-pwd")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_STUDENT','ROLE_OWNER')")
-    public ApiResponse changePassword(@RequestBody @Valid UserPasswordRequest request, Authentication authentication) {
-        String email = authentication.getName();
-        log.info("Changing password for user: {}", request);
 
-        userService.changePassword(request, email);
-
-        return ApiResponse.builder()
-                .status(HttpStatus.NO_CONTENT.value())
-                .message("Password updated successfully")
-                .data("")
-                .build();
-    }
-
-    @PostMapping("/forgot-password")
-    public ApiResponse forgotPassword(@RequestParam String email) {
-        userService.sendResetOtp(email);
-        return ApiResponse.builder()
-                .status(HttpStatus.OK.value())
-                .message("Mã OTP đã được gửi đến email của bạn")
-                .data("")
-                .build();
-    }
-
-    @PostMapping("/reset-password")
-    public ApiResponse resetPassword(@RequestParam String email,
-                                                @RequestParam String otp,
-                                                @RequestParam String newPassword) {
-        userService.resetPassword(email, otp, newPassword);
-        return ApiResponse.builder()
-                .status(HttpStatus.OK.value())
-                .message("Mật khẩu đã được đặt lại thành công")
-                .data("")
-                .build();
-    }
 }

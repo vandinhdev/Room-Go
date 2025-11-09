@@ -15,6 +15,5 @@ public class ConversationDetailResponse {
     private Long conversationId;
     private Long currentUserId;
     private Long ownerId;
-
     private List<MessageResponse> messages;
 }

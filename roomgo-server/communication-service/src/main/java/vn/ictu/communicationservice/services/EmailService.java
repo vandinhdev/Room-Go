@@ -24,16 +24,16 @@ import java.util.Map;
 public class EmailService {
     private final EmailLogRepository emailLogRepository;
 
-    @Value("${sendgrid.api-key}")
+    @Value("${spring.sendGrid.apiKey}")
     private String sendgridApiKey;
 
-    @Value("${app.email.from}")
+    @Value("${spring.sendGrid.fromEmail}")
     private String fromEmail;
 
-    @Value("${app.email.verify-template-id}")
+
     private String verifyTemplateId;
 
-    @Value("${app.email.reset-template-id}")
+
     private String resetTemplateId;
 
     private void send(String to, String templateId, Map<String, Object> params) {

@@ -6,16 +6,35 @@
     <title>Tin yêu thích</title>
     <link rel="stylesheet" href="access/css/styles.css">
     <link rel="stylesheet" href="access/css/footer.css">
+    <link rel="stylesheet" href="access/css/responsive.css">
+    <link rel="stylesheet" href="access/css/auth.css">
+    <link rel="stylesheet" href="access/css/user.css">
+    <link rel="stylesheet" href="access/css/profile.css">
+    <link rel="stylesheet" href="access/css/favourite.css">
+    <link rel="stylesheet" href="access/css/loading.css">
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    
+    <script>
+        document.documentElement.classList.add('loading');
+    </script>
 </head>
-<body>
-    <div class="favourite-container">
-
+<body class="loading">
+    <div id="initialLoadingOverlay">
+        <div class="loading-content">
+            <div class="spinner-container">
+                <div class="spinner"></div>
+            </div>
+            <h3>Đang tải danh sách yêu thích</h3>
+            <p>Vui lòng đợi một chút...</p>
+        </div>
     </div>
-
+    
+    <div class="favourite-container"></div>
     <script type="module" src="js/header.js"></script>
     <script src="js/footer.js"></script>
-    <script src="js/favourite.js"></script>
+    <script src="js/utils.js"></script>
+    <script type="module" src="js/favourite.js"></script>
 
 </body>
 </html>

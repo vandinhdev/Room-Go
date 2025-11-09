@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import vn.ictu.communicationservice.common.response.ApiResponse;
 import vn.ictu.communicationservice.dto.request.CreateConversationRequest;
@@ -16,7 +17,7 @@ import vn.ictu.communicationservice.services.client.UserClient;
 
 
 @RestController
-@RequestMapping("/api/chats")
+@RequestMapping("/api/chat")
 @Slf4j(topic = "CHAT_CONTROLLER")
 @RequiredArgsConstructor
 public class ChatController {
@@ -24,101 +25,81 @@ public class ChatController {
     private final UserClient userClient;
     private final RoomClient roomClient;
 
-    @Operation(summary = "Get all conversations for a user")
-    @GetMapping("/get-user-conversations")
+    @GetMapping("/get-all-user-conversations")
     public ApiResponse getUserConversations(@RequestHeader("X-User-Email") String email,
                                             @RequestHeader("Authorization") String authorizationHeader) {
         Long userId = userClient.getUserIdByEmail(email, authorizationHeader);
         log.info("Fetching conversations for userId: {}", userId);
         return ApiResponse.builder()
-                .status(200)
+                .status(HttpStatus.OK.value())
                 .message("User conversations retrieved successfully")
-                .data(chatService.getUserConversations(userId))
+                .data(chatService.getUserConversations(userId, authorizationHeader))
                 .build();
     }
 
-    @Operation(summary = "Search for a conversation by its name")
-    @GetMapping("/search-by-conversation-name")
-    public ApiResponse searchConversationByConversationName(
-            @RequestParam("name") String conversationName,
-            @RequestHeader("X-User-Email") String email,
-            @RequestHeader("Authorization") String authorizationHeader) {
+    @GetMapping("/conversation/{conversationId}")
+    public ApiResponse getConversationDetail(@PathVariable Long conversationId,
+                                             @RequestHeader("X-User-Email") String email,
+                                             @RequestHeader("Authorization") String authorizationHeader) {
 
-        Conversation conversation = chatService.findConversationByName(
-                conversationName, email, authorizationHeader);
-
+        ConversationDetailResponse detail = chatService.getConversationDetail(conversationId, email, authorizationHeader);
         return ApiResponse.builder()
-                .status(200)
-                .message("Conversation found successfully")
-                .data(conversation)
+                .status(HttpStatus.OK.value())
+                .message("Conversation fetched successfully")
+                .data(detail)
                 .build();
     }
 
-    @Operation(summary = "Create a new conversation")
-    @PostMapping("/add-conversations")
-    public ApiResponse createConversation(
-            @RequestBody @Valid CreateConversationRequest request,
-            @RequestHeader("X-User-Email") String email,
-            @RequestHeader("Authorization") String authorizationHeader) {
+//    @GetMapping("/search-by-conversation-name")
+//    public ApiResponse searchConversationByConversationName(
+//            @RequestParam("name") String conversationName,
+//            @RequestHeader("X-User-Email") String email,
+//            @RequestHeader("Authorization") String authorizationHeader) {
+//
+//        Conversation conversation = chatService.findConversationByName(conversationName, email, authorizationHeader);
+//        return ApiResponse.builder()
+//                .status(200)
+//                .message("Conversation found successfully")
+//                .data(conversation)
+//                .build();
+//    }
 
-        log.info("Received request to create conversation for room: {}", request.getRoomId());
+    @PostMapping("/add-conversations/{roomId}")
+    public ApiResponse createConversation(@PathVariable Long roomId,
+                                          @RequestHeader("X-User-Email") String email,
+                                          @RequestHeader("Authorization") String authorizationHeader) {
 
-        Long currentUserId = userClient.getUserIdByEmail(email, authorizationHeader);
-        request.setCurrentUserId(currentUserId);
-
-        Long ownerId = roomClient.getOwnerIdByRoomId(request.getRoomId(), authorizationHeader);
-        request.setOwnerId(ownerId);
-
-        log.info("Creating conversation between currentUser {} and owner {} for room {}",
-                currentUserId, ownerId, request.getRoomId());
-
-        log.info("Request payload: {}", request);
+        log.info("Received request to create conversation for room: {}", roomId);
 
         return ApiResponse.builder()
-                .status(200)
+                .status(HttpStatus.CREATED.value())
                 .message("Conversation created successfully")
-                .data(chatService.CreateConversation(request, email, authorizationHeader))
+                .data(chatService.createConversation(roomId, email, authorizationHeader))
                 .build();
     }
 
-    @Operation(summary = "Send a message in a conversation")
     @PostMapping("/send-message")
     public ApiResponse  SendMessage(@RequestBody @Valid SendMessageRequest request,
                                     @RequestHeader("X-User-Email") String email,
                                     @RequestHeader("Authorization") String authorizationHeader) {
         log.info("Received request to send message: {}", request);
         return ApiResponse.builder()
-                .status(200)
+                .status(HttpStatus.CREATED.value())
                 .message("Message sent successfully")
-                .data(chatService.SendMessage(request, email, authorizationHeader))
+                .data(chatService.sendMessage(request, email, authorizationHeader))
                 .build();
 
     }
 
-    @GetMapping("/conversations/{conversationId}")
-    public ApiResponse getConversationDetail(
-            @PathVariable Long conversationId,
-            @RequestHeader("X-User-Email") String email,
-            @RequestHeader("Authorization") String authorizationHeader) {
 
-
-        ConversationDetailResponse detail =
-                chatService.getConversationDetail(conversationId, email, authorizationHeader);
-
+    @DeleteMapping("/delete-conversation/{conversationId}")
+    public ApiResponse deleteConversation(@PathVariable Long conversationId,
+                                          @RequestHeader("X-User-Email") String email,
+                                          @RequestHeader("Authorization") String authorizationHeader) {
+        Long userId = userClient.getUserIdByEmail(email, authorizationHeader);
+        chatService.deleteConversation(conversationId, userId);
         return ApiResponse.builder()
-                .status(200)
-                .message("Conversation fetched successfully")
-                .data(detail)
-                .build();
-    }
-
-
-    @Operation(summary = "Delete a conversation by ID")
-    @DeleteMapping("/delete-conversation/{id}")
-    public ApiResponse deleteConversation(@PathVariable Long id) {
-        chatService.DeleteConversation(id);
-        return ApiResponse.builder()
-                .status(200)
+                .status(HttpStatus.NO_CONTENT.value())
                 .message("Conversation deleted successfully")
                 .data(null)
                 .build();

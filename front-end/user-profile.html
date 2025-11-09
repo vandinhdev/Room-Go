@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thông tin người dùng - ROOM GO</title>
+    <link rel="stylesheet" href="access/css/styles.css">
+    <link rel="stylesheet" href="access/css/user.css">
+    <link rel="stylesheet" href="access/css/footer.css">
+    <link rel="stylesheet" href="access/css/responsive.css">
+    <link rel="stylesheet" href="access/css/profile.css">
+    <link rel="stylesheet" href="access/css/favourite.css">
+    <link rel="stylesheet" href="access/css/user-profile.css">
+    <link rel="stylesheet" href="access/css/loading.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <script>
+        // Set loading class immediately before page renders
+        document.documentElement.classList.add('loading');
+    </script>
+    <style>
+        .loading-spinner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 400px;
+        }
+        .error-message {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 400px;
+            text-align: center;
+        }
+        .no-rooms-message {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+        }
+        .no-rooms-message i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body class="loading">
+    <div id="initialLoadingOverlay">
+        <div class="loading-content">
+            <div class="spinner-container">
+                <div class="spinner"></div>
+            </div>
+            <h3>Đang tải thông tin người dùng...</h3>
+            <p>Vui lòng đợi trong giây lát</p>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="user-profile-container" id="userProfileContainer" style="display: none;">
+            <div class="user-profile-header">
+                <div class="user-avatar-section">
+                    <div class="user-avatar-large" id="userAvatarLarge">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    
+                </div>
+                
+                <div class="user-basic-info">
+                    <h1 class="user-display-name" id="userDisplayName">Tên người dùng</h1>
+                    <p class="user-join-date" id="userJoinDate">
+                        <i class="fas fa-calendar-alt"></i>
+                        Tham gia từ: 
+                    </p>
+                    
+                </div>
+
+                <div class="user-actions-section">
+                    <button class="btn btn-primary" id="contactBtn">
+                        <i class="fas fa-phone"></i>
+                        Liên hệ
+                    </button>
+                    <button class="btn btn-primary" id="messageBtn">
+                        <i class="fas fa-comment"></i>
+                        Nhắn tin
+                    </button>
+                </div>
+            </div>
+
+            <div class="user-content">
+                <div class="content-tabs">
+                    <button class="tab-btn active" data-tab="rooms">
+                        <i class="fas fa-bed"></i>
+                        Phòng đã đăng
+                    </button>
+                    
+                </div>
+
+                <div class="tab-content active" id="rooms-tab">
+                    <div class="user-rooms-list" id="userRoomsList">
+                    </div>
+
+                    <div class="no-rooms-message" id="noRoomsMessage" style="display: none;">
+                        <i class="fas fa-home"></i>
+                        <p>Người dùng này chưa đăng phòng nào.</p>
+                    </div>
+
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+
+   
+
+    <script src="js/loading.js"></script>
+    <script src="js/utils.js"></script>
+    <script type="module" src="js/header.js"></script>
+    <script type="module" src="js/auth.js"></script>
+    <script type="module" src="js/user-profile.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const userId = urlParams.get('userId');
+            
+            if (userId) {
+                UserProfile.loadUserProfile(userId);
+            } else {
+                UserProfile.showError('Không tìm thấy thông tin người dùng.');
+            }
+        });
+    </script>
+    <script src="js/footer.js"></script>
+</body>
+</html>

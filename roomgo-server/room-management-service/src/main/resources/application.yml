@@ -10,11 +10,27 @@ spring:
   profiles:
     active: @spring.profiles.active@
 
+  cloud:
+    consul:
+      host: ${SPRING_CLOUD_CONSUL_HOST:consul-server}
+      port: ${SPRING_CLOUD_CONSUL_PORT:8500}
+      discovery:
+        register: true
+        prefer-ip-address: true
+        health-check-path: /actuator/health
+        health-check-interval: 10s
+        instance-id: ${spring.application.name}:${server.port}
+
 management:
   endpoints:
     web:
       exposure:
         include: '*'
+
+cloudinary:
+  cloud-name: dd0h8hbbl
+
+
 
 logging:
   level:
@@ -22,3 +38,9 @@ logging:
     org.springframework.web: DEBUG
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    vn.ictu.roommanagementservice.mapper.RoomMapper: DEBUG
+    org.springframework.http.converter.json: TRACE
+    com.cloudinary: DEBUG
+    com.cloudinary.http44: DEBUG
+    okhttp3: DEBUG
+

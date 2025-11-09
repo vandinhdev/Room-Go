@@ -12,8 +12,8 @@ public class SendEmailRequest {
     private String to;
 
     @NotBlank
-    private String templateId; // SendGrid templateId
+    private String templateId;
 
-    private Map<String, Object> params; // dynamic variables
+    private Map<String, Object> params;
 }
 

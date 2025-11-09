@@ -29,7 +29,7 @@ public class RoomClient {
         if (roomId == null) {
             throw new IllegalArgumentException("RoomId must not be null");
         }
-        String url = esbUrl + "/room/detail/" + roomId;
+        String url = esbUrl + "/room/" + roomId;
         log.info("Requesting room details from URL: {}", url);
         log.info("Using bearer token: {}", bearerToken);
         HttpHeaders headers = new HttpHeaders();

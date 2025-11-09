@@ -1,10 +1,12 @@
 package vn.ictu.usermanagementservice.service;
 
 
-import vn.ictu.usermanagementservice.dto.request.UpdateProfileRequest;
-import vn.ictu.usermanagementservice.dto.request.UserPasswordRequest;
+import org.springframework.web.multipart.MultipartFile;
+import vn.ictu.usermanagementservice.dto.request.*;
 import vn.ictu.usermanagementservice.dto.response.UserPageResponse;
 import vn.ictu.usermanagementservice.dto.response.UserResponse;
+
+import java.io.IOException;
 
 public interface UserService {
     UserPageResponse getAllUser(String keyword, String sort, int page, int size);
@@ -14,9 +16,10 @@ public interface UserService {
     void updateStatus(long id, String status);
     UserResponse getProfile(String email);
     void updateProfile(UpdateProfileRequest req, String email);
-    void changePassword(UserPasswordRequest req, String email);
+    void updateAvatar(UpdateAvatarRequest req, String email);
+    void updateEmail(UpdateEmailRequest req, String email);
+    void updatePhone(UpdatePhoneRequest req, String email);
+    void updateInfo(UpdateInfoRequest req, String email);
     void deleteUser(long id);
 
-    void sendResetOtp(String email);
-    void resetPassword(String email, String otp, String newPassword);
 }

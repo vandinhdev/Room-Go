@@ -9,14 +9,19 @@
     <link rel="stylesheet" href="access/css/footer.css">
     <link rel="stylesheet" href="access/css/user.css">
     <link rel="stylesheet" href="access/css/pagination.css">
+    <link rel="stylesheet" href="access/css/responsive.css">
+    <link rel="stylesheet" href="access/css/auth.css">
+    <link rel="stylesheet" href="access/css/favourite.css">
+    <link rel="stylesheet" href="access/css/loading.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
 </head>
 <body>
-   
-
-    <!-- Main Container -->
     <div class="main-container">
-    
+        <div id="loadingSpinner" class="loading-spinner" style="display: none;">
+            <div class="spinner"></div>
+            <p>Đang tải...</p>
+        </div>
+
 
         <!-- Filters -->
         <div class="filters">
@@ -62,16 +67,10 @@
             </button>
         </div>
 
-        <!-- Category Tags -->
-        
-
-        <!-- Content Tabs -->
         <div class="content-tabs">
             <div class="tab active">Tất cả</div>
             <div class="tab">Cá nhân</div>
         </div>
-
-        <!-- Sort & View Controls -->
         <div class="sort-view-controls">
             <div class="sort-control">
                 <span>Tin mới nhất</span>
@@ -79,65 +78,14 @@
             
         </div>
 
-        <!-- Listings Grid -->
         <div class="listings-grid" id="listingsGrid">
-            <!-- Cards sẽ được render bằng JS -->
+           
         </div>
 
-        <!-- Pagination -->
         <div id="paginationContainer" class="pagination-container"></div>
     </div>
-
+    <script src="js/utils.js"></script>
     <script type="module" src="./js/main.js"></script>
-    <script>
-        // Xử lý lọc tỉnh thành, giá, diện tích
-        document.addEventListener('DOMContentLoaded', function() {
-            const provinceSelect = document.getElementById('provinceSelect');
-            const priceFilter = document.getElementById('priceFilter');
-            const areaFilter = document.getElementById('areaFilter');
-            const clearBtn = document.querySelector('.clear-filters');
-            // Lưu lại hàm renderRooms từ main.js
-            let roomsData = window.roomsData || [];
-            if (!roomsData.length && window.rooms) roomsData = window.rooms;
-            function getFilteredRooms() {
-                let filtered = roomsData;
-                // Lọc tỉnh thành
-                const province = provinceSelect.value;
-                if (province) {
-                    filtered = filtered.filter(r => r.address && r.address.includes(province));
-                }
-                // Lọc giá
-                switch (priceFilter.value) {
-                    case '1': filtered = filtered.filter(r => r.price < 1000000); break;
-                    case '2': filtered = filtered.filter(r => r.price >= 1000000 && r.price <= 2000000); break;
-                    case '3': filtered = filtered.filter(r => r.price > 2000000 && r.price <= 3000000); break;
-                    case '4': filtered = filtered.filter(r => r.price > 3000000); break;
-                }
-                // Lọc diện tích
-                switch (areaFilter.value) {
-                    case '1': filtered = filtered.filter(r => r.area < 15); break;
-                    case '2': filtered = filtered.filter(r => r.area >= 15 && r.area <= 25); break;
-                    case '3': filtered = filtered.filter(r => r.area > 25 && r.area <= 35); break;
-                    case '4': filtered = filtered.filter(r => r.area > 35); break;
-                }
-                return filtered;
-            }
-            function updateRooms() {
-                if (window.renderRooms) {
-                    window.renderRooms(getFilteredRooms());
-                }
-            }
-            provinceSelect.addEventListener('change', updateRooms);
-            priceFilter.addEventListener('change', updateRooms);
-            areaFilter.addEventListener('change', updateRooms);
-            clearBtn.addEventListener('click', function() {
-                provinceSelect.value = '';
-                priceFilter.value = '';
-                areaFilter.value = '';
-                updateRooms();
-            });
-        });
-    </script>
     <script type="module" src="js/header.js"></script>
     <script src="js/footer.js"></script>
 </body>

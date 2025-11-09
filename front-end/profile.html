@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trang Cá Nhân - ROOM GO</title>
+    <link rel="stylesheet" href="access/css/styles.css">
+    <link rel="stylesheet" href="access/css/user.css">
+    <link rel="stylesheet" href="access/css/footer.css">
+    <link rel="stylesheet" href="access/css/responsive.css">
+    <link rel="stylesheet" href="access/css/profile.css">
+    <link rel="stylesheet" href="access/css/favourite.css">
+    <link rel="stylesheet" href="access/css/loading.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    
+    <script>
+        document.documentElement.classList.add('loading');
+    </script>
+</head>
+<body class="loading">
+    <div id="initialLoadingOverlay">
+        <div class="loading-content">
+            <div class="spinner-container">
+                <div class="spinner"></div>
+            </div>
+            <h3>Đang tải trang cá nhân</h3>
+            <p>Vui lòng đợi một chút...</p>
+        </div>
+    </div>
+    
+    <div class="main-container">
+        <div class="profile-container">
+            <div class="profile-header">
+                <div class="profile-avatar">
+                    <div class="avatar-circle" id="profileAvatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <button class="change-avatar-btn" id="changeAvatarBtn">
+                        <i class="fas fa-camera"></i>
+                    </button>
+                </div>
+                <div class="profile-info">
+                    <h1 class="profile-name" id="profileName">Tên người dùng</h1>
+                    <p class="profile-email" id="profileEmail">email@example.com</p>
+                    <span class="profile-role" id="profileRole">Người dùng</span>
+                </div>
+            </div>
+
+            <div class="profile-content">
+                <div class="profile-tabs">
+                    <button class="tab-btn active" data-tab="info">Thông tin cá nhân</button>
+                    <button class="tab-btn" data-tab="settings">Cài đặt</button>
+                </div>
+                <div class="tab-content active" id="info-tab">
+                    <div class="info-section">
+                        <div class="section-header">
+                            <h3>Thông tin cơ bản</h3>
+                            <button class="btn-edit" id="editBasicInfoBtn">
+                                <i class="fas fa-edit"></i> Chỉnh sửa
+                            </button>
+                        </div>
+                        
+                        <div class="info-display" id="basicInfoDisplay">
+                            <div class="info-item">
+                                <label>Họ và tên:</label>
+                                <span id="displayFullName">Chưa cập nhật</span>
+                            </div>
+                            <div class="info-item">
+                                <label>Ngày sinh:</label>
+                                <span id="displayBirthDate">Chưa cập nhật</span>
+                            </div>
+                            <div class="info-item">
+                                <label>Địa chỉ:</label>
+                                <span id="displayAddress">Chưa cập nhật</span>
+                            </div>
+                            <div class="info-item">
+                                <label>Giới thiệu:</label>
+                                <span id="displayBio">Chưa cập nhật</span>
+                            </div>
+                        </div>
+
+                        <div class="info-edit" id="basicInfoEdit" style="display: none;">
+                            <form class="profile-form" id="basicInfoForm">
+                                <div class="form-group">
+                                    <label for="fullName">Họ và tên</label>
+                                    <input type="text" id="fullName" name="fullName" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="birthDate">Ngày sinh</label>
+                                    <input type="date" id="birthDate" name="birthDate">
+                                </div>
+                                <div class="form-group">
+                                    <label for="address">Địa chỉ</label>
+                                    <textarea id="address" name="address" rows="3" placeholder="Nhập địa chỉ của bạn"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="bio">Giới thiệu bản thân</label>
+                                    <textarea id="bio" name="bio" rows="4" placeholder="Viết vài dòng giới thiệu về bản thân..."></textarea>
+                                </div>
+                                <div class="form-actions">
+                                    <button type="submit" class="btn-primary">Lưu thay đổi</button>
+                                    <button type="button" class="btn-secondary" id="cancelBasicInfoBtn">Hủy</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="info-section">
+                        <div class="section-header ">
+                            <h3>Thông tin liên hệ</h3>
+                        </div>
+
+                        <div class="contact-item">
+                            <div class="contact-display" id="emailDisplay">
+                                <div class="contact-info">
+                                    <div class="contact-label">
+                                        <i class="fas fa-envelope"></i>
+                                        <span>Email</span>
+                                    </div>
+                                    <div class="contact-value">
+                                        <span id="displayEmail">email@example.com</span>
+                                        <span class="verified-badge" id="emailVerified" style="display: none;">
+                                            <i class="fas fa-check-circle"></i> Đã xác thực
+                                        </span>
+                                    </div>
+                                </div>
+                                <button class="btn-edit-contact" id="editEmailBtn">
+                                    <i class="fas fa-edit"></i> Sửa
+                                </button>
+                            </div>
+
+                            <div class="contact-edit" id="emailEdit" style="display: none;">
+                                <form class="contact-form" id="emailForm">
+                                    <div class="form-group">
+                                        <label for="newEmail">Email mới</label>
+                                        <input type="email" id="newEmail" name="newEmail" required>
+                                        <small class="form-note">Bạn sẽ cần xác thực email mới</small>
+                                    </div>
+                                    <div class="form-actions">
+                                        <button type="submit" class="btn-primary">Cập nhật Email</button>
+                                        <button type="button" class="btn-secondary" id="cancelEmailBtn">Hủy</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <div class="contact-item">
+                            <div class="contact-display" id="phoneDisplay">
+                                <div class="contact-info">
+                                    <div class="contact-label">
+                                        <i class="fas fa-phone"></i>
+                                        <span>Số điện thoại</span>
+                                    </div>
+                                    <div class="contact-value">
+                                        <span id="displayPhone">Chưa cập nhật</span>
+                                        <span class="verified-badge" id="phoneVerified" style="display: none;">
+                                            <i class="fas fa-check-circle"></i> Đã xác thực
+                                        </span>
+                                    </div>
+                                </div>
+                                <button class="btn-edit-contact" id="editPhoneBtn">
+                                    <i class="fas fa-edit"></i> Sửa
+                                </button>
+                            </div>
+
+                            <div class="contact-edit" id="phoneEdit" style="display: none;">
+                                <form class="contact-form" id="phoneForm">
+                                    <div class="form-group">
+                                        <label for="newPhone">Số điện thoại mới</label>
+                                        <input type="tel" id="newPhone" name="newPhone" required>
+                                        <small class="form-note">Bạn sẽ nhận mã xác thực qua SMS</small>
+                                    </div>
+                                    <div class="form-actions">
+                                        <button type="submit" class="btn-primary">Cập nhật SĐT</button>
+                                        <button type="button" class="btn-secondary" id="cancelPhoneBtn">Hủy</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="settings-tab">
+                    <div class="settings-section">
+                        <h3 style="margin-bottom: 22px;">Đổi mật khẩu</h3>
+                        <div class="setting-item">               
+                            <form class="password-form" id="changePasswordForm">
+                                <div class="form-group">
+                                    <label for="currentPassword">Mật khẩu hiện tại</label>
+                                    <input type="password" id="currentPassword" required>
+                                    <button type="button" class="password-toggle" id="toggleCurrentPassword">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                        </svg>
+                                     </button>
+                                </div>
+                                <div class="form-group">
+                                    <label for="newPassword">Mật khẩu mới</label>
+                                    <input type="password" id="newPassword" required>
+                                    <button type="button" class="password-toggle" id="toggleNewPassword">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                        </svg>
+                                     </button>
+                                </div>
+                                <div class="form-group">
+                                    <label for="confirmPassword">Xác nhận mật khẩu mới</label>
+                                    <input type="password" id="confirmPassword" required>
+                                    <button type="button" class="password-toggle" id="toggleConfirmPassword">
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <button type="submit" class="btn-primary">Đổi mật khẩu</button>
+                            </form>
+                        </div>
+
+                        <div class="setting-item danger-zone">
+                            <button class="btn-danger" id="deleteAccountBtn">
+                                <i class="fas fa-trash"></i> Xóa tài khoản
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="deleteModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Xác nhận xóa tài khoản</h3>
+                <button class="close-btn" id="closeDeleteModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa tài khoản? Hành động này không thể hoàn tác.</p>
+                <p><strong>Tất cả dữ liệu của bạn sẽ bị xóa vĩnh viễn.</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="cancelDeleteBtn">Hủy</button>
+                <button class="btn-danger" id="confirmDeleteBtn">Xóa tài khoản</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/utils.js"></script>
+    <script src="js/loading.js"></script>
+    <script type="module" src="js/header.js"></script>
+    <script type="module" src="js/profile.js"></script>
+    <script src="js/footer.js"></script>
+</body>
+</html>

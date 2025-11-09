@@ -22,9 +22,8 @@ import java.math.BigDecimal;
 public class RoomController {
     private final RoomService roomService;
 
-    @Operation(summary = "Get Room list", description = "API retrieve room from database")
     @GetMapping("/list")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER', 'ROLE_GUEST')")
     public ApiResponse getAllRoom(@RequestParam(required = false) String keyword,
                                   @RequestParam(required = false) String province,
                                   @RequestParam(required = false) String district,
@@ -33,7 +32,7 @@ public class RoomController {
                                   @RequestParam(required = false) BigDecimal maxPrice,
                                   @RequestParam(required = false) BigDecimal minArea,
                                   @RequestParam(required = false) BigDecimal maxArea,
-                                  @RequestParam(defaultValue = "0") int page,
+                                  @RequestParam(defaultValue = "1") int page,
                                   @RequestParam(defaultValue = "20") int size,
                                   @RequestParam(required = false) String sort,
                                   @RequestHeader("X-User-Email") String email,
@@ -46,24 +45,23 @@ public class RoomController {
                 .build();
     }
 
-    @Operation(summary = "Get search history by user email", description = "API retrieve search history by user email from database")
     @RequestMapping("/search-history")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
     public ApiResponse getSearchHistoryByUserEmail(@RequestHeader("X-User-Email")  String email,
                                                    @RequestHeader("Authorization") String authorizationHeader) {
         return ApiResponse.builder()
-                .status(200)
+                .status(HttpStatus.OK.value())
                 .message("search history")
                 .data(roomService.getSearchHistoryByUserEmail(email, authorizationHeader))
                 .build();
 
     }
 
-    @Operation(summary = "Get Room list of user", description = "API retrieve room list of user from database")
     @GetMapping("/me")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
     public ApiResponse getRoomMe(@RequestParam(required = false) String keyword,
                                  @RequestParam(required = false) String sort,
-                                 @RequestParam(defaultValue = "0") int page,
+                                 @RequestParam(defaultValue = "1") int page,
                                  @RequestParam(defaultValue = "20") int size,
                                  @RequestHeader("X-User-Email") String email,
                                  @RequestHeader("Authorization") String authorizationHeader) {
@@ -76,60 +74,66 @@ public class RoomController {
                 .build();
     }
 
-    @Operation(summary = "Get Room detail", description = "API retrieve room detail by ID from database")
-    @GetMapping("/detail/{id}")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
-    public ApiResponse getRoomById(@PathVariable Long id) {
-        log.info("Get room detail by ID: {}", id);
+    @GetMapping("/detail/{roomId}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER','ROLE_GUEST')")
+    public ApiResponse getRoomById(@PathVariable Long roomId) {
+        log.info("Get room detail by ID: {}", roomId);
         return ApiResponse.builder()
                 .status(HttpStatus.OK.value())
                 .message("room")
-                .data(roomService.getRoomById(id))
+                .data(roomService.getRoomById(roomId))
                 .build();
     }
 
-    @Operation(summary = "Create Room", description = "API add new room to database")
     @PostMapping("/add")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
-    @ResponseStatus(HttpStatus.OK)
     public ApiResponse createRoom(@RequestBody @Valid CreateRoomRequest request,
                                   @RequestHeader("X-User-Email")  String email,
                                   @RequestHeader("Authorization") String authorizationHeader) {
         log.info("Create new room");
         Long roomId = roomService.createRoom(request, email, authorizationHeader);
         return ApiResponse.builder()
-                .status(200)
+                .status(HttpStatus.CREATED.value())
                 .message("Room created successfully")
                 .data(roomId)
                 .build();
     }
 
-    @Operation(summary = "Update Room", description = "API update room in database")
     @PutMapping("/update")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
-    @ResponseStatus(HttpStatus.OK)
     public ApiResponse updateRoom(@RequestBody @Valid UpdateRoomRequest request) {
         log.info("Update room");
         roomService.updateRoom(request);
 
         return ApiResponse.builder()
-                .status(200)
+                .status(HttpStatus.NO_CONTENT.value())
                 .message("Room updated successfully")
                 .data("")
                 .build();
     }
 
-    @Operation(summary = "Delete Room", description = "API delete room from database")
-    @DeleteMapping("/delete/{id}")
+    @DeleteMapping("/delete/{roomId}")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN','ROLE_USER')")
-    @ResponseStatus(HttpStatus.OK)
-    public ApiResponse deleteRoom(@PathVariable Long id) {
-        log.info("Delete room with id: {}", id);
-        roomService.deleteRoom(id);
+    public ApiResponse deleteRoom(@PathVariable Long roomId) {
+        log.info("Delete room with id: {}", roomId);
+        roomService.deleteRoom(roomId);
 
         return ApiResponse.builder()
-                .status(200)
+                .status(HttpStatus.RESET_CONTENT.value())
                 .message("Room deleted successfully")
+                .data("")
+                .build();
+    }
+
+    @PutMapping("/approve/{roomId}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ApiResponse approveRoom(@PathVariable Long roomId,
+                                   @RequestParam boolean approved) {
+        log.info("Approve room with id: {}, approved: {}", roomId, approved);
+        roomService.approveRoom(roomId, approved);
+        return ApiResponse.builder()
+                .status(HttpStatus.NO_CONTENT.value())
+                .message("Room approval status updated successfully")
                 .data("")
                 .build();
     }

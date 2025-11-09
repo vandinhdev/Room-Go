@@ -15,6 +15,7 @@ public class MessageResponse {
     private Long conversationId;
     private Long senderId;
     private String senderName;
+    private String senderAvatar;
     private String content;
     private MessageType messageType;
     private Boolean isRead;

@@ -17,6 +17,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.client.RestTemplate;
 import vn.ictu.usermanagementservice.service.UserServiceDetail;
 
+
+
 import static org.springframework.security.config.http.SessionCreationPolicy.STATELESS;
 
 @Configuration
@@ -26,8 +28,8 @@ public class SecurityConfig {
 
     private final JWTAuthenticationFilter jwtFilter;
     private final UserServiceDetail userServiceDetail;
+    private final CustomAuthEntryPoint customAuthEntryPoint;
 
-    // Whitelist dùng cho SecurityConfig
     private static final String[] AUTH_WHITELIST = {
             "/api/user/auth/**",
             "/api/esb/auth/**",
@@ -35,23 +37,30 @@ public class SecurityConfig {
             "/swagger-ui/**",
             "/v3/**",
             "/webjars/**",
-            "/favicon.ico"
+            "/favicon.ico",
+            "/actuator/**"
     };
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
+                .cors(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(AUTH_WHITELIST).permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(STATELESS))
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(customAuthEntryPoint)
+                )
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
+
+
 
     @Bean
     public AuthenticationProvider authenticationProvider() {
