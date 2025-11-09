@@ -1,7 +1,5 @@
-// Import API configuration
 import { API_BASE_URL } from './config.js';
 
-// API endpoints
 const CHAT_API = {
     GET_CONVERSATIONS: `${API_BASE_URL}/chat/get-all-user-conversations`,
     GET_CONVERSATION_DETAIL: (conversationId) => `${API_BASE_URL}/chat/conversation/${conversationId}`,
@@ -17,15 +15,14 @@ class ChatSystem {
         this.chats = [];
         this.activeChat = null;
         this.searchTerm = '';
-        this.filter = 'all'; // 'all' or 'unread'
-        this.selectedImages = []; // For storing selected images
-        this.conversationsData = []; // Store raw API data
+        this.filter = 'all';
+        this.selectedImages = [];
+        this.conversationsData = [];
         
         this.init();
     }
 
     getCurrentUser() {
-        // Get current user from localStorage or default to user 1
         const userInfo = JSON.parse(localStorage.getItem('userInfo')) || 
                         JSON.parse(localStorage.getItem('currentUser'));
         
@@ -47,18 +44,9 @@ class ChatSystem {
     }
 
     async init() {
-        // Debug localStorage
-        console.log('=== Authentication Debug ===');
         const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-        console.log('userInfo.token:', userInfo.token ? 'EXISTS' : 'MISSING');
-        console.log('userInfo.email:', userInfo.email || 'MISSING');
-        console.log('userInfo full:', userInfo);
-        console.log('Current user object:', this.currentUser);
-        console.log('===========================');
 
-        // Check authentication first
         if (!this.isAuthenticated()) {
-            console.warn('User not authenticated. Redirecting to login...');
             Utils.showNotification('Vui lòng đăng nhập để sử dụng chat', 'warning');
             setTimeout(() => {
                 window.location.href = 'auth.html';
@@ -70,13 +58,9 @@ class ChatSystem {
         this.setupEventListeners();
         this.setupImageUpload();
         
-        // Check if there's a conversation to auto-open from detail page
         const openConversationId = sessionStorage.getItem('openConversationId');
         if (openConversationId) {
-            console.log('📬 Auto-opening conversation from detail page:', openConversationId);
-            sessionStorage.removeItem('openConversationId'); // Clear after reading
-            
-            // Find the conversation
+            sessionStorage.removeItem('openConversationId'); 
             const convId = parseInt(openConversationId);
             let conversation = this.chats.find(c => c.id === convId);
             
@@ -84,97 +68,64 @@ class ChatSystem {
                 await this.selectChat(convId);
                 Utils.showNotification('Đã mở cuộc trò chuyện', 'success');
             } else {
-                console.warn('⚠️ Conversation not found in loaded chats:', convId);
-                console.log('🔄 Trying to load conversation directly from API...');
-                
-                // Try to load the conversation directly from API
                 try {
                     const conversationDetail = await this.loadConversationDetails(convId);
                     if (conversationDetail) {
-                        console.log('✅ Loaded conversation from API:', conversationDetail);
-                        
-                        // Add to chats list
                         this.chats.unshift(conversationDetail);
                         this.loadChatList();
-                        
-                        // Select it
                         await this.selectChat(convId);
                         Utils.showNotification('Đã mở cuộc trò chuyện', 'success');
                     } else {
                         throw new Error('Conversation detail is null');
                     }
                 } catch (error) {
-                    console.error('❌ Failed to load conversation:', error);
                     Utils.showNotification('Không tìm thấy cuộc trò chuyện', 'error');
                     
-                    // Fallback to first chat
                     if (this.chats.length > 0) {
                         await this.selectChat(this.chats[0].id);
                     }
                 }
             }
         } else {
-            // Auto-select first chat if available (default behavior)
             if (this.chats.length > 0) {
                 await this.selectChat(this.chats[0].id);
             }
         }
     }
 
-    // Check if user is authenticated
     isAuthenticated() {
-        // Đọc token từ userInfo (nơi login.js lưu trữ)
         const userInfoRaw = localStorage.getItem('userInfo');
         const userInfo = userInfoRaw ? JSON.parse(userInfoRaw) : {};
         const token = userInfo.token;
         const email = userInfo.email || this.currentUser.email;
         
-        console.log('🔐 Auth check - Token:', token ? 'Present' : 'Missing');
-        console.log('🔐 Auth check - UserInfo raw:', userInfoRaw);
-        console.log('🔐 Auth check - Email:', email);
-        
         if (!token) {
-            console.error('❌ No access token found in userInfo.token');
             return false;
         }
         
         if (!userInfoRaw) {
-            console.error('❌ No userInfo in localStorage');
             return false;
         }
         
         if (!email) {
-            console.error('❌ No user email found in userInfo');
-            console.error('UserInfo structure:', userInfo);
             return false;
         }
         
-        // Optional: Check if token is expired (if JWT)
         try {
             const payload = JSON.parse(atob(token.split('.')[1]));
             if (payload.exp && payload.exp * 1000 < Date.now()) {
-                console.error('❌ Token expired');
                 return false;
             }
         } catch (e) {
-            // Not a JWT or cannot parse, assume valid for now
-            console.warn('⚠️ Cannot validate token expiry');
         }
         
-        console.log('✅ Authentication successful');
         return true;
     }
-
-    // Get authentication headers
     getAuthHeaders() {
-        // Đọc token từ userInfo (nơi login.js lưu trữ)
         const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
         const token = userInfo.token;
         const email = userInfo.email || this.currentUser.email;
-        
-        console.log('🔑 Getting auth headers - Token:', token ? 'Present' : 'Missing', 'Email:', email);
-        console.log('UserInfo structure:', token);
-        
+    
         return {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`,
@@ -182,26 +133,18 @@ class ChatSystem {
         };
     }
 
-    // Load conversations from API
     async loadConversationsFromAPI() {
         try {
-            console.log('✅ Loading conversations from API...');
-            console.log('📧 Email:', this.currentUser.email);
-            
             const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
             const token = userInfo.token;
-            console.log('🔑 Token:', token ? (token.substring(0, 20) + '...') : 'MISSING');
             
             const response = await fetch(CHAT_API.GET_CONVERSATIONS, {
                 method: 'GET',
                 headers: this.getAuthHeaders()
             });
 
-            console.log('Response status:', response.status);
-
             if (!response.ok) {
                 const errorText = await response.text();
-                console.error('API Error Response:', errorText);
                 
                 if (response.status === 401 || response.status === 403) {
                     Utils.showNotification('Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.', 'error');
@@ -221,28 +164,17 @@ class ChatSystem {
             }
 
             const result = await response.json();
-            console.log('API Response:', result);
-            console.log('result.data type:', typeof result.data);
-            console.log('result.data:', result.data);
-            console.log('Array.isArray(result.data):', Array.isArray(result.data));
             
-            // Check if data exists and is an array with items
             if (result.status === 200 && result.data && Array.isArray(result.data) && result.data.length > 0) {
                 this.conversationsData = result.data;
                 this.transformConversationsData();
                 this.loadChatList();
-                console.log('✅ Loaded conversations:', this.chats.length);
             } else {
-                console.warn('⚠️ No conversations found or empty data');
-                console.log('Setting empty chats array');
                 this.chats = [];
                 this.loadChatList();
             }
         } catch (error) {
-            console.error('Error loading conversations:', error);
-            console.error('Error stack:', error.stack);
             
-            // Check if it's a network error
             if (error.message.includes('Failed to fetch') || error.name === 'TypeError') {
                 Utils.showNotification('Không thể kết nối đến server. Vui lòng kiểm tra kết nối.', 'error');
             } else {
@@ -254,31 +186,22 @@ class ChatSystem {
         }
     }
 
-    // Transform API data to match internal format
     transformConversationsData() {
-        console.log('🔄 Transforming conversations data:', this.conversationsData);
-        
         this.chats = this.conversationsData.map(conv => {
             return {
                 id: conv.id,
                 roomId: conv.roomId,
-                // Thông tin người chat kia
                 otherUserId: conv.otherUserId,
                 otherUserName: conv.otherUserName,
                 otherUserAvatar: conv.otherUserAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(conv.otherUserName)}&background=random`,
-                // Participants
                 participants: [this.currentUser.id, conv.otherUserId],
-                // Messages will be loaded when chat is selected
                 messages: [],
                 lastMessage: null,
                 unreadCount: 0
             };
         });
-        
-        console.log('✅ Transformed chats:', this.chats);
     }
 
-    // Load conversation details with messages
     async loadConversationDetails(conversationId) {
         try {
             const response = await fetch(CHAT_API.GET_CONVERSATION_DETAIL(conversationId), {
@@ -296,15 +219,11 @@ class ChatSystem {
                 return this.transformConversationDetail(result.data);
             }
         } catch (error) {
-            console.error('Error loading conversation details:', error);
             throw error;
         }
     }
 
-    // Transform conversation detail from API
     transformConversationDetail(detail) {
-        console.log('🔄 Transforming conversation detail:', detail);
-        
         const messages = detail.messages ? detail.messages.map(msg => ({
             id: msg.id,
             senderId: msg.senderId,
@@ -315,10 +234,8 @@ class ChatSystem {
             read: msg.isRead
         })) : [];
 
-        // Get other user info (the one who is not current user)
         const otherUserId = detail.ownerId === this.currentUser.id ? detail.currentUserId : detail.ownerId;
         
-        // Try to find other user's name from messages
         let otherUserName = 'User';
         if (messages.length > 0) {
             const otherUserMessage = messages.find(m => m.senderId === otherUserId);
@@ -327,7 +244,6 @@ class ChatSystem {
             }
         }
 
-        // Get last message
         const lastMessage = messages.length > 0 ? messages[messages.length - 1] : null;
 
         return {
@@ -344,7 +260,6 @@ class ChatSystem {
     }
 
     setupEventListeners() {
-        // Search functionality
         const searchInput = document.querySelector('.chat-search-input input');
         if (searchInput) {
             searchInput.addEventListener('input', (e) => {
@@ -353,7 +268,6 @@ class ChatSystem {
             });
         }
 
-        // Filter buttons
         const allMessagesBtn = document.querySelector('.chat-all-message');
         const unreadMessagesBtn = document.querySelector('.chat-unread-message');
         
@@ -375,7 +289,6 @@ class ChatSystem {
             });
         }
 
-        // Send message
         const sendButton = document.getElementById('send-button');
         const messageInput = document.getElementById('message-input');
         
@@ -399,20 +312,17 @@ class ChatSystem {
         const imageInput = document.getElementById('image-input');
         const clearImagesBtn = document.getElementById('clear-images-btn');
 
-        // Click image button to open file dialog
         if (imageBtn && imageInput) {
             imageBtn.addEventListener('click', () => {
                 imageInput.click();
             });
 
-            // Handle file selection
             imageInput.addEventListener('change', (e) => {
                 const files = Array.from(e.target.files);
                 this.handleImageSelection(files);
             });
         }
 
-        // Clear all selected images
         if (clearImagesBtn) {
             clearImagesBtn.addEventListener('click', () => {
                 this.clearSelectedImages();
@@ -477,7 +387,6 @@ class ChatSystem {
 
         let filteredChats = this.chats;
 
-        // Apply search filter
         if (this.searchTerm) {
             filteredChats = filteredChats.filter(chat => {
                 const chatName = chat.otherUserName || '';
@@ -485,12 +394,10 @@ class ChatSystem {
             });
         }
 
-        // Apply unread filter
         if (this.filter === 'unread') {
             filteredChats = filteredChats.filter(chat => chat.unreadCount > 0);
         }
 
-        // Sort by last message timestamp
         filteredChats.sort((a, b) => {
             const timeA = a.lastMessage ? new Date(a.lastMessage.timestamp) : new Date(0);
             const timeB = b.lastMessage ? new Date(b.lastMessage.timestamp) : new Date(0);
@@ -534,10 +441,8 @@ class ChatSystem {
             `;
         }).join('');
 
-        // Add click listeners to chat items
         document.querySelectorAll('.chat-item').forEach(item => {
             item.addEventListener('click', (e) => {
-                // Don't select chat if clicking on options button or menu
                 if (e.target.closest('.chat-options')) {
                     return;
                 }
@@ -546,7 +451,6 @@ class ChatSystem {
             });
         });
 
-        // Add click listeners to options buttons
         document.querySelectorAll('.chat-options-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -555,7 +459,6 @@ class ChatSystem {
             });
         });
 
-        // Add click listeners to menu items
         document.querySelectorAll('.chat-options-menu-item').forEach(item => {
             item.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -566,12 +469,10 @@ class ChatSystem {
                     this.deleteChat(chatId);
                 }
                 
-                // Hide all menus
                 this.hideAllChatMenus();
             });
         });
 
-        // Close menus when clicking outside
         document.addEventListener('click', () => {
             this.hideAllChatMenus();
         });
@@ -580,12 +481,9 @@ class ChatSystem {
     async selectChat(chatId) {
         const chat = this.chats.find(c => c.id === chatId);
         if (!chat) return;
-
-        // Load conversation details from API
         try {
             const details = await this.loadConversationDetails(chatId);
             
-            // Update chat with loaded messages
             chat.messages = details.messages;
             if (details.messages.length > 0) {
                 chat.lastMessage = details.messages[details.messages.length - 1];
@@ -593,12 +491,11 @@ class ChatSystem {
             
             this.activeChat = chat;
             
-            // Mark messages as read
             this.markChatAsRead(chatId);
             
             this.loadChatHeader();
             this.loadMessages();
-            this.loadChatList(); // Refresh to update unread counts
+            this.loadChatList(); 
         } catch (error) {
             console.error('Error selecting chat:', error);
             Utils.showNotification('Không thể tải tin nhắn', 'error');
@@ -665,7 +562,6 @@ class ChatSystem {
             `;
         }).join('');
 
-        // Scroll to bottom
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 
@@ -675,11 +571,8 @@ class ChatSystem {
 
         const content = messageInput.value.trim();
         const hasImages = this.selectedImages.length > 0;
-
-        // Must have either content or images
         if (!content && !hasImages) return;
 
-        // Send text message if there's content
         if (content) {
             try {
                 const messageData = {
@@ -716,10 +609,8 @@ class ChatSystem {
                     this.activeChat.messages.push(textMessage);
                     this.activeChat.lastMessage = textMessage;
                     
-                    // Clear input
                     messageInput.value = '';
                     
-                    // Reload messages
                     this.loadMessages();
                     this.loadChatList();
                 } else {
@@ -731,25 +622,17 @@ class ChatSystem {
             }
         }
 
-        // Send image messages (TODO: Implement image upload)
         if (hasImages) {
-            // TODO: Implement image upload to server
             console.log('Image upload not yet implemented');
             Utils.showNotification('Tính năng gửi ảnh đang được phát triển', 'info');
         }
 
-        // Clear input and images
         messageInput.value = '';
         this.clearSelectedImages();
 
-        // Clear selected images
         this.clearSelectedImages();
     }
 
-    // TODO: Implement WebSocket for real-time messages
-    // simulateRealTimeMessages() {
-    //     // This will be replaced with WebSocket implementation
-    // }
 
     markChatAsRead(chatId) {
         const chat = this.chats.find(c => c.id === chatId);
@@ -792,10 +675,8 @@ class ChatSystem {
     }
 
     toggleChatMenu(chatId) {
-        // Hide all other menus first
         this.hideAllChatMenus();
         
-        // Show the clicked menu
         const menu = document.getElementById(`chat-menu-${chatId}`);
         if (menu) {
             menu.classList.add('show');
@@ -809,7 +690,6 @@ class ChatSystem {
     }
 
     async deleteChat(chatId) {
-        // Hiển thị hộp thoại xác nhận
         if (confirm('Bạn có chắc chắn muốn xóa cuộc trò chuyện này không?')) {
             try {
                 const response = await fetch(CHAT_API.DELETE_CONVERSATION(chatId), {
@@ -868,10 +748,8 @@ class ChatSystem {
             if (result.status === 201 && result.data) {
                 const conversationId = result.data;
                 
-                // Reload all conversations to get the new one
                 await this.loadConversationsFromAPI();
                 
-                // Select the new conversation
                 await this.selectChat(conversationId);
                 
                 Utils.showNotification('Đã tạo cuộc trò chuyện mới', 'success');
@@ -913,13 +791,11 @@ class ChatSystem {
     }
 
     formatMessageContent(content) {
-        // Check if this is a room intro message (new format with image)
         if (content.startsWith('ROOM_INTRO|')) {
             const parts = content.split('|');
             if (parts.length >= 7) {
                 const [, imageUrl, title, price, area, district, roomId] = parts;
                 
-                // Create clickable room card with image
                 return `
                     <div class="room-intro-card" data-room-id="${roomId}" onclick="window.location.href='detail.html?id=${roomId}'" style="cursor: pointer;">
                         <div class="room-intro-image">
@@ -939,15 +815,13 @@ class ChatSystem {
             }
         }
         
-        // Check for old format (backward compatibility)
         const oldRoomIntroPattern = /^Xin chào! Tôi quan tâm đến phòng: "(.+?)" - (.+?) - (\d+)m² tại (.+)$/;
         const oldMatch = content.match(oldRoomIntroPattern);
         
         if (oldMatch) {
             const [, title, price, area, district] = oldMatch;
             const roomId = this.activeChat?.roomId || '';
-            
-            // Create clickable room card (without image for old format)
+
             return `
                 <div class="room-intro-card" data-room-id="${roomId}" onclick="window.location.href='detail.html?id=${roomId}'" style="cursor: pointer;">
                     <div class="room-intro-details">
@@ -962,7 +836,6 @@ class ChatSystem {
             `;
         }
         
-        // Regular message formatting
         return content
             .replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>')
             .replace(/:\)/g, '😊')

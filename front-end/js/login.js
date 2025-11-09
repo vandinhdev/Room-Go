@@ -43,7 +43,6 @@ document.getElementById('switchBtn').addEventListener('click', function(e) {
     toggleAuthForm();
 });
 
-// ✅ Xử lý form đăng nhập
 document.getElementById('loginForm').addEventListener('submit', async function (e) {
     e.preventDefault();
 
@@ -144,7 +143,6 @@ document.getElementById('loginForm').addEventListener('submit', async function (
             window.location.href = 'index.html';
         }, 1000);
     } catch (error) {
-        console.error('🚨 Lỗi kết nối khi đăng nhập:', error);
         Utils.showNotification('Mất kết nối đến máy chủ. Vui lòng thử lại sau.', 'error');
     }
 });
@@ -181,12 +179,6 @@ document.getElementById('registerForm').addEventListener('submit', async functio
 
         
         const data = await response.json();
-
-        console.log('🔹 Register request body:', { name, email, password });
-        console.log('🔹 Register status:', response.status);
-        console.log('🔹 Register response:', data);
-
-        // Handle API response structure
         if (!response.ok) {
             const msg =
                 data.message ||
@@ -197,7 +189,6 @@ document.getElementById('registerForm').addEventListener('submit', async functio
             return;
         }
 
-        // Check if registration was successful
         if (data.status && data.status !== 200) {
             Utils.showNotification(data.message || 'Đăng ký không thành công. Vui lòng thử lại.', 'error');
             return;
@@ -210,7 +201,6 @@ document.getElementById('registerForm').addEventListener('submit', async functio
             toggleAuthForm();
         }, 2000);
     } catch (error) {
-        console.error('🚨 Lỗi khi đăng ký:', error);
         Utils.showNotification('Đăng ký không thành công. Vui lòng thử lại sau.', 'error');
     }
 });

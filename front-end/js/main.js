@@ -422,7 +422,6 @@ function getFilteredRooms() {
 
 function updateRooms() {
   const filtered = getFilteredRooms();
-  console.log('📊 Filtered rooms:', filtered.length, 'from total:', rooms.length);
   window.app.updateFilteredRooms(filtered);
 }
 
@@ -512,7 +511,6 @@ function initializeHeaderDependentElements() {
 
     if (wardSelect) wardSelect.addEventListener('change', updateRooms);
 
-    // Setup price and area filters
     const priceFilter = document.getElementById('priceFilter');
     const areaFilter = document.getElementById('areaFilter');
     const clearBtn = document.querySelector('.clear-filters');
